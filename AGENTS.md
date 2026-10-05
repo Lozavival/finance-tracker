@@ -1,6 +1,6 @@
 # Lindgo – Futuristic Fintech SaaS Dashboard Design
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+React + Vite + Tailwind CSS project.
 
 ## Development Server
 
@@ -10,7 +10,7 @@ are reflected through hot reload.
 ## Key Files
 
 - `src/main.tsx` - Browser entry point
-- `vite.figma.config.ts` - Figma Make wrapper configuration
+- `vite.config.ts` - Vite configuration
 - `.mise.toml` - Toolchain versions
 
 ## Project Guidelines

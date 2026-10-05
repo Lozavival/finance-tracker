@@ -5,8 +5,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
@@ -15,5 +13,9 @@ export default defineConfig({
       '@/styles': path.resolve(__dirname, './src/styles'),
       '@': path.resolve(__dirname, './src/app'),
     },
+  },
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 8443,
+    host: true,
   },
 })
