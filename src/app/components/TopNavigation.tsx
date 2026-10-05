@@ -1,11 +1,4 @@
 import { Search, Bell, Settings, Sun, Moon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 import { useState } from "react";
 
 export function TopNavigation() {
@@ -14,16 +7,9 @@ export function TopNavigation() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-black/40 backdrop-blur-xl border-b border-white/10">
-      <div className="flex items-center justify-between h-full px-6">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="text-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-            Lindgo
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="flex-1 max-w-xl mx-8">
+      <div className="relative flex items-center justify-end h-full px-6">
+        {/* Search Bar - centered */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl px-4">
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400" />
             <input
@@ -63,33 +49,6 @@ export function TopNavigation() {
               <Moon className="w-5 h-5 text-gray-300" />
             )}
           </button>
-
-          {/* Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative group">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400 to-purple-600 opacity-75 blur-sm group-hover:opacity-100 transition-opacity" />
-                <Avatar className="relative w-10 h-10 border-2 border-cyan-400/50">
-                  <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-gray-900/95 backdrop-blur-xl border border-white/10">
-              <DropdownMenuItem className="text-gray-300 focus:bg-cyan-500/20 focus:text-cyan-300">
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-gray-300 focus:bg-cyan-500/20 focus:text-cyan-300">
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-gray-300 focus:bg-cyan-500/20 focus:text-cyan-300">
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-400 focus:bg-red-500/20 focus:text-red-300">
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </div>

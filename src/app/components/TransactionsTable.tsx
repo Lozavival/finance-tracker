@@ -1,5 +1,4 @@
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Card } from "./ui/card"
 import {
   Table,
   TableBody,
@@ -7,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./ui/table";
+} from "./ui/table"
 
 const transactions = [
   {
@@ -16,7 +15,7 @@ const transactions = [
     description: "Amazon Purchase",
     type: "Shopping",
     amount: "-$124.99",
-    status: "success",
+    account: "Bank of America",
   },
   {
     id: 2,
@@ -24,7 +23,7 @@ const transactions = [
     description: "Salary Deposit",
     type: "Income",
     amount: "+$5,200.00",
-    status: "success",
+    account: "Bank of America",
   },
   {
     id: 3,
@@ -32,7 +31,7 @@ const transactions = [
     description: "Netflix Subscription",
     type: "Entertainment",
     amount: "-$15.99",
-    status: "pending",
+    account: "Citigroup",
   },
   {
     id: 4,
@@ -40,7 +39,7 @@ const transactions = [
     description: "Uber Ride",
     type: "Transportation",
     amount: "-$28.50",
-    status: "success",
+    account: "Bank of America",
   },
   {
     id: 5,
@@ -48,7 +47,7 @@ const transactions = [
     description: "Refund - Returns",
     type: "Refund",
     amount: "+$89.99",
-    status: "success",
+    account: "Bank of America",
   },
   {
     id: 6,
@@ -56,7 +55,7 @@ const transactions = [
     description: "International Transfer",
     type: "Transfer",
     amount: "-$1,500.00",
-    status: "failed",
+    account: "Goldman Sachs",
   },
   {
     id: 7,
@@ -64,7 +63,7 @@ const transactions = [
     description: "Starbucks Coffee",
     type: "Food & Dining",
     amount: "-$6.75",
-    status: "success",
+    account: "Bank of America",
   },
   {
     id: 8,
@@ -72,38 +71,11 @@ const transactions = [
     description: "Electric Bill",
     type: "Bills",
     amount: "-$132.00",
-    status: "pending",
+    account: "Citigroup",
   },
-];
+]
 
 export function TransactionsTable() {
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      success: {
-        variant: "default" as const,
-        className: "bg-green-500/20 text-green-400 border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.3)]",
-        text: "Success",
-      },
-      pending: {
-        variant: "default" as const,
-        className: "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)]",
-        text: "Pending",
-      },
-      failed: {
-        variant: "default" as const,
-        className: "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]",
-        text: "Failed",
-      },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        {config.text}
-      </Badge>
-    );
-  };
-
   return (
     <Card className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 hover:shadow-[0_0_25px_rgba(34,211,238,0.1)] transition-all duration-300">
       <h3 className="text-white text-lg mb-4">Recent Transactions</h3>
@@ -115,8 +87,8 @@ export function TransactionsTable() {
               <TableHead className="text-gray-400">Date</TableHead>
               <TableHead className="text-gray-400">Description</TableHead>
               <TableHead className="text-gray-400">Type</TableHead>
+              <TableHead className="text-gray-400">Account</TableHead>
               <TableHead className="text-gray-400 text-right">Amount</TableHead>
-              <TableHead className="text-gray-400 text-center">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -125,20 +97,26 @@ export function TransactionsTable() {
                 key={transaction.id}
                 className="border-b border-white/5 hover:bg-cyan-500/10 hover:shadow-[0_0_15px_rgba(34,211,238,0.1)] transition-all duration-300 group"
               >
-                <TableCell className="text-gray-300">{transaction.date}</TableCell>
+                <TableCell className="text-gray-300">
+                  {transaction.date}
+                </TableCell>
                 <TableCell className="text-white group-hover:text-cyan-300 transition-colors">
                   {transaction.description}
                 </TableCell>
-                <TableCell className="text-gray-400">{transaction.type}</TableCell>
+                <TableCell className="text-gray-400">
+                  {transaction.type}
+                </TableCell>
+                 <TableCell className="text-gray-400">
+                  {transaction.account}
+                </TableCell>
                 <TableCell
                   className={`text-right ${
-                    transaction.amount.startsWith("+") ? "text-green-400" : "text-gray-300"
+                    transaction.amount.startsWith("+")
+                      ? "text-green-400"
+                      : "text-red-400"
                   }`}
                 >
                   {transaction.amount}
-                </TableCell>
-                <TableCell className="text-center">
-                  {getStatusBadge(transaction.status)}
                 </TableCell>
               </TableRow>
             ))}
@@ -146,5 +124,5 @@ export function TransactionsTable() {
         </Table>
       </div>
     </Card>
-  );
+  )
 }

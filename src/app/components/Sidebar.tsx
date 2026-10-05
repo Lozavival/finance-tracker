@@ -1,20 +1,15 @@
 import {
   LayoutDashboard,
   ArrowLeftRight,
-  BarChart3,
   Wallet,
-  Plug,
   Settings,
-  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
   { icon: ArrowLeftRight, label: "Transactions", id: "transactions" },
-  { icon: BarChart3, label: "Analytics", id: "analytics" },
-  { icon: Wallet, label: "Wallets", id: "wallets" },
-  { icon: Plug, label: "Integrations", id: "integrations" },
+  { icon: Wallet, label: "Accounts", id: "accounts" },
   { icon: Settings, label: "Settings", id: "settings" },
 ];
 
@@ -61,26 +56,13 @@ export function Sidebar() {
               </button>
 
               {/* Neon separator after Transactions and Wallets */}
-              {(index === 1 || index === 3) && (
+              {(index === 2) && (
                 <div className="my-4 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
               )}
             </div>
           );
         })}
       </nav>
-
-      {/* Logout Button */}
-      <div className="p-4 border-t border-white/10">
-        <button
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                   bg-white/5 border border-red-500/30 text-red-400
-                   hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]
-                   transition-all duration-300 group"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Logout</span>
-        </button>
-      </div>
     </div>
   );
 }
