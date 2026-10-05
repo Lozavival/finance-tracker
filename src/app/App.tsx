@@ -18,10 +18,10 @@ export default function App() {
         <div className="p-8 space-y-8">
           {/* Page Header */}
           <div>
-            <h1 className="text-white text-3xl mb-2">
+            <h1 className="text-foreground text-3xl mb-2">
               Dashboard
             </h1>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Welcome back! Here's your financial overview.
             </p>
           </div>

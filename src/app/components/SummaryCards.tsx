@@ -46,29 +46,29 @@ export function SummaryCards() {
             border: "border-cyan-500/30",
             shadow: "hover:shadow-[0_0_25px_rgba(34,211,238,0.3)]",
             iconBg: "bg-cyan-500/20",
-            iconColor: "text-cyan-400",
-            textColor: "text-cyan-400",
+            iconColor: "text-theme-cyan",
+            textColor: "text-theme-cyan",
           },
           green: {
             border: "border-green-500/30",
             shadow: "hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]",
             iconBg: "bg-green-500/20",
-            iconColor: "text-green-400",
-            textColor: "text-green-400",
+            iconColor: "text-theme-green",
+            textColor: "text-theme-green",
           },
           blue: {
             border: "border-blue-500/30",
             shadow: "hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]",
             iconBg: "bg-blue-500/20",
-            iconColor: "text-blue-400",
-            textColor: "text-blue-400",
+            iconColor: "text-theme-blue",
+            textColor: "text-theme-blue",
           },
           orange: {
             border: "border-orange-500/30",
             shadow: "hover:shadow-[0_0_25px_rgba(249,115,22,0.3)]",
             iconBg: "bg-orange-500/20",
-            iconColor: "text-orange-400",
-            textColor: "text-orange-400",
+            iconColor: "text-theme-orange",
+            textColor: "text-theme-orange",
           },
         };
 
@@ -77,7 +77,7 @@ export function SummaryCards() {
         return (
           <Card
             key={index}
-            className={`p-6 bg-white/5 backdrop-blur-xl border ${colors.border} 
+            className={`p-6 bg-foreground/5 backdrop-blur-xl border ${colors.border} 
                        ${colors.shadow} transition-all duration-300 group relative overflow-hidden`}
           >
             {/* Background glow effect */}
@@ -94,10 +94,10 @@ export function SummaryCards() {
 
             {/* Content */}
             <div className="relative z-10">
-              <p className="text-gray-400 text-sm mb-1">{item.title}</p>
+              <p className="text-muted-foreground text-sm mb-1">{item.title}</p>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-white text-2xl mb-1">{item.value}</p>
+                  <p className="text-foreground text-2xl mb-1">{item.value}</p>
                   <p className={`text-sm ${colors.textColor}`}>{item.change}</p>
                 </div>
 

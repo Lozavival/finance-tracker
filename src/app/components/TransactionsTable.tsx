@@ -77,43 +77,45 @@ const transactions = [
 
 export function TransactionsTable() {
   return (
-    <Card className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 hover:shadow-[0_0_25px_rgba(34,211,238,0.1)] transition-all duration-300">
-      <h3 className="text-white text-lg mb-4">Recent Transactions</h3>
+    <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300">
+      <div role="heading" aria-level={2} className="text-foreground text-lg mb-4">
+        Recent Transactions
+      </div>
 
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-white/10 hover:bg-transparent">
-              <TableHead className="text-gray-400">Date</TableHead>
-              <TableHead className="text-gray-400">Description</TableHead>
-              <TableHead className="text-gray-400">Type</TableHead>
-              <TableHead className="text-gray-400">Account</TableHead>
-              <TableHead className="text-gray-400 text-right">Amount</TableHead>
+            <TableRow className="border-b border-border hover:bg-transparent">
+              <TableHead className="text-muted-foreground">Date</TableHead>
+              <TableHead className="text-muted-foreground">Description</TableHead>
+              <TableHead className="text-muted-foreground">Type</TableHead>
+              <TableHead className="text-muted-foreground">Account</TableHead>
+              <TableHead className="text-muted-foreground text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {transactions.map((transaction) => (
               <TableRow
                 key={transaction.id}
-                className="border-b border-white/5 hover:bg-cyan-500/10 hover:shadow-[0_0_15px_rgba(34,211,238,0.1)] transition-all duration-300 group"
+                className="border-b border-border/50 hover:bg-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
               >
-                <TableCell className="text-gray-300">
+                <TableCell className="text-foreground">
                   {transaction.date}
                 </TableCell>
-                <TableCell className="text-white group-hover:text-cyan-300 transition-colors">
+                <TableCell className="text-foreground group-hover:text-cyan-300 transition-colors">
                   {transaction.description}
                 </TableCell>
-                <TableCell className="text-gray-400">
+                <TableCell className="text-muted-foreground">
                   {transaction.type}
                 </TableCell>
-                 <TableCell className="text-gray-400">
+                 <TableCell className="text-muted-foreground">
                   {transaction.account}
                 </TableCell>
                 <TableCell
                   className={`text-right ${
                     transaction.amount.startsWith("+")
-                      ? "text-green-400"
-                      : "text-red-400"
+                      ? "text-theme-green"
+                      : "text-theme-red"
                   }`}
                 >
                   {transaction.amount}

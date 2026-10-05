@@ -17,7 +17,7 @@ export function Sidebar() {
   const [activeItem, setActiveItem] = useState("dashboard");
 
   return (
-    <div className="fixed left-0 top-16 bottom-0 w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 flex flex-col">
+    <div className="fixed left-0 top-16 bottom-0 w-64 bg-background/80 backdrop-blur-xl border-r border-border flex flex-col">
       {/* Menu Items */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {menuItems.map((item, index) => {
@@ -32,8 +32,8 @@ export function Sidebar() {
                          transition-all duration-300 group relative overflow-hidden
                          ${
                            isActive
-                             ? "bg-cyan-500/20 border border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-                             : "bg-white/5 border border-white/10 hover:border-cyan-400/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                             ? "bg-cyan-500/20 border border-cyan-400/50 shadow-lg shadow-cyan-500/20"
+                             : "bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-lg shadow-cyan-500/10"
                          }`}
               >
                 {/* Neon border effect on hover */}
@@ -43,12 +43,12 @@ export function Sidebar() {
 
                 <Icon
                   className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-cyan-400" : "text-gray-400 group-hover:text-cyan-300"
+                    isActive ? "text-theme-cyan" : "text-muted-foreground group-hover:text-theme-cyan"
                   }`}
                 />
                 <span
                   className={`transition-colors ${
-                    isActive ? "text-cyan-300" : "text-gray-300 group-hover:text-white"
+                    isActive ? "text-cyan-700 dark:text-cyan-300" : "text-muted-foreground group-hover:text-foreground"
                   }`}
                 >
                   {item.label}

@@ -48,9 +48,9 @@ export function AnalyticsChart() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-gray-900/95 backdrop-blur-xl border border-cyan-400/50 rounded-lg p-3 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-          <p className="text-gray-300 text-sm">{payload[0].payload.date}</p>
-          <p className="text-cyan-400">${payload[0].value.toLocaleString()}</p>
+        <div className="bg-popover/95 backdrop-blur-xl border border-cyan-500/50 rounded-lg p-3 shadow-lg shadow-cyan-500/20">
+          <p className="text-muted-foreground text-sm">{payload[0].payload.date}</p>
+          <p className="text-theme-cyan">${payload[0].value.toLocaleString()}</p>
         </div>
       );
     }
@@ -60,9 +60,11 @@ export function AnalyticsChart() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Revenue Chart - Takes 2 columns */}
-      <Card className="lg:col-span-2 p-6 bg-white/5 backdrop-blur-xl border border-cyan-500/30 hover:shadow-[0_0_25px_rgba(34,211,238,0.2)] transition-all duration-300">
+      <Card className="lg:col-span-2 p-6 bg-foreground/5 backdrop-blur-xl border border-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-white text-lg">Revenue Growth Over Time</h3>
+          <div role="heading" aria-level={2} className="text-foreground text-lg">
+            Revenue Growth Over Time
+          </div>
           <div className="flex gap-2">
             {(["7D", "1M", "1Y"] as const).map((period) => (
               <button
@@ -70,8 +72,8 @@ export function AnalyticsChart() {
                 onClick={() => setTimePeriod(period)}
                 className={`px-4 py-1.5 rounded-lg transition-all duration-300 ${
                   timePeriod === period
-                    ? "bg-cyan-500/30 border border-cyan-400/50 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-                    : "bg-white/5 border border-white/10 text-gray-400 hover:border-cyan-400/30"
+                    ? "bg-cyan-500/30 border-cyan-400/50 text-theme-cyan shadow-md shadow-cyan-500/20 hover:bg-cyan-500/30 hover:text-theme-cyan"
+                    : "bg-foreground/5 border border-border text-muted-foreground hover:border-cyan-400/30"
                 }`}
               >
                 {period}
@@ -88,9 +90,9 @@ export function AnalyticsChart() {
                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-            <XAxis dataKey="date" stroke="#9ca3af" />
-            <YAxis stroke="#9ca3af" />
+            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" opacity={0.5} />
+            <XAxis dataKey="date" stroke="currentColor" className="text-muted-foreground" />
+            <YAxis stroke="currentColor" className="text-muted-foreground" />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
@@ -110,8 +112,8 @@ export function AnalyticsChart() {
       </Card>
 
       {/* Spending by Category - Takes 1 column */}
-      <Card className="p-6 bg-white/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-[0_0_25px_rgba(168,85,247,0.2)] transition-all duration-300">
-        <h3 className="text-white text-lg mb-4">Spending by Category</h3>
+      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300">
+        <h3 className="text-foreground text-lg mb-4">Spending by Category</h3>
 
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
@@ -134,21 +136,21 @@ export function AnalyticsChart() {
         {/* Stats */}
         <div className="mt-6 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Total Spend</span>
-            <span className="text-white">$14,400</span>
+            <span className="text-muted-foreground">Total Spend</span>
+            <span className="text-foreground">$14,400</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Top Merchant</span>
-            <span className="text-cyan-400">Amazon</span>
+            <span className="text-muted-foreground">Top Merchant</span>
+            <span className="text-theme-cyan">Amazon</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Top Country</span>
-            <span className="text-purple-400">United States</span>
+            <span className="text-muted-foreground">Top Country</span>
+            <span className="text-theme-purple">United States</span>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
           {categoryData.map((category, index) => (
             <div key={index} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
@@ -156,9 +158,9 @@ export function AnalyticsChart() {
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: category.color }}
                 />
-                <span className="text-gray-400">{category.name}</span>
+                <span className="text-muted-foreground">{category.name}</span>
               </div>
-              <span className="text-white">${category.value}</span>
+              <span className="text-foreground">${category.value}</span>
             </div>
           ))}
         </div>

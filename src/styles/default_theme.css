@@ -1,5 +1,4 @@
-/* KEEP_IN_SYNC(fullscreen/resources/figmake/styles/globals.css) */
-/* KEEP_IN_SYNC(sinatra/lib/make/clf2_to_generic/legacy_scaffold.rb#DEFAULT_THEME_CSS) */
+@custom-variant dark (&:is(.dark *));
 
 :root {
   --font-size: 16px;
@@ -40,6 +39,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  --theme-cyan: #0891b2;
+  --theme-green: #16a34a;
+  --theme-blue: #2563eb;
+  --theme-orange: #ea580c;
+  --theme-purple: #9333ea;
+  --theme-red: #dc2626;
+  --theme-cyan-btn: #0891b2;
+  --theme-cyan-btn-hover: #0e7490;
 }
 
 .dark {
@@ -57,8 +65,8 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
@@ -77,6 +85,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  --theme-cyan: #22d3ee;
+  --theme-green: #4ade80;
+  --theme-blue: #60a5fa;
+  --theme-orange: #fb923c;
+  --theme-purple: #c084fc;
+  --theme-red: #f87171;
+  --theme-cyan-btn: #06b6d4;
+  --theme-cyan-btn-hover: #22d3ee;
 }
 
 @theme inline {
@@ -118,4 +135,87 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-theme-cyan: var(--theme-cyan);
+  --color-theme-green: var(--theme-green);
+  --color-theme-blue: var(--theme-blue);
+  --color-theme-orange: var(--theme-orange);
+  --color-theme-purple: var(--theme-purple);
+  --color-theme-red: var(--theme-red);
+  --color-theme-cyan-btn: var(--theme-cyan-btn);
+  --color-theme-cyan-btn-hover: var(--theme-cyan-btn-hover);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
 }
