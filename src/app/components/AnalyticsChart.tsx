@@ -1,6 +1,12 @@
 import { Card } from "./ui/card";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Button } from "./ui/button";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useState } from "react";
+import {
+  CATEGORY_STYLES,
+  formatCurrency,
+  type CategoryTotal,
+} from "../data/transactions";
 
 const revenueData = {
   "7D": [
@@ -35,12 +41,98 @@ const revenueData = {
 };
 
 const categoryData = [
-  { name: "Shopping", value: 4500, color: "#06b6d4" },
-  { name: "Food & Dining", value: 3200, color: "#3b82f6" },
-  { name: "Transportation", value: 2100, color: "#8b5cf6" },
-  { name: "Entertainment", value: 1800, color: "#ec4899" },
-  { name: "Bills", value: 2800, color: "#f59e0b" },
+  { name: "Shopping", value: 4500, ...CATEGORY_STYLES.Shopping },
+  { name: "Food & Dining", value: 3200, ...CATEGORY_STYLES["Food & Dining"] },
+  { name: "Transportation", value: 2100, ...CATEGORY_STYLES.Transportation },
+  { name: "Entertainment", value: 1800, ...CATEGORY_STYLES.Entertainment },
+  { name: "Bills", value: 2800, ...CATEGORY_STYLES.Bills },
 ];
+
+type SpendingByCategoryChartProps = {
+  data: CategoryTotal[];
+  totalSpend: number;
+  secondaryLabel?: string;
+  secondaryValue?: string;
+  tertiaryLabel?: string;
+  tertiaryValue?: string;
+  className?: string;
+};
+
+export function SpendingByCategoryChart({
+  data,
+  totalSpend,
+  secondaryLabel,
+  secondaryValue,
+  tertiaryLabel,
+  tertiaryValue,
+  className = "",
+}: SpendingByCategoryChartProps) {
+  return (
+    <Card className={`p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 ${className}`}>
+      <div className="text-foreground text-lg">Spending by Category</div>
+
+      {data.length > 0 ? (
+        <>
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+
+          <div className="mt-6 space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Total Spend</span>
+              <span className="text-foreground">{formatCurrency(totalSpend)}</span>
+            </div>
+            {secondaryLabel && secondaryValue && (
+              <div className="flex justify-between gap-4 text-sm">
+                <span className="text-muted-foreground">{secondaryLabel}</span>
+                <span className="text-theme-cyan text-right">{secondaryValue}</span>
+              </div>
+            )}
+            {tertiaryLabel && tertiaryValue && (
+              <div className="flex justify-between gap-4 text-sm">
+                <span className="text-muted-foreground">{tertiaryLabel}</span>
+                <span className="text-theme-purple text-right">{tertiaryValue}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border space-y-2">
+            {data.map((category) => (
+              <div key={category.name} className="flex items-center justify-between gap-4 text-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`size-3 shrink-0 rounded-full ${category.dotClassName}`} />
+                  <span className="text-muted-foreground truncate">{category.name}</span>
+                </div>
+                <span className="text-foreground">{formatCurrency(category.value)}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="min-h-64 flex flex-col items-center justify-center text-center">
+          <div className="text-muted-foreground mb-1">No spending to visualize</div>
+          <div className="text-muted-foreground text-sm max-w-xs">
+            Income-only results and empty periods do not contribute to spending.
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export function AnalyticsChart() {
   const [timePeriod, setTimePeriod] = useState<"7D" | "1M" | "1Y">("1M");
@@ -67,17 +159,21 @@ export function AnalyticsChart() {
           </div>
           <div className="flex gap-2">
             {(["7D", "1M", "1Y"] as const).map((period) => (
-              <button
+              <Button
                 key={period}
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-pressed={timePeriod === period}
                 onClick={() => setTimePeriod(period)}
-                className={`px-4 py-1.5 rounded-lg transition-all duration-300 ${
+                className={`rounded-lg transition-all duration-300 ${
                   timePeriod === period
                     ? "bg-cyan-500/30 border-cyan-400/50 text-theme-cyan shadow-md shadow-cyan-500/20 hover:bg-cyan-500/30 hover:text-theme-cyan"
                     : "bg-foreground/5 border border-border text-muted-foreground hover:border-cyan-400/30"
                 }`}
               >
                 {period}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -86,8 +182,8 @@ export function AnalyticsChart() {
           <AreaChart data={revenueData[timePeriod]}>
             <defs>
               <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-cyan-500)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--color-green-500)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" opacity={0.5} />
@@ -103,68 +199,22 @@ export function AnalyticsChart() {
             />
             <defs>
               <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#06b6d4" />
-                <stop offset="100%" stopColor="#22c55e" />
+                <stop offset="0%" stopColor="var(--color-cyan-500)" />
+                <stop offset="100%" stopColor="var(--color-green-500)" />
               </linearGradient>
             </defs>
           </AreaChart>
         </ResponsiveContainer>
       </Card>
 
-      {/* Spending by Category - Takes 1 column */}
-      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300">
-        <h3 className="text-foreground text-lg mb-4">Spending by Category</h3>
-
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={categoryData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={5}
-              dataKey="value"
-            >
-              {categoryData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-
-        {/* Stats */}
-        <div className="mt-6 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total Spend</span>
-            <span className="text-foreground">$14,400</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Top Merchant</span>
-            <span className="text-theme-cyan">Amazon</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Top Country</span>
-            <span className="text-theme-purple">United States</span>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-4 pt-4 border-t border-border space-y-2">
-          {categoryData.map((category, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: category.color }}
-                />
-                <span className="text-muted-foreground">{category.name}</span>
-              </div>
-              <span className="text-foreground">${category.value}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <SpendingByCategoryChart
+        data={categoryData}
+        totalSpend={14400}
+        secondaryLabel="Top Merchant"
+        secondaryValue="Amazon"
+        tertiaryLabel="Top Country"
+        tertiaryValue="United States"
+      />
     </div>
   );
 }

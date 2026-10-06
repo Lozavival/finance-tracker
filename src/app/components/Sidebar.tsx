@@ -4,7 +4,7 @@ import {
   Wallet,
   Settings,
 } from "lucide-react";
-import { useState } from "react";
+import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
@@ -13,9 +13,12 @@ const menuItems = [
   { icon: Settings, label: "Settings", id: "settings" },
 ];
 
-export function Sidebar() {
-  const [activeItem, setActiveItem] = useState("dashboard");
+type SidebarProps = {
+  activeItem: string;
+  onItemSelect: (id: string) => void;
+};
 
+export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
   return (
     <div className="fixed left-0 top-16 bottom-0 w-64 bg-background/80 backdrop-blur-xl border-r border-border flex flex-col">
       {/* Menu Items */}
@@ -26,19 +29,20 @@ export function Sidebar() {
 
           return (
             <div key={item.id}>
-              <button
-                onClick={() => setActiveItem(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg
+              <Button
+                variant="ghost"
+                onClick={() => onItemSelect(item.id)}
+                className={`h-auto w-full justify-start gap-3 px-4 py-3 rounded-lg
                          transition-all duration-300 group relative overflow-hidden
                          ${
                            isActive
                              ? "bg-cyan-500/20 border border-cyan-400/50 shadow-lg shadow-cyan-500/20"
-                             : "bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-lg shadow-cyan-500/10"
+                             : "bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10"
                          }`}
               >
                 {/* Neon border effect on hover */}
                 {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-blue-500 shadow-md shadow-cyan-400/60" />
                 )}
 
                 <Icon
@@ -53,7 +57,7 @@ export function Sidebar() {
                 >
                   {item.label}
                 </span>
-              </button>
+              </Button>
 
               {/* Neon separator after Transactions and Wallets */}
               {(index === 2) && (

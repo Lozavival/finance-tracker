@@ -1,0 +1,100 @@
+import { useEffect, useState } from "react";
+import { FilterChip } from "./FilterChip";
+import { FilterPanel } from "./FilterPanel";
+import { DateField } from "./DateField";
+import { Button } from "../ui/button";
+import { parseTransactionDate, PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from "../../data/transactions";
+
+type PeriodFilterProps = {
+  value: PeriodFilterType;
+  onChange: (value: PeriodFilterType) => void;
+};
+
+export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<PeriodFilterType>(value);
+
+  // Reset draft when opening
+  useEffect(() => {
+    if (open) {
+      setDraft(value);
+    }
+  }, [open, value]);
+
+  const active = value.kind !== "all";
+  let label = "Period";
+  if (value.kind === "preset") {
+    label = `Last ${value.days} days`;
+  } else if (value.kind === "custom") {
+    label = formatPeriodLabel(value.from, value.to);
+  }
+
+  const applyDisabled = draft.kind === "custom" && (!draft.from || !draft.to || draft.from > draft.to);
+
+  return (
+    <FilterPanel
+      open={open}
+      onOpenChange={setOpen}
+      title="Period"
+      trigger={<FilterChip active={active} label={label} />}
+      onApply={() => onChange(draft)}
+      onClear={() => onChange({ kind: "all" })}
+      applyDisabled={applyDisabled}
+    >
+      <div className="flex gap-2 mb-6">
+        {PERIOD_PRESETS.map((days) => (
+          <Button
+            key={days}
+            variant="outline"
+            size="sm"
+            onClick={() => setDraft({ kind: "preset", days })}
+            className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
+              draft.kind === "preset" && draft.days === days
+                ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
+                : "text-foreground"
+            }`}
+          >
+            {days} Days
+          </Button>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-foreground">Custom period</div>
+        <div className="space-y-2">
+          <DateField
+            placeholder="Start date"
+            value={draft.kind === "custom" ? draft.from : undefined}
+            onChange={(date) =>
+              setDraft((prev) => ({
+                kind: "custom",
+                from: date,
+                to: prev.kind === "custom" ? prev.to : "",
+              }))
+            }
+            disabledDays={(d) => {
+              if (draft.kind !== "custom" || !draft.to) return false;
+              return d > parseTransactionDate(draft.to);
+            }}
+          />
+          <DateField
+            placeholder="End date"
+            value={draft.kind === "custom" ? draft.to : undefined}
+            onChange={(date) =>
+              setDraft((prev) => ({
+                kind: "custom",
+                from: prev.kind === "custom" ? prev.from : "",
+                to: date,
+              }))
+            }
+            disabledDays={(d) => {
+              if (draft.kind !== "custom" || !draft.from) return false;
+              return d < parseTransactionDate(draft.from);
+            }}
+          />
+        </div>
+      </div>
+    </FilterPanel>
+  );
+}
+
