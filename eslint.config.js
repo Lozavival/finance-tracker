@@ -21,6 +21,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        React: 'readonly',
       },
       parser: typescriptParser,
       parserOptions: {
@@ -77,6 +78,7 @@ export default [
       'vars-on-top': 'error',
 
       /* Disabled rules */
+      'no-undef': 'off', // Handled by TypeScript compiler
       'camelcase': 'off',
       'consistent-return': 'off',
       'no-continue': 'off',
