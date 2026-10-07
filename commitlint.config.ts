@@ -5,7 +5,7 @@ const gitlintPlugin = {
     'hard-tab': ({ header, body, footer }) => {
       const message = 'cannot contain hard tab character (\\t)';
       switch (true) {
-        case header.includes('\t'):
+        case Boolean(header?.includes('\t')):
           return [false, `header ${message}`];
         case body?.includes('\t'):
           return [false, `body ${message}`];
