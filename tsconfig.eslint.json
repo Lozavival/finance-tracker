@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "emitDecoratorMetadata": false
+  },
+  "include": [
+    "*.config.ts",
+    "*.config.js",
+    "*.config.mjs",
+    "vite.config.ts",
+    "src"
+  ]
+}
