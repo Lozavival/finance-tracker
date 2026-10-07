@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { FilterChip } from "./FilterChip";
-import { FilterPanel } from "./FilterPanel";
-import { PAYMENT_METHODS, PaymentMethod } from "../../data/transactions";
-import { Toggle } from "../ui/toggle";
+import { useEffect, useState } from 'react';
+import { FilterChip } from './FilterChip';
+import { FilterPanel } from './FilterPanel';
+import { PAYMENT_METHODS, PaymentMethod } from '../../data/transactions';
+import { Toggle } from '../ui/toggle';
 
 type PaymentFilterProps = {
   value: PaymentMethod[];
@@ -20,7 +20,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   }, [open, value]);
 
   const active = value.length > 0;
-  let label = "Payment";
+  let label = 'Payment';
   if (value.length === 1) {
     label = value[0];
   } else if (value.length > 1) {
@@ -33,11 +33,11 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
       <Toggle
         key={payment}
         pressed={isSelected}
-        onPressedChange={(pressed) => {
+        onPressedChange={pressed => {
           if (pressed) {
             setDraft([...draft, payment]);
           } else {
-            setDraft(draft.filter((t) => t !== payment));
+            setDraft(draft.filter(t => t !== payment));
           }
         }}
         variant="outline"
@@ -57,10 +57,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
       onApply={() => onChange(draft)}
       onClear={() => onChange([])}
     >
-      <div className="flex flex-wrap gap-2">
-        {PAYMENT_METHODS.map(renderToggle)}
-      </div>
+      <div className="flex flex-wrap gap-2">{PAYMENT_METHODS.map(renderToggle)}</div>
     </FilterPanel>
   );
 }
-

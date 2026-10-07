@@ -1,8 +1,8 @@
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
-import { Label } from "../ui/label";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Label } from '../ui/label';
 
-export type DialogMode = "income" | "expense" | "transfer";
+export type DialogMode = 'income' | 'expense' | 'transfer';
 
 type DirectionToggleProps = {
   value: DialogMode;
@@ -16,7 +16,7 @@ export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
       <ToggleGroup
         type="single"
         value={value}
-        onValueChange={(nextValue) => {
+        onValueChange={nextValue => {
           if (nextValue) onChange(nextValue as DialogMode);
         }}
         aria-label="Transaction direction"
@@ -50,4 +50,3 @@ export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
     </div>
   );
 }
-

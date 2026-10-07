@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, RotateCcw } from "lucide-react";
+import { useMemo, useState } from 'react';
+import { Plus, RotateCcw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,15 +9,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { TransactionDialog, EditingTarget } from "./TransactionDialog";
-import { TransactionsMonthTable } from "./transactions/TransactionsMonthTable";
-import { PeriodFilter } from "./transactions/PeriodFilter";
-import { TypeFilter } from "./transactions/TypeFilter";
-import { DirectionFilter } from "./transactions/DirectionFilter";
-import { PaymentFilter } from "./transactions/PaymentFilter";
+} from './ui/alert-dialog';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { TransactionDialog, EditingTarget } from './TransactionDialog';
+import { TransactionsMonthTable } from './transactions/TransactionsMonthTable';
+import { PeriodFilter } from './transactions/PeriodFilter';
+import { TypeFilter } from './transactions/TypeFilter';
+import { DirectionFilter } from './transactions/DirectionFilter';
+import { PaymentFilter } from './transactions/PaymentFilter';
 import {
   buildTransferLegs,
   createTransactionId,
@@ -31,8 +31,8 @@ import {
   type TransactionType,
   type TransactionDraft,
   type PaymentMethod,
-} from "../data/transactions";
-import { buildInstallments, findInstallmentSeries } from "../data/installments";
+} from '../data/transactions';
+import { buildInstallments, findInstallmentSeries } from '../data/installments';
 
 type TransactionsPageProps = {
   transactions: Transaction[];
@@ -40,24 +40,20 @@ type TransactionsPageProps = {
   onTransactionsChange: (transactions: Transaction[]) => void;
 };
 
-export function TransactionsPage({
-  transactions,
-  defaultMonth,
-  onTransactionsChange,
-}: TransactionsPageProps) {
-  const [period, setPeriod] = useState<PeriodFilterType>({ kind: "up-to-today" });
+export function TransactionsPage({ transactions, defaultMonth, onTransactionsChange }: TransactionsPageProps) {
+  const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
-  const [direction, setDirection] = useState<"all" | TransactionDirection>("all");
+  const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
-  
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period);
-    
-    const filtered = transactions.filter((transaction) => {
+
+    const filtered = transactions.filter(transaction => {
       if (periodRange) {
         if (transaction.date < periodRange.from || transaction.date > periodRange.to) {
           return false;
@@ -66,7 +62,7 @@ export function TransactionsPage({
       if (selectedTypes.length > 0 && !selectedTypes.includes(transaction.type)) {
         return false;
       }
-      if (direction !== "all" && transaction.direction !== direction) {
+      if (direction !== 'all' && transaction.direction !== direction) {
         return false;
       }
       if (selectedPayments.length > 0) {
@@ -76,16 +72,17 @@ export function TransactionsPage({
       }
       return true;
     });
-    
+
     return sortTransactionsDescending(filtered);
   }, [period, selectedTypes, direction, selectedPayments, transactions]);
 
-  const filtersActive = period.kind !== "up-to-today" || selectedTypes.length > 0 || direction !== "all" || selectedPayments.length > 0;
+  const filtersActive =
+    period.kind !== 'up-to-today' || selectedTypes.length > 0 || direction !== 'all' || selectedPayments.length > 0;
 
   function resetFilters() {
-    setPeriod({ kind: "up-to-today" });
+    setPeriod({ kind: 'up-to-today' });
     setSelectedTypes([]);
-    setDirection("all");
+    setDirection('all');
     setSelectedPayments([]);
   }
 
@@ -98,11 +95,11 @@ export function TransactionsPage({
     const legs = findTransferLegs(transactions, transaction);
     const series = findInstallmentSeries(transactions, transaction);
     if (legs) {
-      setEditingTarget({ kind: "transfer", outgoing: legs.outgoing, incoming: legs.incoming });
+      setEditingTarget({ kind: 'transfer', outgoing: legs.outgoing, incoming: legs.incoming });
     } else if (series) {
-      setEditingTarget({ kind: "installments", series });
+      setEditingTarget({ kind: 'installments', series });
     } else {
-      setEditingTarget({ kind: "single", transaction });
+      setEditingTarget({ kind: 'single', transaction });
     }
     setDialogOpen(true);
   }
@@ -115,40 +112,31 @@ export function TransactionsPage({
 
     // Remove existing if editing
     if (editingTarget) {
-      if (editingTarget.kind === "single") {
+      if (editingTarget.kind === 'single') {
         existingIds = [editingTarget.transaction.id];
-        nextTransactions = nextTransactions.filter(
-          (t) => t.id !== editingTarget.transaction.id,
-        );
-      } else if (editingTarget.kind === "transfer") {
+        nextTransactions = nextTransactions.filter(t => t.id !== editingTarget.transaction.id);
+      } else if (editingTarget.kind === 'transfer') {
         existingIds = [editingTarget.outgoing.id, editingTarget.incoming.id];
         transferId = editingTarget.outgoing.transferId!;
-        nextTransactions = nextTransactions.filter(
-          (t) => t.transferId !== transferId,
-        );
-      } else if (editingTarget.kind === "installments") {
+        nextTransactions = nextTransactions.filter(t => t.transferId !== transferId);
+      } else if (editingTarget.kind === 'installments') {
         existingIds = editingTarget.series.map(t => t.id);
         groupId = editingTarget.series[0].installment!.groupId;
-        nextTransactions = nextTransactions.filter(
-          (t) => t.installment?.groupId !== groupId
-        );
+        nextTransactions = nextTransactions.filter(t => t.installment?.groupId !== groupId);
       }
     }
 
-    if (draft.kind === "single") {
+    if (draft.kind === 'single') {
       const id = existingIds[0] ?? createTransactionId();
       nextTransactions.push({ ...draft.transaction, id });
-    } else if (draft.kind === "transfer") {
-      const ids: [string, string] = [
-        existingIds[0] ?? createTransactionId(),
-        existingIds[1] ?? createTransactionId(),
-      ];
+    } else if (draft.kind === 'transfer') {
+      const ids: [string, string] = [existingIds[0] ?? createTransactionId(), existingIds[1] ?? createTransactionId()];
       const legs = buildTransferLegs(draft, transferId, ids);
       nextTransactions.push(legs[0], legs[1]);
-    } else if (draft.kind === "installments") {
+    } else if (draft.kind === 'installments') {
       // Safety net: check if payment method is still credit card.
       // Handled partly by the dialog, but let's ensure it here.
-      if (draft.transaction.paymentMethod !== "Credit card") {
+      if (draft.transaction.paymentMethod !== 'Credit card') {
         const id = existingIds[0] ?? createTransactionId();
         nextTransactions.push({
           ...draft.transaction,
@@ -170,19 +158,13 @@ export function TransactionsPage({
 
   function deleteTransaction() {
     if (!deleteTarget) return;
-    
+
     if (deleteTarget.transferId) {
-      onTransactionsChange(
-        transactions.filter((t) => t.transferId !== deleteTarget.transferId),
-      );
+      onTransactionsChange(transactions.filter(t => t.transferId !== deleteTarget.transferId));
     } else if (deleteTarget.installment) {
-      onTransactionsChange(
-        transactions.filter((t) => t.installment?.groupId !== deleteTarget.installment!.groupId),
-      );
+      onTransactionsChange(transactions.filter(t => t.installment?.groupId !== deleteTarget.installment!.groupId));
     } else {
-      onTransactionsChange(
-        transactions.filter((t) => t.id !== deleteTarget.id),
-      );
+      onTransactionsChange(transactions.filter(t => t.id !== deleteTarget.id));
     }
     setDeleteTarget(null);
   }
@@ -194,9 +176,7 @@ export function TransactionsPage({
           <div role="heading" aria-level={1} className="text-foreground text-3xl mb-2">
             Transaction History
           </div>
-          <div className="text-muted-foreground">
-            Review, filter, and manage your financial activity.
-          </div>
+          <div className="text-muted-foreground">Review, filter, and manage your financial activity.</div>
         </div>
         <Button
           onClick={openAddDialog}
@@ -215,7 +195,6 @@ export function TransactionsPage({
             <DirectionFilter value={direction} onChange={setDirection} />
             <PaymentFilter value={selectedPayments} onChange={setSelectedPayments} />
 
-            
             {filtersActive && (
               <Button
                 variant="ghost"
@@ -229,24 +208,17 @@ export function TransactionsPage({
             )}
 
             <div className="text-muted-foreground text-sm mt-1">
-              {visibleTransactions.length}{" "}
-              {visibleTransactions.length === 1 ? "transaction" : "transactions"}
+              {visibleTransactions.length} {visibleTransactions.length === 1 ? 'transaction' : 'transactions'}
             </div>
           </div>
         </div>
-        
-        <TransactionsMonthTable 
-          transactions={visibleTransactions} 
-          onEdit={openEditDialog}
-          onDelete={setDeleteTarget}
-        />
+
+        <TransactionsMonthTable transactions={visibleTransactions} onEdit={openEditDialog} onDelete={setDeleteTarget} />
 
         {visibleTransactions.length === 0 && (
           <div className="min-h-64 border-t border-border/50 flex flex-col items-center justify-center p-8 text-center">
             <div className="text-foreground mb-1">No transactions found</div>
-            <div className="text-muted-foreground text-sm mb-5">
-              Try a different period or transaction type.
-            </div>
+            <div className="text-muted-foreground text-sm mb-5">Try a different period or transaction type.</div>
             {filtersActive && (
               <Button
                 variant="outline"
@@ -265,7 +237,7 @@ export function TransactionsPage({
         open={dialogOpen}
         editing={editingTarget}
         defaultDate={defaultMonth.to}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setDialogOpen(open);
           if (!open) setEditingTarget(null);
         }}
@@ -274,7 +246,7 @@ export function TransactionsPage({
 
       <AlertDialog
         open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) setDeleteTarget(null);
         }}
       >
@@ -283,12 +255,12 @@ export function TransactionsPage({
             <AlertDialogTitle>Exclude transaction?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               {deleteTarget
-                ? deleteTarget.transferId 
+                ? deleteTarget.transferId
                   ? `Both sides of this transfer will be removed.`
                   : deleteTarget.installment
-                  ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
-                  : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
-                : "This transaction will be removed for this session."}
+                    ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
+                    : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
+                : 'This transaction will be removed for this session.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

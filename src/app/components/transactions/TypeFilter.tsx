@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { FilterChip } from "./FilterChip";
-import { FilterPanel } from "./FilterPanel";
-import { EXPENSE_TYPES, INCOME_TYPES, TransactionType } from "../../data/transactions";
-import { Toggle } from "../ui/toggle";
+import { useEffect, useState } from 'react';
+import { FilterChip } from './FilterChip';
+import { FilterPanel } from './FilterPanel';
+import { EXPENSE_TYPES, INCOME_TYPES, TransactionType } from '../../data/transactions';
+import { Toggle } from '../ui/toggle';
 
 type TypeFilterProps = {
   value: TransactionType[];
@@ -20,7 +20,7 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
   }, [open, value]);
 
   const active = value.length > 0;
-  let label = "Type";
+  let label = 'Type';
   if (value.length === 1) {
     label = value[0];
   } else if (value.length > 1) {
@@ -33,11 +33,11 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
       <Toggle
         key={type}
         pressed={isSelected}
-        onPressedChange={(pressed) => {
+        onPressedChange={pressed => {
           if (pressed) {
             setDraft([...draft, type]);
           } else {
-            setDraft(draft.filter((t) => t !== type));
+            setDraft(draft.filter(t => t !== type));
           }
         }}
         variant="outline"
@@ -59,24 +59,15 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
     >
       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
         <div className="space-y-2">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Income
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {INCOME_TYPES.map(renderToggle)}
-          </div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Income</div>
+          <div className="flex flex-wrap gap-2">{INCOME_TYPES.map(renderToggle)}</div>
         </div>
-        
+
         <div className="space-y-2">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Expense
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {EXPENSE_TYPES.map(renderToggle)}
-          </div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Expense</div>
+          <div className="flex flex-wrap gap-2">{EXPENSE_TYPES.map(renderToggle)}</div>
         </div>
       </div>
     </FilterPanel>
   );
 }
-

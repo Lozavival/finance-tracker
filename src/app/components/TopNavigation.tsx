@@ -1,11 +1,11 @@
-import { Search, Bell, Settings, Sun, Moon } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 
 export function TopNavigation() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [hasNotification, setHasNotification] = useState(true);
+  const [hasNotification, _] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -46,10 +46,10 @@ export function TopNavigation() {
 
           {/* Theme Toggle */}
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="p-2 rounded-lg bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300"
           >
-            {mounted && theme === "light" ? (
+            {mounted && theme === 'light' ? (
               <Moon className="w-5 h-5 text-muted-foreground" />
             ) : (
               <Sun className="w-5 h-5 text-muted-foreground" />

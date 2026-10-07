@@ -1,51 +1,58 @@
-import { Card } from "./ui/card";
-import { Button } from "./ui/button";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useState } from "react";
+import { Card } from './ui/card';
+import { Button } from './ui/button';
 import {
-  CATEGORY_STYLES,
-  formatCurrency,
-  type CategoryTotal,
-} from "../data/transactions";
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { useState } from 'react';
+import { CATEGORY_STYLES, formatCurrency, type CategoryTotal } from '../data/transactions';
 
 const revenueData = {
-  "7D": [
-    { date: "Mon", value: 12400 },
-    { date: "Tue", value: 13200 },
-    { date: "Wed", value: 11800 },
-    { date: "Thu", value: 14500 },
-    { date: "Fri", value: 13900 },
-    { date: "Sat", value: 15200 },
-    { date: "Sun", value: 14800 },
+  '7D': [
+    { date: 'Mon', value: 12400 },
+    { date: 'Tue', value: 13200 },
+    { date: 'Wed', value: 11800 },
+    { date: 'Thu', value: 14500 },
+    { date: 'Fri', value: 13900 },
+    { date: 'Sat', value: 15200 },
+    { date: 'Sun', value: 14800 },
   ],
-  "1M": [
-    { date: "Week 1", value: 45000 },
-    { date: "Week 2", value: 52000 },
-    { date: "Week 3", value: 48000 },
-    { date: "Week 4", value: 58000 },
+  '1M': [
+    { date: 'Week 1', value: 45000 },
+    { date: 'Week 2', value: 52000 },
+    { date: 'Week 3', value: 48000 },
+    { date: 'Week 4', value: 58000 },
   ],
-  "1Y": [
-    { date: "Jan", value: 45000 },
-    { date: "Feb", value: 52000 },
-    { date: "Mar", value: 48000 },
-    { date: "Apr", value: 61000 },
-    { date: "May", value: 55000 },
-    { date: "Jun", value: 67000 },
-    { date: "Jul", value: 72000 },
-    { date: "Aug", value: 68000 },
-    { date: "Sep", value: 75000 },
-    { date: "Oct", value: 82000 },
-    { date: "Nov", value: 78000 },
-    { date: "Dec", value: 85000 },
+  '1Y': [
+    { date: 'Jan', value: 45000 },
+    { date: 'Feb', value: 52000 },
+    { date: 'Mar', value: 48000 },
+    { date: 'Apr', value: 61000 },
+    { date: 'May', value: 55000 },
+    { date: 'Jun', value: 67000 },
+    { date: 'Jul', value: 72000 },
+    { date: 'Aug', value: 68000 },
+    { date: 'Sep', value: 75000 },
+    { date: 'Oct', value: 82000 },
+    { date: 'Nov', value: 78000 },
+    { date: 'Dec', value: 85000 },
   ],
 };
 
-const categoryData = [
-  { name: "Shopping", value: 4500, ...CATEGORY_STYLES.Shopping },
-  { name: "Food & Dining", value: 3200, ...CATEGORY_STYLES["Food & Dining"] },
-  { name: "Transportation", value: 2100, ...CATEGORY_STYLES.Transportation },
-  { name: "Entertainment", value: 1800, ...CATEGORY_STYLES.Entertainment },
-  { name: "Bills", value: 2800, ...CATEGORY_STYLES.Bills },
+const categoryData: CategoryTotal[] = [
+  { name: 'Shopping', value: 4500, ...CATEGORY_STYLES.Shopping },
+  { name: 'Food & Dining', value: 3200, ...CATEGORY_STYLES['Food & Dining'] },
+  { name: 'Transportation', value: 2100, ...CATEGORY_STYLES.Transportation },
+  { name: 'Entertainment', value: 1800, ...CATEGORY_STYLES.Entertainment },
+  { name: 'Bills', value: 2800, ...CATEGORY_STYLES.Bills },
 ];
 
 type SpendingByCategoryChartProps = {
@@ -65,26 +72,20 @@ export function SpendingByCategoryChart({
   secondaryValue,
   tertiaryLabel,
   tertiaryValue,
-  className = "",
+  className = '',
 }: SpendingByCategoryChartProps) {
   return (
-    <Card className={`p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 ${className}`}>
+    <Card
+      className={`p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 ${className}`}
+    >
       <div className="text-foreground text-lg">Spending by Category</div>
 
       {data.length > 0 ? (
         <>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {data.map((entry) => (
+              <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                {data.map(entry => (
                   <Cell key={entry.name} fill={entry.color} />
                 ))}
               </Pie>
@@ -111,7 +112,7 @@ export function SpendingByCategoryChart({
           </div>
 
           <div className="mt-4 pt-4 border-t border-border space-y-2">
-            {data.map((category) => (
+            {data.map(category => (
               <div key={category.name} className="flex items-center justify-between gap-4 text-sm">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={`size-3 shrink-0 rounded-full ${category.dotClassName}`} />
@@ -135,7 +136,7 @@ export function SpendingByCategoryChart({
 }
 
 export function AnalyticsChart() {
-  const [timePeriod, setTimePeriod] = useState<"7D" | "1M" | "1Y">("1M");
+  const [timePeriod, setTimePeriod] = useState<'7D' | '1M' | '1Y'>('1M');
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -158,7 +159,7 @@ export function AnalyticsChart() {
             Revenue Growth Over Time
           </div>
           <div className="flex gap-2">
-            {(["7D", "1M", "1Y"] as const).map((period) => (
+            {(['7D', '1M', '1Y'] as const).map(period => (
               <Button
                 key={period}
                 type="button"
@@ -168,8 +169,8 @@ export function AnalyticsChart() {
                 onClick={() => setTimePeriod(period)}
                 className={`rounded-lg transition-all duration-300 ${
                   timePeriod === period
-                    ? "bg-cyan-500/30 border-cyan-400/50 text-theme-cyan shadow-md shadow-cyan-500/20 hover:bg-cyan-500/30 hover:text-theme-cyan"
-                    : "bg-foreground/5 border border-border text-muted-foreground hover:border-cyan-400/30"
+                    ? 'bg-cyan-500/30 border-cyan-400/50 text-theme-cyan shadow-md shadow-cyan-500/20 hover:bg-cyan-500/30 hover:text-theme-cyan'
+                    : 'bg-foreground/5 border border-border text-muted-foreground hover:border-cyan-400/30'
                 }`}
               >
                 {period}

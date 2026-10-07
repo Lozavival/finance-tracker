@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { FilterChip } from "./FilterChip";
-import { FilterPanel } from "./FilterPanel";
-import { TransactionDirection } from "../../data/transactions";
-import { Toggle } from "../ui/toggle";
+import { useEffect, useState } from 'react';
+import { FilterChip } from './FilterChip';
+import { FilterPanel } from './FilterPanel';
+import { TransactionDirection } from '../../data/transactions';
+import { Toggle } from '../ui/toggle';
 
 type DirectionFilterProps = {
-  value: "all" | TransactionDirection;
-  onChange: (value: "all" | TransactionDirection) => void;
+  value: 'all' | TransactionDirection;
+  onChange: (value: 'all' | TransactionDirection) => void;
 };
 
 export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<"all" | TransactionDirection>(value);
+  const [draft, setDraft] = useState<'all' | TransactionDirection>(value);
 
   useEffect(() => {
     if (open) {
@@ -19,10 +19,10 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
     }
   }, [open, value]);
 
-  const active = value !== "all";
-  let label = "Direction";
-  if (value === "income") label = "Income";
-  if (value === "expense") label = "Expense";
+  const active = value !== 'all';
+  let label = 'Direction';
+  if (value === 'income') label = 'Income';
+  if (value === 'expense') label = 'Expense';
 
   return (
     <FilterPanel
@@ -31,20 +31,20 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
       title="Direction"
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
-      onClear={() => onChange("all")}
+      onClear={() => onChange('all')}
     >
       <div className="flex gap-2">
         <Toggle
-          pressed={draft === "income"}
-          onPressedChange={(pressed) => setDraft(pressed ? "income" : "all")}
+          pressed={draft === 'income'}
+          onPressedChange={pressed => setDraft(pressed ? 'income' : 'all')}
           variant="outline"
           className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
         >
           Income
         </Toggle>
         <Toggle
-          pressed={draft === "expense"}
-          onPressedChange={(pressed) => setDraft(pressed ? "expense" : "all")}
+          pressed={draft === 'expense'}
+          onPressedChange={pressed => setDraft(pressed ? 'expense' : 'all')}
           variant="outline"
           className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
         >
@@ -54,4 +54,3 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
     </FilterPanel>
   );
 }
-

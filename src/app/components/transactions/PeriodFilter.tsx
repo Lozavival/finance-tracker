@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
-import { FilterChip } from "./FilterChip";
-import { FilterPanel } from "./FilterPanel";
-import { DateField } from "./DateField";
-import { Button } from "../ui/button";
-import { parseTransactionDate, PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from "../../data/transactions";
+import { useEffect, useState } from 'react';
+import { FilterChip } from './FilterChip';
+import { FilterPanel } from './FilterPanel';
+import { DateField } from './DateField';
+import { Button } from '../ui/button';
+import {
+  parseTransactionDate,
+  PERIOD_PRESETS,
+  PeriodFilter as PeriodFilterType,
+  formatPeriodLabel,
+} from '../../data/transactions';
 
 type PeriodFilterProps = {
   value: PeriodFilterType;
@@ -21,17 +26,17 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
     }
   }, [open, value]);
 
-  const active = value.kind !== "up-to-today";
-  let label = "Up to today";
-  if (value.kind === "preset") {
+  const active = value.kind !== 'up-to-today';
+  let label = 'Up to today';
+  if (value.kind === 'preset') {
     label = `Last ${value.days} days`;
-  } else if (value.kind === "custom") {
+  } else if (value.kind === 'custom') {
     label = formatPeriodLabel(value.from, value.to);
-  } else if (value.kind === "all") {
-    label = "Including future";
+  } else if (value.kind === 'all') {
+    label = 'Including future';
   }
 
-  const applyDisabled = draft.kind === "custom" && (!draft.from || !draft.to || draft.from > draft.to);
+  const applyDisabled = draft.kind === 'custom' && (!draft.from || !draft.to || draft.from > draft.to);
 
   return (
     <FilterPanel
@@ -40,18 +45,18 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
       title="Period"
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
-      onClear={() => onChange({ kind: "up-to-today" })}
+      onClear={() => onChange({ kind: 'up-to-today' })}
       applyDisabled={applyDisabled}
     >
       <div className="flex gap-2 mb-4">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setDraft({ kind: "up-to-today" })}
+          onClick={() => setDraft({ kind: 'up-to-today' })}
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
-            draft.kind === "up-to-today"
-              ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
-              : "text-foreground"
+            draft.kind === 'up-to-today'
+              ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+              : 'text-foreground'
           }`}
         >
           Up to today
@@ -59,11 +64,11 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setDraft({ kind: "all" })}
+          onClick={() => setDraft({ kind: 'all' })}
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
-            draft.kind === "all"
-              ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
-              : "text-foreground"
+            draft.kind === 'all'
+              ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+              : 'text-foreground'
           }`}
         >
           Include future
@@ -71,16 +76,16 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
       </div>
 
       <div className="flex gap-2 mb-6">
-        {PERIOD_PRESETS.map((days) => (
+        {PERIOD_PRESETS.map(days => (
           <Button
             key={days}
             variant="outline"
             size="sm"
-            onClick={() => setDraft({ kind: "preset", days })}
+            onClick={() => setDraft({ kind: 'preset', days })}
             className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
-              draft.kind === "preset" && draft.days === days
-                ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
-                : "text-foreground"
+              draft.kind === 'preset' && draft.days === days
+                ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+                : 'text-foreground'
             }`}
           >
             {days} Days
@@ -93,31 +98,31 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
         <div className="space-y-2">
           <DateField
             placeholder="Start date"
-            value={draft.kind === "custom" ? draft.from : undefined}
-            onChange={(date) =>
-              setDraft((prev) => ({
-                kind: "custom",
+            value={draft.kind === 'custom' ? draft.from : undefined}
+            onChange={date =>
+              setDraft(prev => ({
+                kind: 'custom',
                 from: date,
-                to: prev.kind === "custom" ? prev.to : "",
+                to: prev.kind === 'custom' ? prev.to : '',
               }))
             }
-            disabledDays={(d) => {
-              if (draft.kind !== "custom" || !draft.to) return false;
+            disabledDays={d => {
+              if (draft.kind !== 'custom' || !draft.to) return false;
               return d > parseTransactionDate(draft.to);
             }}
           />
           <DateField
             placeholder="End date"
-            value={draft.kind === "custom" ? draft.to : undefined}
-            onChange={(date) =>
-              setDraft((prev) => ({
-                kind: "custom",
-                from: prev.kind === "custom" ? prev.from : "",
+            value={draft.kind === 'custom' ? draft.to : undefined}
+            onChange={date =>
+              setDraft(prev => ({
+                kind: 'custom',
+                from: prev.kind === 'custom' ? prev.from : '',
                 to: date,
               }))
             }
-            disabledDays={(d) => {
-              if (draft.kind !== "custom" || !draft.from) return false;
+            disabledDays={d => {
+              if (draft.kind !== 'custom' || !draft.from) return false;
               return d < parseTransactionDate(draft.from);
             }}
           />
@@ -126,4 +131,3 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
     </FilterPanel>
   );
 }
-

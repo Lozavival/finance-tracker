@@ -1,16 +1,11 @@
-import {
-  LayoutDashboard,
-  ArrowLeftRight,
-  Wallet,
-  Settings,
-} from "lucide-react";
-import { Button } from "./ui/button";
+import { LayoutDashboard, ArrowLeftRight, Wallet, Settings } from 'lucide-react';
+import { Button } from './ui/button';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
-  { icon: ArrowLeftRight, label: "Transactions", id: "transactions" },
-  { icon: Wallet, label: "Accounts", id: "accounts" },
-  { icon: Settings, label: "Settings", id: "settings" },
+  { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
+  { icon: ArrowLeftRight, label: 'Transactions', id: 'transactions' },
+  { icon: Wallet, label: 'Accounts', id: 'accounts' },
+  { icon: Settings, label: 'Settings', id: 'settings' },
 ];
 
 type SidebarProps = {
@@ -36,8 +31,8 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
                          transition-all duration-300 group relative overflow-hidden
                          ${
                            isActive
-                             ? "bg-cyan-500/20 border border-cyan-400/50 shadow-lg shadow-cyan-500/20"
-                             : "bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10"
+                             ? 'bg-cyan-500/20 border border-cyan-400/50 shadow-lg shadow-cyan-500/20'
+                             : 'bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10'
                          }`}
               >
                 {/* Neon border effect on hover */}
@@ -47,12 +42,12 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
 
                 <Icon
                   className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-theme-cyan" : "text-muted-foreground group-hover:text-theme-cyan"
+                    isActive ? 'text-theme-cyan' : 'text-muted-foreground group-hover:text-theme-cyan'
                   }`}
                 />
                 <span
                   className={`transition-colors ${
-                    isActive ? "text-cyan-700 dark:text-cyan-300" : "text-muted-foreground group-hover:text-foreground"
+                    isActive ? 'text-cyan-700 dark:text-cyan-300' : 'text-muted-foreground group-hover:text-foreground'
                   }`}
                 >
                   {item.label}
@@ -60,7 +55,7 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
               </Button>
 
               {/* Neon separator after Transactions and Wallets */}
-              {(index === 2) && (
+              {index === 2 && (
                 <div className="my-4 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
               )}
             </div>

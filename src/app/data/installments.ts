@@ -1,4 +1,4 @@
-import type { Transaction, TransactionDraft, InstallmentInfo } from "./transactions";
+import type { Transaction, TransactionDraft, InstallmentInfo } from './transactions';
 
 export const MAX_INSTALLMENTS = 48;
 
@@ -12,7 +12,7 @@ export function splitInstallmentValues(total: number, count: number): number[] {
 
 /** Adds months keeping the day, clamped to the target month's last day. */
 export function addMonthsClamped(dateString: string, monthsToAdd: number): string {
-  const [yearStr, monthStr, dayStr] = dateString.split("-");
+  const [yearStr, monthStr, dayStr] = dateString.split('-');
   let year = parseInt(yearStr, 10);
   let month = parseInt(monthStr, 10) - 1; // 0-indexed
   const day = parseInt(dayStr, 10);
@@ -20,20 +20,20 @@ export function addMonthsClamped(dateString: string, monthsToAdd: number): strin
   month += monthsToAdd;
   year += Math.floor(month / 12);
   month = month % 12;
-  
+
   // Get last day of the target month
   const lastDayOfTargetMonth = new Date(year, month + 1, 0).getDate();
   const targetDay = Math.min(day, lastDayOfTargetMonth);
 
   const y = String(year);
-  const m = String(month + 1).padStart(2, "0");
-  const d = String(targetDay).padStart(2, "0");
+  const m = String(month + 1).padStart(2, '0');
+  const d = String(targetDay).padStart(2, '0');
 
   return `${y}-${m}-${d}`;
 }
 
 export function buildInstallments(
-  draft: Extract<TransactionDraft, { kind: "installments" }>,
+  draft: Extract<TransactionDraft, { kind: 'installments' }>,
   groupId: string,
   ids: string[],
 ): Transaction[] {
@@ -47,14 +47,9 @@ export function buildInstallments(
   }));
 }
 
-export function findInstallmentSeries(
-  transactions: Transaction[],
-  tx: Transaction,
-): Transaction[] | null {
+export function findInstallmentSeries(transactions: Transaction[], tx: Transaction): Transaction[] | null {
   if (!tx.installment) return null;
-  const series = transactions.filter(
-    (t) => t.installment?.groupId === tx.installment!.groupId
-  );
+  const series = transactions.filter(t => t.installment?.groupId === tx.installment!.groupId);
   // Sort by installment number
   return series.sort((a, b) => a.installment!.number - b.installment!.number);
 }
@@ -62,4 +57,3 @@ export function findInstallmentSeries(
 export function formatInstallmentLabel(info: InstallmentInfo) {
   return `${info.number}/${info.total}`;
 }
-

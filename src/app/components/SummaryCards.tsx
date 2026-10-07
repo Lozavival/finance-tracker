@@ -1,37 +1,37 @@
-import { TrendingUp, DollarSign, Activity, AlertTriangle } from "lucide-react";
-import { Card } from "./ui/card";
+import { TrendingUp, DollarSign, Activity, AlertTriangle } from 'lucide-react';
+import { Card } from './ui/card';
 
 const summaryData = [
   {
-    title: "Total Balance",
-    value: "$124,592.00",
-    change: "+12.5%",
+    title: 'Total Balance',
+    value: '$124,592.00',
+    change: '+12.5%',
     icon: DollarSign,
-    color: "cyan",
+    color: 'cyan',
     chartData: [40, 45, 42, 48, 52, 55, 58],
   },
   {
-    title: "Monthly Revenue",
-    value: "$45,231.89",
-    change: "+20.1%",
+    title: 'Monthly Revenue',
+    value: '$45,231.89',
+    change: '+20.1%',
     icon: TrendingUp,
-    color: "green",
+    color: 'green',
     chartData: [30, 35, 32, 40, 45, 43, 50],
   },
   {
-    title: "New Transactions",
-    value: "1,234",
-    change: "+8.3%",
+    title: 'New Transactions',
+    value: '1,234',
+    change: '+8.3%',
     icon: Activity,
-    color: "blue",
+    color: 'blue',
     chartData: [25, 28, 30, 27, 32, 35, 38],
   },
   {
-    title: "AI Alerts",
-    value: "3",
-    change: "2 High Risk",
+    title: 'AI Alerts',
+    value: '3',
+    change: '2 High Risk',
     icon: AlertTriangle,
-    color: "orange",
+    color: 'orange',
     chartData: [5, 4, 6, 3, 2, 4, 3],
   },
 ];
@@ -43,32 +43,32 @@ export function SummaryCards() {
         const Icon = item.icon;
         const colorClasses = {
           cyan: {
-            border: "border-cyan-500/30",
-            shadow: "hover:shadow-[0_0_25px_rgba(34,211,238,0.3)]",
-            iconBg: "bg-cyan-500/20",
-            iconColor: "text-theme-cyan",
-            textColor: "text-theme-cyan",
+            border: 'border-cyan-500/30',
+            shadow: 'hover:shadow-[0_0_25px_rgba(34,211,238,0.3)]',
+            iconBg: 'bg-cyan-500/20',
+            iconColor: 'text-theme-cyan',
+            textColor: 'text-theme-cyan',
           },
           green: {
-            border: "border-green-500/30",
-            shadow: "hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]",
-            iconBg: "bg-green-500/20",
-            iconColor: "text-theme-green",
-            textColor: "text-theme-green",
+            border: 'border-green-500/30',
+            shadow: 'hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]',
+            iconBg: 'bg-green-500/20',
+            iconColor: 'text-theme-green',
+            textColor: 'text-theme-green',
           },
           blue: {
-            border: "border-blue-500/30",
-            shadow: "hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]",
-            iconBg: "bg-blue-500/20",
-            iconColor: "text-theme-blue",
-            textColor: "text-theme-blue",
+            border: 'border-blue-500/30',
+            shadow: 'hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]',
+            iconBg: 'bg-blue-500/20',
+            iconColor: 'text-theme-blue',
+            textColor: 'text-theme-blue',
           },
           orange: {
-            border: "border-orange-500/30",
-            shadow: "hover:shadow-[0_0_25px_rgba(249,115,22,0.3)]",
-            iconBg: "bg-orange-500/20",
-            iconColor: "text-theme-orange",
-            textColor: "text-theme-orange",
+            border: 'border-orange-500/30',
+            shadow: 'hover:shadow-[0_0_25px_rgba(249,115,22,0.3)]',
+            iconBg: 'bg-orange-500/20',
+            iconColor: 'text-theme-orange',
+            textColor: 'text-theme-orange',
           },
         };
 

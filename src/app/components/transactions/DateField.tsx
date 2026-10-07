@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
-import { Button } from "../ui/button";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "../ui/utils";
-import { formatTransactionDate, parseTransactionDate, toTransactionDate } from "../../data/transactions";
+import { useState } from 'react';
+import { CalendarIcon } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '../ui/utils';
+import { formatTransactionDate, parseTransactionDate, toTransactionDate } from '../../data/transactions';
 
 type DateFieldProps = {
   placeholder: string;
@@ -22,8 +22,8 @@ export function DateField({ placeholder, value, onChange, disabledDays }: DateFi
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-between border-border bg-foreground/5 text-left font-normal text-foreground hover:bg-foreground/10",
-            !value && "text-muted-foreground"
+            'w-full justify-between border-border bg-foreground/5 text-left font-normal text-foreground hover:bg-foreground/10',
+            !value && 'text-muted-foreground',
           )}
         >
           {value ? formatTransactionDate(value) : placeholder}
@@ -34,7 +34,7 @@ export function DateField({ placeholder, value, onChange, disabledDays }: DateFi
         <Calendar
           mode="single"
           selected={dateValue}
-          onSelect={(d) => {
+          onSelect={d => {
             if (d) {
               onChange(toTransactionDate(d));
               setOpen(false);
@@ -47,4 +47,3 @@ export function DateField({ placeholder, value, onChange, disabledDays }: DateFi
     </Popover>
   );
 }
-

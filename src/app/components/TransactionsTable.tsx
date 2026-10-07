@@ -1,32 +1,20 @@
-import { Card } from "./ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table"
-import {
-  formatSignedValue,
-  formatTransactionDate,
-  parseTransactionDate,
-  type Transaction,
-} from "../data/transactions"
-import { formatInstallmentLabel } from "../data/installments"
+import { Card } from './ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { formatSignedValue, formatTransactionDate, parseTransactionDate, type Transaction } from '../data/transactions';
+import { formatInstallmentLabel } from '../data/installments';
 
 type TransactionsTableProps = {
-  transactions: Transaction[]
-}
+  transactions: Transaction[];
+};
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const recentTransactions = [...transactions]
-    .filter((t) => parseTransactionDate(t.date) <= today)
+    .filter(t => parseTransactionDate(t.date) <= today)
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-    .slice(0, 8)
+    .slice(0, 8);
 
   return (
     <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300">
@@ -46,14 +34,12 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentTransactions.map((transaction) => (
+            {recentTransactions.map(transaction => (
               <TableRow
                 key={transaction.id}
                 className="border-b border-border/50 hover:bg-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
               >
-                <TableCell className="text-foreground">
-                  {formatTransactionDate(transaction.date)}
-                </TableCell>
+                <TableCell className="text-foreground">{formatTransactionDate(transaction.date)}</TableCell>
                 <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
                   <div className="inline-flex items-center gap-2">
                     {transaction.description}
@@ -64,18 +50,10 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {transaction.type}
-                </TableCell>
-                 <TableCell className="text-muted-foreground">
-                  {transaction.account}
-                </TableCell>
+                <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
+                <TableCell className="text-muted-foreground">{transaction.account}</TableCell>
                 <TableCell
-                  className={`text-right ${
-                    transaction.direction === "income"
-                      ? "text-theme-green"
-                      : "text-theme-red"
-                  }`}
+                  className={`text-right ${transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'}`}
                 >
                   {formatSignedValue(transaction)}
                 </TableCell>
@@ -85,5 +63,5 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
         </Table>
       </div>
     </Card>
-  )
+  );
 }

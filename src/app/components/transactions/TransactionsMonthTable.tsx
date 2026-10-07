@@ -1,28 +1,16 @@
-import React from "react";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import React from 'react';
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import {
   formatRowDate,
   formatSignedValue,
   groupTransactionsByMonth,
   Transaction,
   parseTransactionDate,
-} from "../../data/transactions";
-import { formatInstallmentLabel } from "../../data/installments";
+} from '../../data/transactions';
+import { formatInstallmentLabel } from '../../data/installments';
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];
@@ -30,17 +18,13 @@ type TransactionsMonthTableProps = {
   onDelete: (transaction: Transaction) => void;
 };
 
-export function TransactionsMonthTable({
-  transactions,
-  onEdit,
-  onDelete,
-}: TransactionsMonthTableProps) {
+export function TransactionsMonthTable({ transactions, onEdit, onDelete }: TransactionsMonthTableProps) {
   const groups = groupTransactionsByMonth(transactions);
 
   if (transactions.length === 0) {
     return null;
   }
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -61,90 +45,78 @@ export function TransactionsMonthTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {groups.map((group) => (
+          {groups.map(group => (
             <React.Fragment key={group.key}>
               <TableRow className="bg-foreground/5 hover:bg-foreground/5">
-                <TableCell
-                  colSpan={7}
-                  className="text-xs uppercase tracking-wider text-muted-foreground font-medium"
-                >
+                <TableCell colSpan={7} className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
                   {group.label}
                 </TableCell>
               </TableRow>
-              {group.transactions.map((transaction) => {
+              {group.transactions.map(transaction => {
                 const isFuture = parseTransactionDate(transaction.date) > today;
                 return (
-                <TableRow
-                  key={transaction.id}
-                  className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${isFuture ? "opacity-60" : ""}`}
-                  title={isFuture ? "Scheduled" : undefined}
-                >
-                  <TableCell className="text-foreground whitespace-nowrap">
-                    {formatRowDate(transaction.date)}
-                  </TableCell>
-                  <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
-                    <div className="inline-flex items-center gap-2">
-                      {transaction.description}
-                      {transaction.installment && (
-                        <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
-                          {formatInstallmentLabel(transaction.installment)}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {transaction.type}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {transaction.account}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {transaction.paymentMethod ?? "—"}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right whitespace-nowrap ${
-                      transaction.direction === "income"
-                        ? "text-theme-green"
-                        : "text-theme-red"
-                    }`}
+                  <TableRow
+                    key={transaction.id}
+                    className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${isFuture ? 'opacity-60' : ''}`}
+                    title={isFuture ? 'Scheduled' : undefined}
                   >
-                    {formatSignedValue(transaction)}
-                  </TableCell>
-                  <TableCell className="w-12 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Actions for ${transaction.description}`}
-                          className="text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
-                        >
-                          <MoreVertical />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="bg-popover border-border text-foreground"
-                      >
-                        <DropdownMenuItem
-                          onSelect={() => onEdit(transaction)}
-                          className="focus:bg-cyan-500/20 focus:text-theme-cyan cursor-pointer"
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => onDelete(transaction)}
-                          className="cursor-pointer"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Exclude
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                    <TableCell className="text-foreground whitespace-nowrap">
+                      {formatRowDate(transaction.date)}
+                    </TableCell>
+                    <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
+                      <div className="inline-flex items-center gap-2">
+                        {transaction.description}
+                        {transaction.installment && (
+                          <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
+                            {formatInstallmentLabel(transaction.installment)}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.type}</TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.account}</TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {transaction.paymentMethod ?? '—'}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right whitespace-nowrap ${
+                        transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
+                      }`}
+                    >
+                      {formatSignedValue(transaction)}
+                    </TableCell>
+                    <TableCell className="w-12 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Actions for ${transaction.description}`}
+                            className="text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                          >
+                            <MoreVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover border-border text-foreground">
+                          <DropdownMenuItem
+                            onSelect={() => onEdit(transaction)}
+                            className="focus:bg-cyan-500/20 focus:text-theme-cyan cursor-pointer"
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onDelete(transaction)}
+                            className="cursor-pointer"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Exclude
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
             </React.Fragment>
@@ -154,4 +126,3 @@ export function TransactionsMonthTable({
     </div>
   );
 }
-
