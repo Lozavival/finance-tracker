@@ -12,6 +12,7 @@ import {
 } from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { TransactionDialog } from "./TransactionDialog";
 import { TransactionsMonthTable } from "./transactions/TransactionsMonthTable";
 import { PeriodFilter } from "./transactions/PeriodFilter";
 import { TypeFilter } from "./transactions/TypeFilter";
@@ -42,6 +43,8 @@ export function TransactionsPage({
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [direction, setDirection] = useState<"all" | TransactionDirection>("all");
   
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
   const visibleTransactions = useMemo(() => {
@@ -73,6 +76,35 @@ export function TransactionsPage({
     setDirection("all");
   }
 
+  function openAddDialog() {
+    setEditingTransaction(null);
+    setDialogOpen(true);
+  }
+
+  function openEditDialog(transaction: Transaction) {
+    setEditingTransaction(transaction);
+    setDialogOpen(true);
+  }
+
+  function saveTransaction(input: Omit<Transaction, "id">) {
+    if (editingTransaction) {
+      onTransactionsChange(
+        transactions.map((transaction) =>
+          transaction.id === editingTransaction.id
+            ? { ...input, id: editingTransaction.id }
+            : transaction,
+        ),
+      );
+    } else {
+      onTransactionsChange([
+        ...transactions,
+        { ...input, id: createTransactionId() },
+      ]);
+    }
+    setDialogOpen(false);
+    setEditingTransaction(null);
+  }
+
   function deleteTransaction() {
     if (!deleteTarget) return;
     onTransactionsChange(
@@ -95,7 +127,7 @@ export function TransactionsPage({
           </div>
         </div>
         <Button
-          onClick={() => {}}
+          onClick={openAddDialog}
           className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -131,7 +163,7 @@ export function TransactionsPage({
         
         <TransactionsMonthTable 
           transactions={visibleTransactions} 
-          onEdit={() => {}}
+          onEdit={openEditDialog}
           onDelete={setDeleteTarget}
         />
 
@@ -154,6 +186,17 @@ export function TransactionsPage({
           </div>
         )}
       </Card>
+
+      <TransactionDialog
+        open={dialogOpen}
+        transaction={editingTransaction}
+        defaultDate={defaultMonth.to}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditingTransaction(null);
+        }}
+        onSave={saveTransaction}
+      />
 
       <AlertDialog
         open={Boolean(deleteTarget)}
