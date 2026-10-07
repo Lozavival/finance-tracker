@@ -28,7 +28,7 @@ export function OptionSelect<T extends string>({
       <Select value={value} onValueChange={(next) => onChange(next as T)}>
         <SelectTrigger
           aria-invalid={Boolean(error)}
-          className="h-11 border-border bg-foreground/5 text-foreground"
+          className="!h-11 border-border bg-foreground/5 text-foreground"
         >
           <SelectValue />
         </SelectTrigger>

@@ -20,7 +20,9 @@ import {
   formatSignedValue,
   groupTransactionsByMonth,
   Transaction,
+  parseTransactionDate,
 } from "../../data/transactions";
+import { formatInstallmentLabel } from "../../data/installments";
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];
@@ -38,6 +40,9 @@ export function TransactionsMonthTable({
   if (transactions.length === 0) {
     return null;
   }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <div className="overflow-x-auto">
@@ -66,16 +71,26 @@ export function TransactionsMonthTable({
                   {group.label}
                 </TableCell>
               </TableRow>
-              {group.transactions.map((transaction) => (
+              {group.transactions.map((transaction) => {
+                const isFuture = parseTransactionDate(transaction.date) > today;
+                return (
                 <TableRow
                   key={transaction.id}
-                  className="border-border/50 hover:bg-cyan-500/10 transition-colors group"
+                  className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${isFuture ? "opacity-60" : ""}`}
+                  title={isFuture ? "Scheduled" : undefined}
                 >
                   <TableCell className="text-foreground whitespace-nowrap">
                     {formatRowDate(transaction.date)}
                   </TableCell>
-                  <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors">
-                    {transaction.description}
+                  <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
+                    <div className="inline-flex items-center gap-2">
+                      {transaction.description}
+                      {transaction.installment && (
+                        <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
+                          {formatInstallmentLabel(transaction.installment)}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {transaction.type}
@@ -130,7 +145,8 @@ export function TransactionsMonthTable({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </React.Fragment>
           ))}
         </TableBody>

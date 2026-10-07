@@ -31,6 +31,12 @@ export type Account = (typeof ACCOUNTS)[number];
 export type TransactionDirection = (typeof TRANSACTION_DIRECTIONS)[number];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+export type InstallmentInfo = {
+  groupId: string;
+  number: number;
+  total: number;
+};
+
 export type Transaction = {
   id: string;
   date: string;
@@ -41,6 +47,7 @@ export type Transaction = {
   account: Account;
   paymentMethod?: PaymentMethod;
   transferId?: string;
+  installment?: InstallmentInfo;
 };
 
 export type TransactionDraft =
@@ -51,6 +58,13 @@ export type TransactionDraft =
       value: number;
       fromAccount: Account;
       toAccount: Account;
+    }
+  | {
+      kind: "installments";
+      transaction: Omit<Transaction, "id" | "date" | "value" | "installment">;
+      firstDate: string;
+      totalValue: number;
+      count: number;
     };
 
 export function buildTransferLegs(
@@ -219,6 +233,28 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     account: "Citigroup",
     paymentMethod: "Bank transfer",
   },
+  {
+    id: "9",
+    date: "2025-10-28",
+    description: "MacBook Pro M3",
+    type: "Shopping",
+    direction: "expense",
+    value: 199.99,
+    account: "Goldman Sachs",
+    paymentMethod: "Credit card",
+    installment: { groupId: "seed-macbook", number: 1, total: 10 },
+  },
+  {
+    id: "10",
+    date: "2025-11-28",
+    description: "MacBook Pro M3",
+    type: "Shopping",
+    direction: "expense",
+    value: 199.99,
+    account: "Goldman Sachs",
+    paymentMethod: "Credit card",
+    installment: { groupId: "seed-macbook", number: 2, total: 10 },
+  },
 ];
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -308,12 +344,20 @@ export function createTransactionId() {
 export const PERIOD_PRESETS = [7, 30, 90] as const;
 
 export type PeriodFilter =
+  | { kind: "up-to-today" }
   | { kind: "all" }
   | { kind: "preset"; days: (typeof PERIOD_PRESETS)[number] }
   | { kind: "custom"; from: string; to: string };
 
 export function resolvePeriodRange(period: PeriodFilter, today = new Date()) {
   if (period.kind === "all") return null;
+
+  if (period.kind === "up-to-today") {
+    return {
+      from: "1970-01-01",
+      to: toTransactionDate(today),
+    };
+  }
 
   if (period.kind === "preset") {
     const fromDate = new Date(today);

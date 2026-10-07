@@ -32,6 +32,7 @@ import {
   type TransactionDraft,
   type PaymentMethod,
 } from "../data/transactions";
+import { buildInstallments, findInstallmentSeries } from "../data/installments";
 
 type TransactionsPageProps = {
   transactions: Transaction[];
@@ -44,7 +45,7 @@ export function TransactionsPage({
   defaultMonth,
   onTransactionsChange,
 }: TransactionsPageProps) {
-  const [period, setPeriod] = useState<PeriodFilterType>({ kind: "all" });
+  const [period, setPeriod] = useState<PeriodFilterType>({ kind: "up-to-today" });
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [direction, setDirection] = useState<"all" | TransactionDirection>("all");
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
@@ -79,10 +80,10 @@ export function TransactionsPage({
     return sortTransactionsDescending(filtered);
   }, [period, selectedTypes, direction, selectedPayments, transactions]);
 
-  const filtersActive = period.kind !== "all" || selectedTypes.length > 0 || direction !== "all" || selectedPayments.length > 0;
+  const filtersActive = period.kind !== "up-to-today" || selectedTypes.length > 0 || direction !== "all" || selectedPayments.length > 0;
 
   function resetFilters() {
-    setPeriod({ kind: "all" });
+    setPeriod({ kind: "up-to-today" });
     setSelectedTypes([]);
     setDirection("all");
     setSelectedPayments([]);
@@ -95,8 +96,11 @@ export function TransactionsPage({
 
   function openEditDialog(transaction: Transaction) {
     const legs = findTransferLegs(transactions, transaction);
+    const series = findInstallmentSeries(transactions, transaction);
     if (legs) {
       setEditingTarget({ kind: "transfer", outgoing: legs.outgoing, incoming: legs.incoming });
+    } else if (series) {
+      setEditingTarget({ kind: "installments", series });
     } else {
       setEditingTarget({ kind: "single", transaction });
     }
@@ -105,32 +109,58 @@ export function TransactionsPage({
 
   function saveTransaction(draft: TransactionDraft) {
     let nextTransactions = [...transactions];
-    let id1 = createTransactionId();
-    let id2 = createTransactionId();
+    let existingIds: string[] = [];
+    let groupId = createTransactionId();
     let transferId = createTransactionId();
 
     // Remove existing if editing
     if (editingTarget) {
       if (editingTarget.kind === "single") {
-        id1 = editingTarget.transaction.id;
+        existingIds = [editingTarget.transaction.id];
         nextTransactions = nextTransactions.filter(
           (t) => t.id !== editingTarget.transaction.id,
         );
-      } else {
-        id1 = editingTarget.outgoing.id;
-        id2 = editingTarget.incoming.id;
+      } else if (editingTarget.kind === "transfer") {
+        existingIds = [editingTarget.outgoing.id, editingTarget.incoming.id];
         transferId = editingTarget.outgoing.transferId!;
         nextTransactions = nextTransactions.filter(
           (t) => t.transferId !== transferId,
+        );
+      } else if (editingTarget.kind === "installments") {
+        existingIds = editingTarget.series.map(t => t.id);
+        groupId = editingTarget.series[0].installment!.groupId;
+        nextTransactions = nextTransactions.filter(
+          (t) => t.installment?.groupId !== groupId
         );
       }
     }
 
     if (draft.kind === "single") {
-      nextTransactions.push({ ...draft.transaction, id: id1 });
-    } else {
-      const legs = buildTransferLegs(draft, transferId, [id1, id2]);
+      const id = existingIds[0] ?? createTransactionId();
+      nextTransactions.push({ ...draft.transaction, id });
+    } else if (draft.kind === "transfer") {
+      const ids: [string, string] = [
+        existingIds[0] ?? createTransactionId(),
+        existingIds[1] ?? createTransactionId(),
+      ];
+      const legs = buildTransferLegs(draft, transferId, ids);
       nextTransactions.push(legs[0], legs[1]);
+    } else if (draft.kind === "installments") {
+      // Safety net: check if payment method is still credit card.
+      // Handled partly by the dialog, but let's ensure it here.
+      if (draft.transaction.paymentMethod !== "Credit card") {
+        const id = existingIds[0] ?? createTransactionId();
+        nextTransactions.push({
+          ...draft.transaction,
+          id,
+          date: draft.firstDate,
+          value: draft.totalValue,
+        });
+      } else {
+        const ids = Array.from({ length: draft.count }, (_, i) => existingIds[i] ?? createTransactionId());
+        const newInstallments = buildInstallments(draft, groupId, ids);
+        nextTransactions.push(...newInstallments);
+      }
     }
 
     onTransactionsChange(nextTransactions);
@@ -144,6 +174,10 @@ export function TransactionsPage({
     if (deleteTarget.transferId) {
       onTransactionsChange(
         transactions.filter((t) => t.transferId !== deleteTarget.transferId),
+      );
+    } else if (deleteTarget.installment) {
+      onTransactionsChange(
+        transactions.filter((t) => t.installment?.groupId !== deleteTarget.installment!.groupId),
       );
     } else {
       onTransactionsChange(
@@ -251,6 +285,8 @@ export function TransactionsPage({
               {deleteTarget
                 ? deleteTarget.transferId 
                   ? `Both sides of this transfer will be removed.`
+                  : deleteTarget.installment
+                  ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
                   : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
                 : "This transaction will be removed for this session."}
             </AlertDialogDescription>

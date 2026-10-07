@@ -10,15 +10,21 @@ import {
 import {
   formatSignedValue,
   formatTransactionDate,
+  parseTransactionDate,
   type Transaction,
 } from "../data/transactions"
+import { formatInstallmentLabel } from "../data/installments"
 
 type TransactionsTableProps = {
   transactions: Transaction[]
 }
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const recentTransactions = [...transactions]
+    .filter((t) => parseTransactionDate(t.date) <= today)
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
     .slice(0, 8)
 
@@ -48,8 +54,15 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                 <TableCell className="text-foreground">
                   {formatTransactionDate(transaction.date)}
                 </TableCell>
-                <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors">
-                  {transaction.description}
+                <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
+                  <div className="inline-flex items-center gap-2">
+                    {transaction.description}
+                    {transaction.installment && (
+                      <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
+                        {formatInstallmentLabel(transaction.installment)}
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {transaction.type}

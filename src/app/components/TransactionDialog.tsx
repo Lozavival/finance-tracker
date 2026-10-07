@@ -15,6 +15,8 @@ import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { DirectionToggle, DialogMode } from "./transactions/DirectionToggle";
 import { OptionSelect } from "./transactions/OptionSelect";
+import { InstallmentsField } from "./transactions/InstallmentsField";
+import { MAX_INSTALLMENTS } from "../data/installments";
 import {
   ACCOUNTS,
   EXPENSE_TYPES,
@@ -32,7 +34,8 @@ import {
 
 export type EditingTarget =
   | { kind: "single"; transaction: Transaction }
-  | { kind: "transfer"; outgoing: Transaction; incoming: Transaction };
+  | { kind: "transfer"; outgoing: Transaction; incoming: Transaction }
+  | { kind: "installments"; series: Transaction[] };
 
 type TransactionDialogProps = {
   open: boolean;
@@ -60,12 +63,16 @@ export function TransactionDialog({
   const [type, setType] = useState<TransactionType>("Shopping");
   const [account, setAccount] = useState<Account>("Bank of America");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Credit card");
+  const [installments, setInstallments] = useState<number | "">(1);
   
   // Transfer specific
   const [fromAccount, setFromAccount] = useState<Account>(ACCOUNTS[0]);
   const [toAccount, setToAccount] = useState<Account>(ACCOUNTS[1]);
 
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const canUseInstallments = mode === "expense" && paymentMethod === "Credit card";
+  const effectiveInstallments = canUseInstallments ? (Number(installments) || 1) : 1;
 
   useEffect(() => {
     if (!open) return;
@@ -79,6 +86,7 @@ export function TransactionDialog({
       setType("Shopping");
       setAccount(ACCOUNTS[0]);
       setPaymentMethod("Credit card");
+      setInstallments(1);
       setFromAccount(ACCOUNTS[0]);
       setToAccount(ACCOUNTS[1]);
       return;
@@ -95,6 +103,20 @@ export function TransactionDialog({
       setType("Transfer");
       setAccount(editing.outgoing.account);
       setPaymentMethod("Credit card");
+      setInstallments(1);
+    } else if (editing.kind === "installments") {
+      const first = editing.series[0];
+      setMode("expense");
+      setDescription(first.description);
+      const total = editing.series.reduce((sum, tx) => sum + tx.value, 0);
+      setValue(total.toFixed(2));
+      setDate(parseTransactionDate(first.date));
+      setType(first.type);
+      setAccount(first.account);
+      if (first.paymentMethod) setPaymentMethod(first.paymentMethod);
+      setInstallments(editing.series.length);
+      setFromAccount(ACCOUNTS[0]);
+      setToAccount(ACCOUNTS[1]);
     } else {
       const tx = editing.transaction;
       setMode(tx.direction);
@@ -104,6 +126,7 @@ export function TransactionDialog({
       setType(tx.type);
       setAccount(tx.account);
       if (tx.paymentMethod) setPaymentMethod(tx.paymentMethod);
+      setInstallments(1);
       setFromAccount(ACCOUNTS[0]);
       setToAccount(ACCOUNTS[1]);
     }
@@ -130,6 +153,9 @@ export function TransactionDialog({
     if (!value || !Number.isFinite(normalizedValue) || normalizedValue <= 0) {
       nextErrors.value = "Enter a value greater than zero.";
     }
+    if (effectiveInstallments > 1 && normalizedValue < effectiveInstallments * 0.01) {
+      nextErrors.value = "Total value is too small to split.";
+    }
     if (!date) {
       nextErrors.date = "Choose a transaction date.";
     }
@@ -148,6 +174,20 @@ export function TransactionDialog({
         fromAccount,
         toAccount,
       });
+    } else if (effectiveInstallments > 1) {
+      onSave({
+        kind: "installments",
+        transaction: {
+          description: normalizedDescription,
+          direction: mode,
+          type,
+          account,
+          paymentMethod,
+        },
+        firstDate: toTransactionDate(date),
+        totalValue: normalizedValue,
+        count: effectiveInstallments,
+      });
     } else {
       onSave({
         kind: "single",
@@ -165,6 +205,7 @@ export function TransactionDialog({
   }
 
   const isTransfer = mode === "transfer";
+  const isEditingSeries = editing?.kind === "installments";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -212,7 +253,9 @@ export function TransactionDialog({
               )}
 
               <div className="space-y-2">
-                <Label className="text-foreground">Date</Label>
+                <Label className="text-foreground">
+                  {effectiveInstallments > 1 ? "First installment" : "Date"}
+                </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -246,7 +289,7 @@ export function TransactionDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="transaction-value" className="text-foreground">
-                  Value
+                  {effectiveInstallments > 1 ? "Total value" : "Value"}
                 </Label>
                 <Input
                   id="transaction-value"
@@ -279,12 +322,21 @@ export function TransactionDialog({
                     onChange={setAccount}
                   />
                   {mode === "expense" && (
-                    <OptionSelect
-                      label="Form of payment"
-                      value={paymentMethod}
-                      options={PAYMENT_METHODS}
-                      onChange={setPaymentMethod}
-                    />
+                    <>
+                      <OptionSelect
+                        label="Form of payment"
+                        value={paymentMethod}
+                        options={PAYMENT_METHODS}
+                        onChange={setPaymentMethod}
+                      />
+                      {canUseInstallments && (
+                        <InstallmentsField
+                          value={installments}
+                          onChange={setInstallments}
+                          totalValue={Number(value) || 0}
+                        />
+                      )}
+                    </>
                   )}
                 </>
               ) : (
@@ -306,6 +358,11 @@ export function TransactionDialog({
                 </>
               )}
             </div>
+            {isEditingSeries && !canUseInstallments && (
+              <div className="rounded-lg bg-orange-500/10 p-3 text-sm text-orange-400">
+                Installments are only available for credit card. This will be saved as a single expense.
+              </div>
+            )}
           </div>
 
           <DialogFooter className="border-t border-border p-6 sm:justify-between">

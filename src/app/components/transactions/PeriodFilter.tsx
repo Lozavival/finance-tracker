@@ -21,12 +21,14 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
     }
   }, [open, value]);
 
-  const active = value.kind !== "all";
-  let label = "Period";
+  const active = value.kind !== "up-to-today";
+  let label = "Up to today";
   if (value.kind === "preset") {
     label = `Last ${value.days} days`;
   } else if (value.kind === "custom") {
     label = formatPeriodLabel(value.from, value.to);
+  } else if (value.kind === "all") {
+    label = "Including future";
   }
 
   const applyDisabled = draft.kind === "custom" && (!draft.from || !draft.to || draft.from > draft.to);
@@ -38,9 +40,36 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
       title="Period"
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
-      onClear={() => onChange({ kind: "all" })}
+      onClear={() => onChange({ kind: "up-to-today" })}
       applyDisabled={applyDisabled}
     >
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDraft({ kind: "up-to-today" })}
+          className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
+            draft.kind === "up-to-today"
+              ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
+              : "text-foreground"
+          }`}
+        >
+          Up to today
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDraft({ kind: "all" })}
+          className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
+            draft.kind === "all"
+              ? "border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20"
+              : "text-foreground"
+          }`}
+        >
+          Include future
+        </Button>
+      </div>
+
       <div className="flex gap-2 mb-6">
         {PERIOD_PRESETS.map((days) => (
           <Button
