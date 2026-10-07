@@ -12,13 +12,16 @@ import {
 } from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { TransactionDialog } from "./TransactionDialog";
+import { TransactionDialog, EditingTarget } from "./TransactionDialog";
 import { TransactionsMonthTable } from "./transactions/TransactionsMonthTable";
 import { PeriodFilter } from "./transactions/PeriodFilter";
 import { TypeFilter } from "./transactions/TypeFilter";
 import { DirectionFilter } from "./transactions/DirectionFilter";
+import { PaymentFilter } from "./transactions/PaymentFilter";
 import {
+  buildTransferLegs,
   createTransactionId,
+  findTransferLegs,
   formatTransactionDate,
   resolvePeriodRange,
   sortTransactionsDescending,
@@ -26,6 +29,8 @@ import {
   type Transaction,
   type TransactionDirection,
   type TransactionType,
+  type TransactionDraft,
+  type PaymentMethod,
 } from "../data/transactions";
 
 type TransactionsPageProps = {
@@ -42,9 +47,10 @@ export function TransactionsPage({
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: "all" });
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [direction, setDirection] = useState<"all" | TransactionDirection>("all");
+  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
   
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
   const visibleTransactions = useMemo(() => {
@@ -62,56 +68,88 @@ export function TransactionsPage({
       if (direction !== "all" && transaction.direction !== direction) {
         return false;
       }
+      if (selectedPayments.length > 0) {
+        if (!transaction.paymentMethod || !selectedPayments.includes(transaction.paymentMethod)) {
+          return false;
+        }
+      }
       return true;
     });
     
     return sortTransactionsDescending(filtered);
-  }, [period, selectedTypes, direction, transactions]);
+  }, [period, selectedTypes, direction, selectedPayments, transactions]);
 
-  const filtersActive = period.kind !== "all" || selectedTypes.length > 0 || direction !== "all";
+  const filtersActive = period.kind !== "all" || selectedTypes.length > 0 || direction !== "all" || selectedPayments.length > 0;
 
   function resetFilters() {
     setPeriod({ kind: "all" });
     setSelectedTypes([]);
     setDirection("all");
+    setSelectedPayments([]);
   }
 
   function openAddDialog() {
-    setEditingTransaction(null);
+    setEditingTarget(null);
     setDialogOpen(true);
   }
 
   function openEditDialog(transaction: Transaction) {
-    setEditingTransaction(transaction);
+    const legs = findTransferLegs(transactions, transaction);
+    if (legs) {
+      setEditingTarget({ kind: "transfer", outgoing: legs.outgoing, incoming: legs.incoming });
+    } else {
+      setEditingTarget({ kind: "single", transaction });
+    }
     setDialogOpen(true);
   }
 
-  function saveTransaction(input: Omit<Transaction, "id">) {
-    if (editingTransaction) {
-      onTransactionsChange(
-        transactions.map((transaction) =>
-          transaction.id === editingTransaction.id
-            ? { ...input, id: editingTransaction.id }
-            : transaction,
-        ),
-      );
-    } else {
-      onTransactionsChange([
-        ...transactions,
-        { ...input, id: createTransactionId() },
-      ]);
+  function saveTransaction(draft: TransactionDraft) {
+    let nextTransactions = [...transactions];
+    let id1 = createTransactionId();
+    let id2 = createTransactionId();
+    let transferId = createTransactionId();
+
+    // Remove existing if editing
+    if (editingTarget) {
+      if (editingTarget.kind === "single") {
+        id1 = editingTarget.transaction.id;
+        nextTransactions = nextTransactions.filter(
+          (t) => t.id !== editingTarget.transaction.id,
+        );
+      } else {
+        id1 = editingTarget.outgoing.id;
+        id2 = editingTarget.incoming.id;
+        transferId = editingTarget.outgoing.transferId!;
+        nextTransactions = nextTransactions.filter(
+          (t) => t.transferId !== transferId,
+        );
+      }
     }
+
+    if (draft.kind === "single") {
+      nextTransactions.push({ ...draft.transaction, id: id1 });
+    } else {
+      const legs = buildTransferLegs(draft, transferId, [id1, id2]);
+      nextTransactions.push(legs[0], legs[1]);
+    }
+
+    onTransactionsChange(nextTransactions);
     setDialogOpen(false);
-    setEditingTransaction(null);
+    setEditingTarget(null);
   }
 
   function deleteTransaction() {
     if (!deleteTarget) return;
-    onTransactionsChange(
-      transactions.filter(
-        (transaction) => transaction.id !== deleteTarget.id,
-      ),
-    );
+    
+    if (deleteTarget.transferId) {
+      onTransactionsChange(
+        transactions.filter((t) => t.transferId !== deleteTarget.transferId),
+      );
+    } else {
+      onTransactionsChange(
+        transactions.filter((t) => t.id !== deleteTarget.id),
+      );
+    }
     setDeleteTarget(null);
   }
 
@@ -141,6 +179,8 @@ export function TransactionsPage({
             <PeriodFilter value={period} onChange={setPeriod} />
             <TypeFilter value={selectedTypes} onChange={setSelectedTypes} />
             <DirectionFilter value={direction} onChange={setDirection} />
+            <PaymentFilter value={selectedPayments} onChange={setSelectedPayments} />
+
             
             {filtersActive && (
               <Button
@@ -189,11 +229,11 @@ export function TransactionsPage({
 
       <TransactionDialog
         open={dialogOpen}
-        transaction={editingTransaction}
+        editing={editingTarget}
         defaultDate={defaultMonth.to}
         onOpenChange={(open) => {
           setDialogOpen(open);
-          if (!open) setEditingTransaction(null);
+          if (!open) setEditingTarget(null);
         }}
         onSave={saveTransaction}
       />
@@ -209,7 +249,9 @@ export function TransactionsPage({
             <AlertDialogTitle>Exclude transaction?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               {deleteTarget
-                ? `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
+                ? deleteTarget.transferId 
+                  ? `Both sides of this transfer will be removed.`
+                  : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
                 : "This transaction will be removed for this session."}
             </AlertDialogDescription>
           </AlertDialogHeader>

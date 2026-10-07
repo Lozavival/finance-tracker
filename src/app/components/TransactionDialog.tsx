@@ -1,11 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  CalendarIcon,
-  Check,
-  Plus,
-} from "lucide-react";
+import { CalendarIcon, Check, Plus } from "lucide-react";
 import { Calendar } from "./ui/calendar";
 import { Button } from "./ui/button";
 import {
@@ -19,67 +13,110 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
+import { DirectionToggle, DialogMode } from "./transactions/DirectionToggle";
+import { OptionSelect } from "./transactions/OptionSelect";
 import {
   ACCOUNTS,
   EXPENSE_TYPES,
   INCOME_TYPES,
+  PAYMENT_METHODS,
   formatTransactionDate,
   parseTransactionDate,
   toTransactionDate,
   type Account,
   type Transaction,
-  type TransactionDirection,
   type TransactionType,
+  type PaymentMethod,
+  type TransactionDraft,
 } from "../data/transactions";
+
+export type EditingTarget =
+  | { kind: "single"; transaction: Transaction }
+  | { kind: "transfer"; outgoing: Transaction; incoming: Transaction };
 
 type TransactionDialogProps = {
   open: boolean;
-  transaction: Transaction | null;
+  editing: EditingTarget | null;
   defaultDate: Date;
   onOpenChange: (open: boolean) => void;
-  onSave: (transaction: Omit<Transaction, "id">) => void;
+  onSave: (draft: TransactionDraft) => void;
 };
 
 type FormErrors = Partial<
-  Record<"description" | "value" | "date", string>
+  Record<"description" | "value" | "date" | "banks", string>
 >;
 
 export function TransactionDialog({
   open,
-  transaction,
+  editing,
   defaultDate,
   onOpenChange,
   onSave,
 }: TransactionDialogProps) {
+  const [mode, setMode] = useState<DialogMode>("expense");
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");
   const [date, setDate] = useState<Date | undefined>(defaultDate);
-  const [direction, setDirection] =
-    useState<TransactionDirection>("expense");
   const [type, setType] = useState<TransactionType>("Shopping");
   const [account, setAccount] = useState<Account>("Bank of America");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Credit card");
+  
+  // Transfer specific
+  const [fromAccount, setFromAccount] = useState<Account>(ACCOUNTS[0]);
+  const [toAccount, setToAccount] = useState<Account>(ACCOUNTS[1]);
+
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (!open) return;
-    setDescription(transaction?.description ?? "");
-    setValue(transaction ? String(transaction.value) : "");
-    setDate(
-      transaction ? parseTransactionDate(transaction.date) : defaultDate,
-    );
-    setDirection(transaction?.direction ?? "expense");
-    setType(transaction?.type ?? "Shopping");
-    setAccount(transaction?.account ?? "Bank of America");
+    
     setErrors({});
-  }, [defaultDate, open, transaction]);
+    if (!editing) {
+      setMode("expense");
+      setDescription("");
+      setValue("");
+      setDate(defaultDate);
+      setType("Shopping");
+      setAccount(ACCOUNTS[0]);
+      setPaymentMethod("Credit card");
+      setFromAccount(ACCOUNTS[0]);
+      setToAccount(ACCOUNTS[1]);
+      return;
+    }
+
+    if (editing.kind === "transfer") {
+      setMode("transfer");
+      setValue(String(editing.outgoing.value));
+      setDate(parseTransactionDate(editing.outgoing.date));
+      setFromAccount(editing.outgoing.account);
+      setToAccount(editing.incoming.account);
+      // reset others
+      setDescription("");
+      setType("Transfer");
+      setAccount(editing.outgoing.account);
+      setPaymentMethod("Credit card");
+    } else {
+      const tx = editing.transaction;
+      setMode(tx.direction);
+      setDescription(tx.description);
+      setValue(String(tx.value));
+      setDate(parseTransactionDate(tx.date));
+      setType(tx.type);
+      setAccount(tx.account);
+      if (tx.paymentMethod) setPaymentMethod(tx.paymentMethod);
+      setFromAccount(ACCOUNTS[0]);
+      setToAccount(ACCOUNTS[1]);
+    }
+  }, [open, editing, defaultDate]);
+
+  function handleModeChange(nextMode: DialogMode) {
+    setMode(nextMode);
+    if (nextMode === "income" && !INCOME_TYPES.includes(type as any)) {
+      setType(INCOME_TYPES[0]);
+    } else if (nextMode === "expense" && !EXPENSE_TYPES.includes(type as any)) {
+      setType(EXPENSE_TYPES[0]);
+    }
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -87,7 +124,7 @@ export function TransactionDialog({
     const normalizedDescription = description.trim();
     const normalizedValue = Number(value);
 
-    if (!normalizedDescription) {
+    if (mode !== "transfer" && !normalizedDescription) {
       nextErrors.description = "Enter a description.";
     }
     if (!value || !Number.isFinite(normalizedValue) || normalizedValue <= 0) {
@@ -96,19 +133,38 @@ export function TransactionDialog({
     if (!date) {
       nextErrors.date = "Choose a transaction date.";
     }
+    if (mode === "transfer" && fromAccount === toAccount) {
+      nextErrors.banks = "Origin and destination must be different.";
+    }
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || !date) return;
 
-    onSave({
-      description: normalizedDescription,
-      value: normalizedValue,
-      date: toTransactionDate(date),
-      direction,
-      type,
-      account,
-    });
+    if (mode === "transfer") {
+      onSave({
+        kind: "transfer",
+        date: toTransactionDate(date),
+        value: normalizedValue,
+        fromAccount,
+        toAccount,
+      });
+    } else {
+      onSave({
+        kind: "single",
+        transaction: {
+          description: normalizedDescription,
+          value: normalizedValue,
+          date: toTransactionDate(date),
+          direction: mode,
+          type,
+          account,
+          ...(mode === "expense" ? { paymentMethod } : {}),
+        },
+      });
+    }
   }
+
+  const isTransfer = mode === "transfer";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,78 +172,44 @@ export function TransactionDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader className="border-b border-border p-6 pr-14">
             <DialogTitle>
-              {transaction ? "Edit transaction" : "Add transaction"}
+              {editing ? "Edit transaction" : "Add transaction"}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              {transaction
-                ? "Update the details for this transaction."
-                : "Record income or an expense."}
+              {isTransfer 
+                ? "Move money between your accounts."
+                : editing
+                  ? "Update the details for this transaction."
+                  : "Record income or an expense."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 p-6">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">
-                Transaction direction
-              </Label>
-              <ToggleGroup
-                type="single"
-                value={direction}
-                onValueChange={(nextDirection) => {
-                  if (nextDirection) {
-                    const newDir = nextDirection as TransactionDirection;
-                    setDirection(newDir);
-                    if (newDir === "income" && !INCOME_TYPES.includes(type as any)) {
-                      setType(INCOME_TYPES[0]);
-                    } else if (newDir === "expense" && !EXPENSE_TYPES.includes(type as any)) {
-                      setType(EXPENSE_TYPES[0]);
-                    }
-                  }
-                }}
-                aria-label="Transaction direction"
-                className="w-full rounded-xl border border-border bg-muted/40 p-1"
-              >
-                <ToggleGroupItem
-                  value="income"
-                  aria-label="Income"
-                  className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-emerald-400 data-[state=on]:shadow-sm"
-                >
-                  <ArrowDownLeft />
-                  Income
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="expense"
-                  aria-label="Expense"
-                  className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-red-400 data-[state=on]:shadow-sm"
-                >
-                  <ArrowUpRight />
-                  Expense
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
+            <DirectionToggle value={mode} onChange={handleModeChange} />
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label
-                  htmlFor="transaction-description"
-                  className="text-foreground"
-                >
-                  Description
-                </Label>
-                <Input
-                  id="transaction-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="e.g. Grocery store"
-                  aria-invalid={Boolean(errors.description)}
-                  className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
-                />
-                {errors.description && (
-                  <div className="text-red-400 text-sm">
-                    {errors.description}
-                  </div>
-                )}
-              </div>
+              {!isTransfer && (
+                <div className="space-y-2 sm:col-span-2">
+                  <Label
+                    htmlFor="transaction-description"
+                    className="text-foreground"
+                  >
+                    Description
+                  </Label>
+                  <Input
+                    id="transaction-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="e.g. Grocery store"
+                    aria-invalid={Boolean(errors.description)}
+                    className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+                  />
+                  {errors.description && (
+                    <div className="text-red-400 text-sm">
+                      {errors.description}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-foreground">Date</Label>
@@ -199,7 +221,7 @@ export function TransactionDialog({
                       aria-invalid={Boolean(errors.date)}
                       className="h-11 w-full justify-start border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
                     >
-                      <CalendarIcon />
+                      <CalendarIcon className="mr-2 h-4 w-4" />
                       {date
                         ? formatTransactionDate(toTransactionDate(date))
                         : "Choose date"}
@@ -242,45 +264,47 @@ export function TransactionDialog({
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-foreground">Type</Label>
-                <Select
-                  value={type}
-                  onValueChange={(nextType) =>
-                    setType(nextType as TransactionType)
-                  }
-                >
-                  <SelectTrigger className="h-11 border-border bg-foreground/5 text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-foreground">
-                    {(direction === "income" ? INCOME_TYPES : EXPENSE_TYPES).map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-foreground">Account</Label>
-                <Select
-                  value={account}
-                  onValueChange={(nextAccount) => setAccount(nextAccount as Account)}
-                >
-                  <SelectTrigger className="h-11 border-border bg-foreground/5 text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-foreground">
-                    {ACCOUNTS.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isTransfer ? (
+                <>
+                  <OptionSelect
+                    label="Type"
+                    value={type}
+                    options={mode === "income" ? INCOME_TYPES : EXPENSE_TYPES}
+                    onChange={setType}
+                  />
+                  <OptionSelect
+                    label="Account"
+                    value={account}
+                    options={ACCOUNTS}
+                    onChange={setAccount}
+                  />
+                  {mode === "expense" && (
+                    <OptionSelect
+                      label="Form of payment"
+                      value={paymentMethod}
+                      options={PAYMENT_METHODS}
+                      onChange={setPaymentMethod}
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  <OptionSelect
+                    label="From account"
+                    value={fromAccount}
+                    options={ACCOUNTS}
+                    onChange={setFromAccount}
+                    error={errors.banks}
+                  />
+                  <OptionSelect
+                    label="To account"
+                    value={toAccount}
+                    options={ACCOUNTS}
+                    onChange={setToAccount}
+                    error={errors.banks}
+                  />
+                </>
+              )}
             </div>
           </div>
 
@@ -297,8 +321,8 @@ export function TransactionDialog({
               type="submit"
               className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
             >
-              {transaction ? <Check /> : <Plus />}
-              {transaction ? "Save changes" : "Add transaction"}
+              {editing ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+              {editing ? "Save changes" : "Add transaction"}
             </Button>
           </DialogFooter>
         </form>

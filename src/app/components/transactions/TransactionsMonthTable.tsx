@@ -48,6 +48,7 @@ export function TransactionsMonthTable({
             <TableHead className="text-muted-foreground">Description</TableHead>
             <TableHead className="text-muted-foreground">Type</TableHead>
             <TableHead className="text-muted-foreground">Account</TableHead>
+            <TableHead className="text-muted-foreground">Payment</TableHead>
             <TableHead className="text-muted-foreground text-right">Value</TableHead>
             <TableHead>
               <span className="sr-only">Actions</span>
@@ -59,7 +60,7 @@ export function TransactionsMonthTable({
             <React.Fragment key={group.key}>
               <TableRow className="bg-foreground/5 hover:bg-foreground/5">
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-xs uppercase tracking-wider text-muted-foreground font-medium"
                 >
                   {group.label}
@@ -81,6 +82,9 @@ export function TransactionsMonthTable({
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {transaction.account}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {transaction.paymentMethod ?? "—"}
                   </TableCell>
                   <TableCell
                     className={`text-right whitespace-nowrap ${

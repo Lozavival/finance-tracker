@@ -18,9 +18,18 @@ export const ACCOUNTS = [
 
 export const TRANSACTION_DIRECTIONS = ["income", "expense"] as const;
 
+export const PAYMENT_METHODS = [
+  "Credit card",
+  "Debit card",
+  "Cash",
+  "PIX",
+  "Bank transfer",
+] as const;
+
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 export type Account = (typeof ACCOUNTS)[number];
 export type TransactionDirection = (typeof TRANSACTION_DIRECTIONS)[number];
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type Transaction = {
   id: string;
@@ -30,7 +39,61 @@ export type Transaction = {
   direction: TransactionDirection;
   value: number;
   account: Account;
+  paymentMethod?: PaymentMethod;
+  transferId?: string;
 };
+
+export type TransactionDraft =
+  | { kind: "single"; transaction: Omit<Transaction, "id"> }
+  | {
+      kind: "transfer";
+      date: string;
+      value: number;
+      fromAccount: Account;
+      toAccount: Account;
+    };
+
+export function buildTransferLegs(
+  draft: Extract<TransactionDraft, { kind: "transfer" }>,
+  transferId: string,
+  ids: [string, string],
+): [Transaction, Transaction] {
+  return [
+    {
+      id: ids[0],
+      date: draft.date,
+      description: `Transfer to ${draft.toAccount}`,
+      type: "Transfer",
+      direction: "expense",
+      value: draft.value,
+      account: draft.fromAccount,
+      transferId,
+    },
+    {
+      id: ids[1],
+      date: draft.date,
+      description: `Transfer from ${draft.fromAccount}`,
+      type: "Transfer",
+      direction: "income",
+      value: draft.value,
+      account: draft.toAccount,
+      transferId,
+    },
+  ];
+}
+
+export function findTransferLegs(
+  transactions: Transaction[],
+  tx: Transaction,
+): { outgoing: Transaction; incoming: Transaction } | null {
+  if (!tx.transferId) return null;
+  const related = transactions.filter((t) => t.transferId === tx.transferId);
+  if (related.length !== 2) return null;
+  const outgoing = related.find((t) => t.direction === "expense");
+  const incoming = related.find((t) => t.direction === "income");
+  if (!outgoing || !incoming) return null;
+  return { outgoing, incoming };
+}
 
 export type CategoryTotal = {
   name: TransactionType;
@@ -86,6 +149,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 124.99,
     account: "Bank of America",
+    paymentMethod: "Credit card",
   },
   {
     id: "2",
@@ -104,6 +168,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 15.99,
     account: "Citigroup",
+    paymentMethod: "Credit card",
   },
   {
     id: "4",
@@ -113,6 +178,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 28.5,
     account: "Bank of America",
+    paymentMethod: "Debit card",
   },
   {
     id: "5",
@@ -131,6 +197,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 1500,
     account: "Goldman Sachs",
+    paymentMethod: "Bank transfer",
   },
   {
     id: "7",
@@ -140,6 +207,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 6.75,
     account: "Bank of America",
+    paymentMethod: "PIX",
   },
   {
     id: "8",
@@ -149,6 +217,7 @@ export const SEEDED_TRANSACTIONS: Transaction[] = [
     direction: "expense",
     value: 132,
     account: "Citigroup",
+    paymentMethod: "Bank transfer",
   },
 ];
 
@@ -214,7 +283,7 @@ export function aggregateExpensesByCategory(
   const totals = new Map<TransactionType, number>();
 
   transactions.forEach((transaction) => {
-    if (transaction.direction === "expense") {
+    if (transaction.direction === "expense" && !transaction.transferId) {
       totals.set(
         transaction.type,
         (totals.get(transaction.type) ?? 0) + transaction.value,
