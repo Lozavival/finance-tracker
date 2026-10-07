@@ -1,0 +1,17 @@
+# ANSI color escape codes
+RED='\033[0;31m' # Red color
+NC='\033[0m'     # No color
+
+# Check for unstaged changes
+unstaged_files=$(git status --porcelain)
+if [ -n "$unstaged_files" ]; then
+  printf "${RED}You have unstaged changes in your working directory:${NC}\n"
+  printf "$unstaged_files\n\n"
+fi
+
+# Check for untracked files
+untracked_files=$(git ls-files --others --exclude-standard)
+if [ -n "$untracked_files" ]; then
+  printf "${RED}You have untracked files in your working directory:${NC}\n"
+  printf "$untracked_files\n\n"
+fi
