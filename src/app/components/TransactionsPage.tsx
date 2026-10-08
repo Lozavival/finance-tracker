@@ -15,6 +15,7 @@ import {
   type TransactionDirection,
   type TransactionType,
   type PaymentMethod,
+  groupToAccrualBasis,
 } from '../data/transactions';
 import { TransactionDialogs } from './transactions/TransactionDialogs';
 import { useTransactionActions } from '../hooks/useTransactionActions';
@@ -46,8 +47,9 @@ export function TransactionsPage({ transactions, defaultMonth, onTransactionsCha
 
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period);
+    const accrualTransactions = groupToAccrualBasis(transactions);
 
-    const filtered = transactions.filter(transaction => {
+    const filtered = accrualTransactions.filter(transaction => {
       if (periodRange) {
         if (transaction.date < periodRange.from || transaction.date > periodRange.to) {
           return false;

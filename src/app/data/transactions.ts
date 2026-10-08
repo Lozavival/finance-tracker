@@ -291,3 +291,35 @@ export function formatPeriodLabel(from: Date | string, to: Date | string) {
 
   return `${formatter.format(fromDate)} – ${formatter.format(toDate)}`;
 }
+
+export function groupToAccrualBasis(transactions: Transaction[]): Transaction[] {
+  const grouped = new Map<string, Transaction[]>();
+  const results: Transaction[] = [];
+
+  for (const t of transactions) {
+    if (t.installment) {
+      const g = grouped.get(t.installment.groupId) || [];
+      g.push(t);
+      grouped.set(t.installment.groupId, g);
+    } else {
+      results.push(t);
+    }
+  }
+
+  for (const group of grouped.values()) {
+    group.sort((a, b) => a.installment!.number - b.installment!.number);
+    const first = group[0];
+    const totalValue = group.reduce((sum, t) => sum + t.value, 0);
+
+    results.push({
+      ...first,
+      value: totalValue,
+      installment: {
+        ...first.installment!,
+        number: -1, // -1 indicates accrual view
+      },
+    });
+  }
+
+  return results;
+}

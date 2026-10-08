@@ -36,5 +36,8 @@ export function findInstallmentSeries(transactions: Transaction[], tx: Transacti
 }
 
 export function formatInstallmentLabel(info: InstallmentInfo) {
+  if (info.number === -1) {
+    return `${info.total} Installments`;
+  }
   return `${info.number}/${info.total}`;
 }
