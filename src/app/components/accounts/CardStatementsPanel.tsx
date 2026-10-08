@@ -1,9 +1,10 @@
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
 import { type Account, formatCurrency } from '../../data/transactions';
 import { Card } from '../ui/card';
-import { CreditCard } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { CreditCard, CalendarIcon } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Button } from '../ui/button';
 
 export function CardStatementsPanel({ account, statements }: { account: Account; statements: CardStatement[] }) {
   const usage = getCardUsage(statements, account);
@@ -20,6 +21,18 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
     setSelectedId(def?.id);
   }, [account, statements]);
 
+  const statementsByYear = useMemo(() => {
+    const grouped: Record<number, CardStatement[]> = {};
+    accountStatements.forEach(s => {
+      const y = new Date(s.closingDate).getFullYear();
+      if (!grouped[y]) grouped[y] = [];
+      grouped[y].push(s);
+    });
+    return grouped;
+  }, [accountStatements]);
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
   if (usage.limit === 0 || accountStatements.length === 0) return null;
 
   const stmt = accountStatements.find(s => s.id === selectedId) || accountStatements[0];
@@ -32,21 +45,63 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
           <div className="text-xl text-foreground">Credit Card Bills</div>
         </div>
         <div className="w-[200px]">
-          <Select value={stmt.id} onValueChange={setSelectedId}>
-            <SelectTrigger className="border-border bg-foreground/5 text-foreground h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-popover text-foreground max-h-[300px]">
-              {accountStatements.map(s => {
-                const label = new Date(s.closingDate).toLocaleString('en-US', { month: 'long', year: 'numeric' });
-                return (
-                  <SelectItem key={s.id} value={s.id}>
-                    {label}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between bg-foreground/5 border-border text-foreground hover:bg-foreground/10"
+              >
+                {new Date(stmt.closingDate).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                <CalendarIcon className="h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[260px] bg-popover border-border p-4 shadow-xl">
+              <div className="space-y-6 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                {Object.entries(statementsByYear)
+                  .sort(([a], [b]) => Number(b) - Number(a))
+                  .map(([year, stmts]) => {
+                    const stmtsByMonth = stmts.reduce(
+                      (acc, s) => {
+                        const m = new Date(s.closingDate).getMonth();
+                        acc[m] = s;
+                        return acc;
+                      },
+                      {} as Record<number, CardStatement>,
+                    );
+
+                    return (
+                      <div key={year}>
+                        <div className="font-medium text-foreground mb-3">{year}</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {Array.from({ length: 12 }, (_, i) => i).map(monthIndex => {
+                            const s = stmtsByMonth[monthIndex];
+                            const monthName = new Date(Number(year), monthIndex, 1).toLocaleString('en-US', {
+                              month: 'short',
+                            });
+                            return (
+                              <Button
+                                key={monthIndex}
+                                variant={s?.id === selectedId ? 'default' : 'outline'}
+                                className={`text-xs h-9 ${!s ? 'opacity-30' : 'hover:bg-accent hover:text-accent-foreground'} ${s?.id === selectedId ? 'bg-primary text-primary-foreground' : ''}`}
+                                disabled={!s}
+                                onClick={() => {
+                                  if (s) {
+                                    setSelectedId(s.id);
+                                    setPopoverOpen(false);
+                                  }
+                                }}
+                              >
+                                {monthName}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 

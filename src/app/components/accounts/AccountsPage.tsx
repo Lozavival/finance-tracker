@@ -1,12 +1,13 @@
 import { type Account } from '../../data/transactions';
 import { type CardStatement } from '../../data/cardStatements';
-import { type AccountLedger, getAccountForecast, resolveHorizonEnd, type ForecastHorizon } from '../../data/ledger';
+import { type AccountLedger, getAccountForecast } from '../../data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardBillSummary } from './CardBillSummary';
 import { ACCOUNT_DETAILS } from '../../data/accounts';
 import { Card } from '../ui/card';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
 import { formatCurrency } from '../../data/transactions';
 
 type AccountsPageProps = {
@@ -20,8 +21,20 @@ type AccountsPageProps = {
 };
 
 export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
-  const [horizon, setHorizon] = useState<ForecastHorizon>('end-of-month');
-  const horizonEnd = resolveHorizonEnd(horizon, finance.today);
+  const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
+
+  const horizonEnd = useMemo(() => {
+    if (upcomingPeriod.kind === 'all') return '2030-01-01';
+    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || '2030-01-01';
+    if (upcomingPeriod.kind === 'end-of-month') {
+      const [y, m] = finance.today.split('-').map(Number);
+      const lastDay = new Date(y, m, 0).getDate();
+      return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    }
+    const d = new Date(`${finance.today}T12:00:00`);
+    d.setDate(d.getDate() + upcomingPeriod.days);
+    return d.toISOString().split('T')[0];
+  }, [finance.today, upcomingPeriod]);
 
   let totalBalance = 0;
   let totalIn = 0;
@@ -110,15 +123,7 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
           <div className="text-muted-foreground">Manage your cash flow and upcoming bills.</div>
         </div>
         <div className="flex gap-2">
-          {['end-of-month', '30d', '90d'].map(h => (
-            <button
-              key={h}
-              onClick={() => setHorizon(h as ForecastHorizon)}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${horizon === h ? 'bg-cyan-500/20 text-theme-cyan' : 'bg-foreground/5 text-muted-foreground hover:text-foreground'}`}
-            >
-              {h === 'end-of-month' ? 'End of month' : h === '30d' ? '30 days' : '90 days'}
-            </button>
-          ))}
+          <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
         </div>
       </div>
 

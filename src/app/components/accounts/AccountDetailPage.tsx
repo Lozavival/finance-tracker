@@ -19,6 +19,7 @@ import { useTransactionActions } from '../../hooks/useTransactionActions';
 import { TransactionDialogs } from '../transactions/TransactionDialogs';
 import { useMemo, useState } from 'react';
 import { PeriodFilter } from '../transactions/PeriodFilter';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
 
 type AccountDetailPageProps = {
   account: Account;
@@ -42,14 +43,27 @@ export function AccountDetailPage({
   const details = ACCOUNT_DETAILS[account];
   const ledger = finance.ledgers[account];
 
-  // Forecast for end of month to show a reasonable scope in the cards
+  const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
+
+  const upcomingLimitDate = useMemo(() => {
+    if (upcomingPeriod.kind === 'all') return '2030-01-01';
+    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || '2030-01-01';
+    if (upcomingPeriod.kind === 'end-of-month') {
+      const [y, m] = finance.today.split('-').map(Number);
+      const lastDay = new Date(y, m, 0).getDate();
+      return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    }
+    const d = new Date(`${finance.today}T12:00:00`);
+    d.setDate(d.getDate() + upcomingPeriod.days);
+    return d.toISOString().split('T')[0];
+  }, [finance.today, upcomingPeriod]);
+
+  // Forecast used in header cards and upcoming list
+  const fullForecast = getAccountForecast(ledger, finance.today, upcomingLimitDate);
+
   const [y, m] = finance.today.split('-').map(Number);
   const lastDay = new Date(y, m, 0).getDate();
   const eom = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-  const forecast = getAccountForecast(ledger, finance.today, eom);
-
-  // Show all upcoming in the list panel
-  const fullForecast = getAccountForecast(ledger, finance.today, '2030-01-01');
 
   const dFrom = new Date(`${finance.today}T12:00:00`);
   dFrom.setDate(dFrom.getDate() - 30);
@@ -112,19 +126,19 @@ export function AccountDetailPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
-          <div className="text-2xl text-foreground">{formatCurrency(forecast.current / 100)}</div>
+          <div className="text-2xl text-foreground">{formatCurrency(fullForecast.current / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">Upcoming In</div>
-          <div className="text-2xl text-theme-green">+{formatCurrency(forecast.upcomingIn / 100)}</div>
+          <div className="text-2xl text-theme-green">+{formatCurrency(fullForecast.upcomingIn / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">Upcoming Out</div>
-          <div className="text-2xl text-theme-red">{formatCurrency(forecast.upcomingOut / 100)}</div>
+          <div className="text-2xl text-theme-red">{formatCurrency(fullForecast.upcomingOut / 100)}</div>
         </Card>
         <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
           <div className="text-sm text-theme-cyan mb-1">Projected</div>
-          <div className="text-2xl text-theme-cyan">{formatCurrency(forecast.projected / 100)}</div>
+          <div className="text-2xl text-theme-cyan">{formatCurrency(fullForecast.projected / 100)}</div>
         </Card>
       </div>
 
@@ -135,7 +149,12 @@ export function AccountDetailPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <Card className="p-6 bg-foreground/5 border-border">
-          <div className="text-xl text-foreground mb-4">Upcoming</div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+            <div className="text-xl text-foreground">Upcoming</div>
+            <div>
+              <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
+            </div>
+          </div>
           <UpcomingList upcoming={fullForecast.upcoming} currentBalance={fullForecast.current} variant="full" />
         </Card>
         <CardStatementsPanel account={account} statements={finance.statements} />
