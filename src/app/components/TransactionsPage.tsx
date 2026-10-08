@@ -1,38 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { TransactionDialog, EditingTarget } from './TransactionDialog';
 import { TransactionsMonthTable } from './transactions/TransactionsMonthTable';
 import { PeriodFilter } from './transactions/PeriodFilter';
 import { TypeFilter } from './transactions/TypeFilter';
 import { DirectionFilter } from './transactions/DirectionFilter';
 import { PaymentFilter } from './transactions/PaymentFilter';
 import {
-  buildTransferLegs,
-  createTransactionId,
-  findTransferLegs,
-  formatTransactionDate,
   resolvePeriodRange,
   sortTransactionsDescending,
   type PeriodFilter as PeriodFilterType,
   type Transaction,
   type TransactionDirection,
   type TransactionType,
-  type TransactionDraft,
   type PaymentMethod,
 } from '../data/transactions';
-import { buildInstallments, findInstallmentSeries } from '../data/installments';
+import { TransactionDialogs } from './transactions/TransactionDialogs';
+import { useTransactionActions } from '../hooks/useTransactionActions';
 
 type TransactionsPageProps = {
   transactions: Transaction[];
@@ -46,9 +31,18 @@ export function TransactionsPage({ transactions, defaultMonth, onTransactionsCha
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
   const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editingTarget,
+    setEditingTarget,
+    deleteTarget,
+    setDeleteTarget,
+    openAddDialog,
+    openEditDialog,
+    saveTransaction,
+    deleteTransaction,
+  } = useTransactionActions(transactions, onTransactionsChange);
 
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period);
@@ -84,89 +78,6 @@ export function TransactionsPage({ transactions, defaultMonth, onTransactionsCha
     setSelectedTypes([]);
     setDirection('all');
     setSelectedPayments([]);
-  }
-
-  function openAddDialog() {
-    setEditingTarget(null);
-    setDialogOpen(true);
-  }
-
-  function openEditDialog(transaction: Transaction) {
-    const legs = findTransferLegs(transactions, transaction);
-    const series = findInstallmentSeries(transactions, transaction);
-    if (legs) {
-      setEditingTarget({ kind: 'transfer', outgoing: legs.outgoing, incoming: legs.incoming });
-    } else if (series) {
-      setEditingTarget({ kind: 'installments', series });
-    } else {
-      setEditingTarget({ kind: 'single', transaction });
-    }
-    setDialogOpen(true);
-  }
-
-  function saveTransaction(draft: TransactionDraft) {
-    let nextTransactions = [...transactions];
-    let existingIds: string[] = [];
-    let groupId = createTransactionId();
-    let transferId = createTransactionId();
-
-    // Remove existing if editing
-    if (editingTarget) {
-      if (editingTarget.kind === 'single') {
-        existingIds = [editingTarget.transaction.id];
-        nextTransactions = nextTransactions.filter(t => t.id !== editingTarget.transaction.id);
-      } else if (editingTarget.kind === 'transfer') {
-        existingIds = [editingTarget.outgoing.id, editingTarget.incoming.id];
-        transferId = editingTarget.outgoing.transferId!;
-        nextTransactions = nextTransactions.filter(t => t.transferId !== transferId);
-      } else if (editingTarget.kind === 'installments') {
-        existingIds = editingTarget.series.map(t => t.id);
-        groupId = editingTarget.series[0].installment!.groupId;
-        nextTransactions = nextTransactions.filter(t => t.installment?.groupId !== groupId);
-      }
-    }
-
-    if (draft.kind === 'single') {
-      const id = existingIds[0] ?? createTransactionId();
-      nextTransactions.push({ ...draft.transaction, id });
-    } else if (draft.kind === 'transfer') {
-      const ids: [string, string] = [existingIds[0] ?? createTransactionId(), existingIds[1] ?? createTransactionId()];
-      const legs = buildTransferLegs(draft, transferId, ids);
-      nextTransactions.push(legs[0], legs[1]);
-    } else if (draft.kind === 'installments') {
-      // Safety net: check if payment method is still credit card.
-      // Handled partly by the dialog, but let's ensure it here.
-      if (draft.transaction.paymentMethod !== 'Credit card') {
-        const id = existingIds[0] ?? createTransactionId();
-        nextTransactions.push({
-          ...draft.transaction,
-          id,
-          date: draft.firstDate,
-          value: draft.totalValue,
-        });
-      } else {
-        const ids = Array.from({ length: draft.count }, (_, i) => existingIds[i] ?? createTransactionId());
-        const newInstallments = buildInstallments(draft, groupId, ids);
-        nextTransactions.push(...newInstallments);
-      }
-    }
-
-    onTransactionsChange(nextTransactions);
-    setDialogOpen(false);
-    setEditingTarget(null);
-  }
-
-  function deleteTransaction() {
-    if (!deleteTarget) return;
-
-    if (deleteTarget.transferId) {
-      onTransactionsChange(transactions.filter(t => t.transferId !== deleteTarget.transferId));
-    } else if (deleteTarget.installment) {
-      onTransactionsChange(transactions.filter(t => t.installment?.groupId !== deleteTarget.installment!.groupId));
-    } else {
-      onTransactionsChange(transactions.filter(t => t.id !== deleteTarget.id));
-    }
-    setDeleteTarget(null);
   }
 
   return (
@@ -233,49 +144,17 @@ export function TransactionsPage({ transactions, defaultMonth, onTransactionsCha
         )}
       </Card>
 
-      <TransactionDialog
-        open={dialogOpen}
-        editing={editingTarget}
+      <TransactionDialogs
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        editingTarget={editingTarget}
+        setEditingTarget={setEditingTarget}
+        deleteTarget={deleteTarget}
+        setDeleteTarget={setDeleteTarget}
         defaultDate={defaultMonth.to}
-        onOpenChange={open => {
-          setDialogOpen(open);
-          if (!open) setEditingTarget(null);
-        }}
         onSave={saveTransaction}
+        onDelete={deleteTransaction}
       />
-
-      <AlertDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={open => {
-          if (!open) setDeleteTarget(null);
-        }}
-      >
-        <AlertDialogContent className="bg-popover border-border text-foreground">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Exclude transaction?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {deleteTarget
-                ? deleteTarget.transferId
-                  ? `Both sides of this transfer will be removed.`
-                  : deleteTarget.installment
-                    ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
-                    : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
-                : 'This transaction will be removed for this session.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={deleteTransaction}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Exclude transaction
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

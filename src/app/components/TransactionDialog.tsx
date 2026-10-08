@@ -33,19 +33,27 @@ type TransactionDialogProps = {
   open: boolean;
   editing: EditingTarget | null;
   defaultDate: Date;
+  defaultAccount?: Account;
   onOpenChange: (open: boolean) => void;
   onSave: (draft: TransactionDraft) => void;
 };
 
 type FormErrors = Partial<Record<'description' | 'value' | 'date' | 'banks', string>>;
 
-export function TransactionDialog({ open, editing, defaultDate, onOpenChange, onSave }: TransactionDialogProps) {
+export function TransactionDialog({
+  open,
+  editing,
+  defaultDate,
+  defaultAccount,
+  onOpenChange,
+  onSave,
+}: TransactionDialogProps) {
   const [mode, setMode] = useState<DialogMode>('expense');
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
   const [date, setDate] = useState<Date | undefined>(defaultDate);
   const [type, setType] = useState<TransactionType>('Shopping');
-  const [account, setAccount] = useState<Account>('Bank of America');
+  const [account, setAccount] = useState<Account>(defaultAccount || 'Bank of America');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Credit card');
   const [installments, setInstallments] = useState<number | ''>(1);
 

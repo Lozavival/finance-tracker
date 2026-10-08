@@ -10,7 +10,8 @@ export const EXPENSE_TYPES = [
 
 export const TRANSACTION_TYPES = [...INCOME_TYPES, ...EXPENSE_TYPES] as const;
 
-export const ACCOUNTS = ['Bank of America', 'Citigroup', 'Goldman Sachs'] as const;
+import { ACCOUNT_DETAILS } from './accounts';
+export const ACCOUNTS = Object.keys(ACCOUNT_DETAILS) as any as ['Bank of America', 'Citigroup', 'Goldman Sachs'];
 
 export const TRANSACTION_DIRECTIONS = ['income', 'expense'] as const;
 
@@ -140,109 +141,6 @@ export const CATEGORY_STYLES: Record<TransactionType, { color: string; dotClassN
     dotClassName: 'bg-indigo-400',
   },
 };
-
-export const SEEDED_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    date: '2025-11-05',
-    description: 'Amazon Purchase',
-    type: 'Shopping',
-    direction: 'expense',
-    value: 124.99,
-    account: 'Bank of America',
-    paymentMethod: 'Credit card',
-  },
-  {
-    id: '2',
-    date: '2025-11-04',
-    description: 'Salary Deposit',
-    type: 'Income',
-    direction: 'income',
-    value: 5200,
-    account: 'Bank of America',
-  },
-  {
-    id: '3',
-    date: '2025-11-03',
-    description: 'Netflix Subscription',
-    type: 'Entertainment',
-    direction: 'expense',
-    value: 15.99,
-    account: 'Citigroup',
-    paymentMethod: 'Credit card',
-  },
-  {
-    id: '4',
-    date: '2025-11-02',
-    description: 'Uber Ride',
-    type: 'Transportation',
-    direction: 'expense',
-    value: 28.5,
-    account: 'Bank of America',
-    paymentMethod: 'Debit card',
-  },
-  {
-    id: '5',
-    date: '2025-11-01',
-    description: 'Refund - Returns',
-    type: 'Refund',
-    direction: 'income',
-    value: 89.99,
-    account: 'Bank of America',
-  },
-  {
-    id: '6',
-    date: '2025-10-31',
-    description: 'International Transfer',
-    type: 'Transfer',
-    direction: 'expense',
-    value: 1500,
-    account: 'Goldman Sachs',
-    paymentMethod: 'Bank transfer',
-  },
-  {
-    id: '7',
-    date: '2025-10-30',
-    description: 'Starbucks Coffee',
-    type: 'Food & Dining',
-    direction: 'expense',
-    value: 6.75,
-    account: 'Bank of America',
-    paymentMethod: 'PIX',
-  },
-  {
-    id: '8',
-    date: '2025-10-29',
-    description: 'Electric Bill',
-    type: 'Bills',
-    direction: 'expense',
-    value: 132,
-    account: 'Citigroup',
-    paymentMethod: 'Bank transfer',
-  },
-  {
-    id: '9',
-    date: '2025-10-28',
-    description: 'MacBook Pro M3',
-    type: 'Shopping',
-    direction: 'expense',
-    value: 199.99,
-    account: 'Goldman Sachs',
-    paymentMethod: 'Credit card',
-    installment: { groupId: 'seed-macbook', number: 1, total: 10 },
-  },
-  {
-    id: '10',
-    date: '2025-11-28',
-    description: 'MacBook Pro M3',
-    type: 'Shopping',
-    direction: 'expense',
-    value: 199.99,
-    account: 'Goldman Sachs',
-    paymentMethod: 'Credit card',
-    installment: { groupId: 'seed-macbook', number: 2, total: 10 },
-  },
-];
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',

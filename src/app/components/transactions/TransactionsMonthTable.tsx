@@ -18,7 +18,12 @@ type TransactionsMonthTableProps = {
   onDelete: (transaction: Transaction) => void;
 };
 
-export function TransactionsMonthTable({ transactions, onEdit, onDelete }: TransactionsMonthTableProps) {
+export function TransactionsMonthTable({
+  transactions,
+  onEdit,
+  onDelete,
+  showAccount = true,
+}: TransactionsMonthTableProps & { showAccount?: boolean }) {
   const groups = groupTransactionsByMonth(transactions);
 
   if (transactions.length === 0) {
@@ -36,7 +41,7 @@ export function TransactionsMonthTable({ transactions, onEdit, onDelete }: Trans
             <TableHead className="text-muted-foreground">Date</TableHead>
             <TableHead className="text-muted-foreground">Description</TableHead>
             <TableHead className="text-muted-foreground">Type</TableHead>
-            <TableHead className="text-muted-foreground">Account</TableHead>
+            {showAccount && <TableHead className="text-muted-foreground">Account</TableHead>}
             <TableHead className="text-muted-foreground">Payment</TableHead>
             <TableHead className="text-muted-foreground text-right">Value</TableHead>
             <TableHead>
@@ -48,7 +53,10 @@ export function TransactionsMonthTable({ transactions, onEdit, onDelete }: Trans
           {groups.map(group => (
             <React.Fragment key={group.key}>
               <TableRow className="bg-foreground/5 hover:bg-foreground/5">
-                <TableCell colSpan={7} className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                <TableCell
+                  colSpan={showAccount ? 7 : 6}
+                  className="text-xs uppercase tracking-wider text-muted-foreground font-medium"
+                >
                   {group.label}
                 </TableCell>
               </TableRow>
@@ -74,7 +82,9 @@ export function TransactionsMonthTable({ transactions, onEdit, onDelete }: Trans
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.type}</TableCell>
-                    <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.account}</TableCell>
+                    {showAccount && (
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.account}</TableCell>
+                    )}
                     <TableCell className="text-muted-foreground whitespace-nowrap">
                       {transaction.paymentMethod ?? '—'}
                     </TableCell>
