@@ -1,14 +1,12 @@
-import { formatFull } from '../data/dates';
 import { useEffect, useState, type FormEvent } from 'react';
-import { CalendarIcon, Check, Plus } from 'lucide-react';
-import { Calendar } from './ui/calendar';
+import { Check, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { DirectionToggle, DialogMode } from './transactions/DirectionToggle';
 import { OptionSelect } from './transactions/OptionSelect';
+import { DateField } from './transactions/DateField';
 import { InstallmentsField } from './transactions/InstallmentsField';
 import {
   ACCOUNTS,
@@ -235,22 +233,13 @@ export function TransactionDialog({
 
               <div className="space-y-2">
                 <Label className="text-foreground">{effectiveInstallments > 1 ? 'First installment' : 'Date'}</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      aria-invalid={Boolean(errors.date)}
-                      className="h-11 w-full justify-start border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? formatFull(date) : 'Choose date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto border-border bg-popover p-0 text-foreground">
-                    <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <DateField
+                  placeholder="Choose date"
+                  value={date}
+                  onChange={d => setDate(d)}
+                  hasError={Boolean(errors.date)}
+                  className="h-11"
+                />
                 {errors.date && <div className="text-red-400 text-sm">{errors.date}</div>}
               </div>
 

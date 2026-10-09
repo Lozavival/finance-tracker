@@ -1,9 +1,9 @@
-import { formatMonthYear, formatFull } from '../../data/dates';
+import { formatMonthYear, formatFull, getToday } from '../../data/dates';
 import { formatShort } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
 import { type Account, formatCurrency } from '../../data/transactions';
 import { Card } from '../ui/card';
-import { CreditCard, CalendarIcon } from 'lucide-react';
+import { CreditCard, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
@@ -12,15 +12,22 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
   const usage = getCardUsage(statements, account);
   const accountStatements = statements.filter(s => s.account === account).reverse();
 
-  // Set the default selected statement to the open one, or the latest closed one
-  const defaultStmt = accountStatements.find(s => s.status === 'open') || accountStatements[0];
-  const [selectedId, setSelectedId] = useState<string | undefined>(defaultStmt?.id);
+  function getDefaultStatement(accStmts: CardStatement[]) {
+    const todayTime = getToday().getTime();
+    return (
+      accStmts.find(s => s.periodStart.getTime() <= todayTime && s.closingDate.getTime() >= todayTime) ||
+      accStmts.find(s => s.status === 'open' && s.periodStart.getTime() <= todayTime) ||
+      accStmts.find(s => s.status === 'open') ||
+      accStmts[0]
+    );
+  }
+
+  const [selectedId, setSelectedId] = useState<string | undefined>(getDefaultStatement(accountStatements)?.id);
 
   // If the account changes, we need to update the selection
   useEffect(() => {
     const accStmts = statements.filter(s => s.account === account).reverse();
-    const def = accStmts.find(s => s.status === 'open') || accStmts[0];
-    setSelectedId(def?.id);
+    setSelectedId(getDefaultStatement(accStmts)?.id);
   }, [account, statements]);
 
   const statementsByYear = useMemo(() => {
@@ -37,7 +44,9 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
 
   if (usage.limit === 0 || accountStatements.length === 0) return null;
 
-  const stmt = accountStatements.find(s => s.id === selectedId) || accountStatements[0];
+  const stmtIndex = accountStatements.findIndex(s => s.id === selectedId);
+  const currentIndex = stmtIndex === -1 ? 0 : stmtIndex;
+  const stmt = accountStatements[currentIndex];
 
   return (
     <Card className="p-6 bg-foreground/5 border-border">
@@ -46,12 +55,22 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
           <CreditCard className="w-5 h-5 text-theme-cyan" />
           <div className="text-xl text-foreground">Credit Card Bills</div>
         </div>
-        <div className="w-[200px]">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 bg-foreground/5 border-border text-foreground hover:bg-foreground/10 flex-shrink-0"
+            disabled={currentIndex >= accountStatements.length - 1}
+            onClick={() => setSelectedId(accountStatements[currentIndex + 1].id)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-full justify-between bg-foreground/5 border-border text-foreground hover:bg-foreground/10"
+                className="w-[160px] h-9 justify-between bg-foreground/5 border-border text-foreground hover:bg-foreground/10"
               >
                 {formatMonthYear(stmt.closingDate)}
                 <CalendarIcon className="h-4 w-4 opacity-50" />
@@ -104,6 +123,16 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
               </div>
             </PopoverContent>
           </Popover>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 bg-foreground/5 border-border text-foreground hover:bg-foreground/10 flex-shrink-0"
+            disabled={currentIndex <= 0}
+            onClick={() => setSelectedId(accountStatements[currentIndex - 1].id)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ import { SummaryCards } from './components/SummaryCards';
 import { AnalyticsChart } from './components/AnalyticsChart';
 import { TransactionsTable } from './components/TransactionsTable';
 import { TransactionsPage } from './components/TransactionsPage';
-import { getLatestMonthRange, type Transaction, type Account } from './data/transactions';
+import { type Transaction, type Account } from './data/transactions';
 import { AccountsPage } from './components/accounts/AccountsPage';
 import { AccountDetailPage } from './components/accounts/AccountDetailPage';
 
@@ -18,7 +18,6 @@ export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
-  const defaultMonth = useMemo(() => getLatestMonthRange(SEEDED_TRANSACTIONS), []);
   const today = useMemo(() => getToday(), []);
 
   const finance = useMemo(() => {
@@ -41,11 +40,7 @@ export default function App() {
       <div className="ml-64 mt-16 relative">
         <div className="p-8">
           {activePage === 'transactions' ? (
-            <TransactionsPage
-              transactions={transactions}
-              defaultMonth={defaultMonth}
-              onTransactionsChange={setTransactions}
-            />
+            <TransactionsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : activePage === 'accounts' ? (
             selectedAccount ? (
               <AccountDetailPage

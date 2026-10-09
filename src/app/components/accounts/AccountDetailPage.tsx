@@ -1,3 +1,4 @@
+import { getToday } from '../../data/dates';
 import { type Account } from '../../data/transactions';
 import { type CardStatement } from '../../data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '../../data/ledger';
@@ -187,7 +188,7 @@ export function AccountDetailPage({
         setEditingTarget={setEditingTarget}
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
-        defaultDate={new Date()}
+        defaultDate={getToday()}
         defaultAccount={account}
         onSave={saveTransaction}
         onDelete={deleteTransaction}

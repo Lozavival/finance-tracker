@@ -1,3 +1,4 @@
+import { getToday } from '../data/dates';
 import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
@@ -22,11 +23,10 @@ import { useTransactionActions } from '../hooks/useTransactionActions';
 
 type TransactionsPageProps = {
   transactions: Transaction[];
-  defaultMonth: { from: Date; to: Date };
   onTransactionsChange: (transactions: Transaction[]) => void;
 };
 
-export function TransactionsPage({ transactions, defaultMonth, onTransactionsChange }: TransactionsPageProps) {
+export function TransactionsPage({ transactions, onTransactionsChange }: TransactionsPageProps) {
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
   const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
@@ -153,7 +153,7 @@ export function TransactionsPage({ transactions, defaultMonth, onTransactionsCha
         setEditingTarget={setEditingTarget}
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
-        defaultDate={defaultMonth.to}
+        defaultDate={getToday()}
         onSave={saveTransaction}
         onDelete={deleteTransaction}
       />
