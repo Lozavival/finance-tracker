@@ -1,3 +1,4 @@
+import { formatFull } from '../data/dates';
 import { useEffect, useState, type FormEvent } from 'react';
 import { CalendarIcon, Check, Plus } from 'lucide-react';
 import { Calendar } from './ui/calendar';
@@ -14,9 +15,6 @@ import {
   EXPENSE_TYPES,
   INCOME_TYPES,
   PAYMENT_METHODS,
-  formatTransactionDate,
-  parseTransactionDate,
-  toTransactionDate,
   type Account,
   type Transaction,
   type TransactionType,
@@ -87,7 +85,7 @@ export function TransactionDialog({
     if (editing.kind === 'transfer') {
       setMode('transfer');
       setValue(String(editing.outgoing.value));
-      setDate(parseTransactionDate(editing.outgoing.date));
+      setDate(editing.outgoing.date);
       setFromAccount(editing.outgoing.account);
       setToAccount(editing.incoming.account);
       // reset others
@@ -102,7 +100,7 @@ export function TransactionDialog({
       setDescription(first.description);
       const total = editing.series.reduce((sum, tx) => sum + tx.value, 0);
       setValue(total.toFixed(2));
-      setDate(parseTransactionDate(first.date));
+      setDate(first.date);
       setType(first.type);
       setAccount(first.account);
       if (first.paymentMethod) setPaymentMethod(first.paymentMethod);
@@ -114,7 +112,7 @@ export function TransactionDialog({
       setMode(tx.direction);
       setDescription(tx.description);
       setValue(String(tx.value));
-      setDate(parseTransactionDate(tx.date));
+      setDate(tx.date);
       setType(tx.type);
       setAccount(tx.account);
       if (tx.paymentMethod) setPaymentMethod(tx.paymentMethod);
@@ -161,7 +159,7 @@ export function TransactionDialog({
     if (mode === 'transfer') {
       onSave({
         kind: 'transfer',
-        date: toTransactionDate(date),
+        date,
         value: normalizedValue,
         fromAccount,
         toAccount,
@@ -176,7 +174,7 @@ export function TransactionDialog({
           account,
           paymentMethod,
         },
-        firstDate: toTransactionDate(date),
+        firstDate: date,
         totalValue: normalizedValue,
         count: effectiveInstallments,
       });
@@ -186,7 +184,7 @@ export function TransactionDialog({
         transaction: {
           description: normalizedDescription,
           value: normalizedValue,
-          date: toTransactionDate(date),
+          date,
           direction: mode,
           type,
           account,
@@ -246,7 +244,7 @@ export function TransactionDialog({
                       className="h-11 w-full justify-start border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? formatTransactionDate(toTransactionDate(date)) : 'Choose date'}
+                      {date ? formatFull(date) : 'Choose date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto border-border bg-popover p-0 text-foreground">

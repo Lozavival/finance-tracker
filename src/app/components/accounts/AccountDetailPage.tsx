@@ -20,13 +20,14 @@ import { TransactionDialogs } from '../transactions/TransactionDialogs';
 import { useMemo, useState } from 'react';
 import { PeriodFilter } from '../transactions/PeriodFilter';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
+import { parseLocalDate } from '../../data/dates';
 
 type AccountDetailPageProps = {
   account: Account;
   finance: {
     statements: CardStatement[];
     ledgers: Record<Account, AccountLedger>;
-    today: string;
+    today: Date;
   };
   transactions: any[];
   onTransactionsChange: (txs: any[]) => void;
@@ -46,29 +47,30 @@ export function AccountDetailPage({
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
 
   const upcomingLimitDate = useMemo(() => {
-    if (upcomingPeriod.kind === 'all') return '2030-01-01';
-    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || '2030-01-01';
+    if (upcomingPeriod.kind === 'all') return parseLocalDate('2030-01-01');
+    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || parseLocalDate('2030-01-01');
     if (upcomingPeriod.kind === 'end-of-month') {
-      const [y, m] = finance.today.split('-').map(Number);
+      const y = finance.today.getFullYear();
+      const m = finance.today.getMonth() + 1;
       const lastDay = new Date(y, m, 0).getDate();
-      return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
     }
-    const d = new Date(`${finance.today}T12:00:00`);
+    const d = new Date(finance.today);
     d.setDate(d.getDate() + upcomingPeriod.days);
-    return d.toISOString().split('T')[0];
+    return d;
   }, [finance.today, upcomingPeriod]);
 
   // Forecast used in header cards and upcoming list
   const fullForecast = getAccountForecast(ledger, finance.today, upcomingLimitDate);
 
-  const [y, m] = finance.today.split('-').map(Number);
+  const y = finance.today.getFullYear();
+  const m = finance.today.getMonth() + 1;
   const lastDay = new Date(y, m, 0).getDate();
-  const eom = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const eom = new Date(y, m - 1, lastDay, 0, 0, 0, 0);
 
-  const dFrom = new Date(`${finance.today}T12:00:00`);
+  const dFrom = new Date(finance.today);
   dFrom.setDate(dFrom.getDate() - 30);
-  const fromStr = dFrom.toISOString().split('T')[0];
-  const series = buildDailySeries(ledger, fromStr, eom, finance.today);
+  const series = buildDailySeries(ledger, dFrom, eom, finance.today);
 
   const {
     dialogOpen,
@@ -85,19 +87,22 @@ export function AccountDetailPage({
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
 
   const visibleTransactions = useMemo(() => {
-    const periodRange = resolvePeriodRange(period);
+    const periodRange = resolvePeriodRange(period, finance.today);
     const filtered = transactions
       .filter(t => t.account === account)
       .filter(transaction => {
         if (periodRange) {
-          if (transaction.date < periodRange.from || transaction.date > periodRange.to) {
+          if (
+            transaction.date.getTime() < periodRange.from.getTime() ||
+            transaction.date.getTime() > periodRange.to.getTime()
+          ) {
             return false;
           }
         }
         return true;
       });
     return sortTransactionsDescending(filtered);
-  }, [period, transactions, account]);
+  }, [period, transactions, account, finance.today]);
 
   return (
     <div className="space-y-8">

@@ -1,3 +1,5 @@
+import { formatMonthYear, formatFull } from '../../data/dates';
+import { formatShort } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
 import { type Account, formatCurrency } from '../../data/transactions';
 import { Card } from '../ui/card';
@@ -24,7 +26,7 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
   const statementsByYear = useMemo(() => {
     const grouped: Record<number, CardStatement[]> = {};
     accountStatements.forEach(s => {
-      const y = new Date(s.closingDate).getFullYear();
+      const y = s.closingDate.getFullYear();
       if (!grouped[y]) grouped[y] = [];
       grouped[y].push(s);
     });
@@ -51,7 +53,7 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
                 variant="outline"
                 className="w-full justify-between bg-foreground/5 border-border text-foreground hover:bg-foreground/10"
               >
-                {new Date(stmt.closingDate).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                {formatMonthYear(stmt.closingDate)}
                 <CalendarIcon className="h-4 w-4 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -62,7 +64,7 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
                   .map(([year, stmts]) => {
                     const stmtsByMonth = stmts.reduce(
                       (acc, s) => {
-                        const m = new Date(s.closingDate).getMonth();
+                        const m = s.closingDate.getMonth();
                         acc[m] = s;
                         return acc;
                       },
@@ -123,14 +125,9 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
       <div className="p-4 border border-border/50 rounded-lg">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <div className="text-foreground font-medium mb-1">
-              {new Date(stmt.closingDate).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
-            </div>
+            <div className="text-foreground font-medium mb-1">{formatMonthYear(stmt.closingDate)}</div>
             <div className="text-xs text-muted-foreground">
-              Closes{' '}
-              {new Date(stmt.closingDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}{' '}
-              • Due{' '}
-              {new Date(stmt.dueDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              Closes {formatFull(stmt.closingDate)} • Due {formatFull(stmt.dueDate)}
             </div>
           </div>
           <div className="text-right">
@@ -154,7 +151,7 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
             {stmt.items.map(item => (
               <div key={item.id} className="flex justify-between py-1">
                 <div className="flex min-w-0 items-center gap-3 pr-4">
-                  <span className="text-muted-foreground">{item.date}</span>
+                  <span className="text-muted-foreground">{formatShort(item.date)}</span>
                   <span className="truncate text-muted-foreground">{item.description}</span>
                 </div>
 

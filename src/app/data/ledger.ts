@@ -1,14 +1,14 @@
 import { type Transaction, type Account } from './transactions';
 import { type CardStatement } from './cardStatements';
 import { ACCOUNT_DETAILS } from './accounts';
-import { addDays } from './dates';
+import { addDays, formatShort } from './dates';
 
 export type CashMovementKind = 'opening' | 'transaction' | 'card-bill';
 
 export type CashMovement = {
   id: string;
   account: Account;
-  date: string;
+  date: Date;
   amount: number; // cents
   kind: CashMovementKind;
   description: string;
@@ -59,17 +59,17 @@ export function buildCashMovements(transactions: Transaction[], statements: Card
       date: stmt.dueDate,
       amount: -stmt.total,
       kind: 'card-bill',
-      description: `${stmt.cardName} — ${new Date(stmt.closingDate).toLocaleString('en-US', { month: 'short' })} bill`,
+      description: `${stmt.cardName} — ${formatShort(stmt.closingDate)} bill`,
       isTransfer: false,
       isEstimate: stmt.status === 'open',
       statementId: stmt.id,
     });
   }
 
-  return movements.filter(m => m.date >= ACCOUNT_DETAILS[m.account].openingDate);
+  return movements.filter(m => m.date.getTime() >= ACCOUNT_DETAILS[m.account].openingDate.getTime());
 }
 
-export type BalancePoint = { date: string; balance: number };
+export type BalancePoint = { date: Date; balance: number };
 
 export type AccountLedger = {
   account: Account;
@@ -84,7 +84,9 @@ export function buildLedgers(movements: CashMovement[]): Record<Account, Account
     ledgers[acc as Account] = { account: acc as Account, movements: [], points: [] };
   }
 
-  const sortedMovements = [...movements].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const sortedMovements = [...movements].sort(
+    (a, b) => a.date.getTime() - b.date.getTime() || a.id.localeCompare(b.id),
+  );
 
   for (const m of sortedMovements) {
     ledgers[m.account].movements.push(m);
@@ -92,26 +94,24 @@ export function buildLedgers(movements: CashMovement[]): Record<Account, Account
 
   for (const acc of Object.values(ledgers)) {
     let balance = 0;
-    const pointsMap = new Map<string, number>();
+    const pointsMap = new Map<number, { date: Date; balance: number }>();
     for (const m of acc.movements) {
       balance += m.amount;
-      pointsMap.set(m.date, balance);
+      pointsMap.set(m.date.getTime(), { date: m.date, balance });
     }
-    acc.points = Array.from(pointsMap.entries())
-      .map(([date, bal]) => ({ date, balance: bal }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    acc.points = Array.from(pointsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   return ledgers as Record<Account, AccountLedger>;
 }
 
-export function balanceAt(ledger: AccountLedger, date: string): number {
+export function balanceAt(ledger: AccountLedger, date: Date): number {
   let low = 0;
   let high = ledger.points.length - 1;
   let ans = 0;
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    if (ledger.points[mid].date <= date) {
+    if (ledger.points[mid].date.getTime() <= date.getTime()) {
       ans = ledger.points[mid].balance;
       low = mid + 1;
     } else {
@@ -123,14 +123,15 @@ export function balanceAt(ledger: AccountLedger, date: string): number {
 
 export type ForecastHorizon = 'end-of-month' | '30d' | '90d';
 
-export function resolveHorizonEnd(h: ForecastHorizon, today: string): string {
+export function resolveHorizonEnd(h: ForecastHorizon, today: Date): Date {
   if (h === '30d') return addDays(today, 30);
   if (h === '90d') return addDays(today, 90);
 
   // end-of-month
-  const [y, m] = today.split('-').map(Number);
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
   const lastDay = new Date(y, m, 0).getDate();
-  return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
 }
 
 export type AccountForecast = {
@@ -140,28 +141,28 @@ export type AccountForecast = {
   upcomingOut: number; // cents
   projected: number; // cents
   lowest: BalancePoint;
-  firstNegativeDate?: string;
+  firstNegativeDate?: Date;
   monthChange: number; // cents
 };
 
-export function getAccountForecast(ledger: AccountLedger, today: string, horizonEnd: string): AccountForecast {
+export function getAccountForecast(ledger: AccountLedger, today: Date, horizonEnd: Date): AccountForecast {
   const current = balanceAt(ledger, today);
-  const upcoming = ledger.movements.filter(m => m.date > today && m.date <= horizonEnd);
+  const upcoming = ledger.movements.filter(
+    m => m.date.getTime() > today.getTime() && m.date.getTime() <= horizonEnd.getTime(),
+  );
 
   let upcomingIn = 0;
   let upcomingOut = 0;
   for (const m of upcoming) {
-    if (!m.isTransfer) {
-      if (m.amount > 0) upcomingIn += m.amount;
-      else upcomingOut += m.amount;
-    }
+    if (m.amount > 0) upcomingIn += m.amount;
+    else upcomingOut += m.amount;
   }
 
   const projected = balanceAt(ledger, horizonEnd);
 
   let lowestBal = current;
   let lowestDate = today;
-  let firstNegative: string | undefined;
+  let firstNegative: Date | undefined;
 
   let runBal = current;
   for (const m of upcoming) {
@@ -175,11 +176,14 @@ export function getAccountForecast(ledger: AccountLedger, today: string, horizon
     }
   }
 
-  const [y, m] = today.split('-').map(Number);
-  let lastMonthEnd = '';
-  if (m === 1) lastMonthEnd = `${y - 1}-12-31`;
-  else
-    lastMonthEnd = `${y}-${String(m - 1).padStart(2, '0')}-${String(new Date(y, m - 1, 0).getDate()).padStart(2, '0')}`;
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  let lastMonthEnd: Date;
+  if (m === 1) lastMonthEnd = new Date(y - 1, 11, 31, 0, 0, 0, 0);
+  else {
+    const prevMonthLastDay = new Date(y, m - 1, 0).getDate();
+    lastMonthEnd = new Date(y, m - 2, prevMonthLastDay, 0, 0, 0, 0);
+  }
 
   const monthChange = current - balanceAt(ledger, lastMonthEnd);
 
@@ -195,16 +199,16 @@ export function getAccountForecast(ledger: AccountLedger, today: string, horizon
   };
 }
 
-export type DailyBalance = { date: string; actual?: number; projected?: number };
+export type DailyBalance = { date: Date; actual?: number; projected?: number };
 
-export function buildDailySeries(ledger: AccountLedger, from: string, to: string, today: string): DailyBalance[] {
+export function buildDailySeries(ledger: AccountLedger, from: Date, to: Date, today: Date): DailyBalance[] {
   const series: DailyBalance[] = [];
   let d = from;
-  while (d <= to) {
+  while (d.getTime() <= to.getTime()) {
     const bal = balanceAt(ledger, d);
-    if (d <= today && d >= today) {
+    if (d.getTime() === today.getTime()) {
       series.push({ date: d, actual: bal, projected: bal });
-    } else if (d < today) {
+    } else if (d.getTime() < today.getTime()) {
       series.push({ date: d, actual: bal });
     } else {
       series.push({ date: d, projected: bal });

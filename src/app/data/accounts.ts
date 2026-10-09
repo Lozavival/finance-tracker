@@ -1,4 +1,5 @@
 import { type Account } from './transactions';
+import { parseLocalDate } from './dates';
 
 export type AccountKind = 'Checking' | 'Savings';
 
@@ -13,7 +14,7 @@ export type AccountDetails = {
   name: Account;
   kind: AccountKind;
   openingBalance: number; // cents
-  openingDate: string;
+  openingDate: Date;
   initials: string;
   color: string;
   card?: CreditCardConfig;
@@ -24,7 +25,7 @@ export const ACCOUNT_DETAILS: Record<Account, AccountDetails> = {
     name: 'Bank of America',
     kind: 'Checking',
     openingBalance: 320000, // $3200
-    openingDate: '2025-01-01',
+    openingDate: parseLocalDate('2025-01-01'),
     initials: 'BA',
     color: 'var(--color-blue-500)',
     card: {
@@ -38,7 +39,7 @@ export const ACCOUNT_DETAILS: Record<Account, AccountDetails> = {
     name: 'Citigroup',
     kind: 'Checking',
     openingBalance: 120000, // $1200
-    openingDate: '2025-01-01',
+    openingDate: parseLocalDate('2025-01-01'),
     initials: 'CI',
     color: 'var(--color-cyan-500)',
     card: {
@@ -52,7 +53,7 @@ export const ACCOUNT_DETAILS: Record<Account, AccountDetails> = {
     name: 'Goldman Sachs',
     kind: 'Savings',
     openingBalance: 1800000, // $18000
-    openingDate: '2025-01-01',
+    openingDate: parseLocalDate('2025-01-01'),
     initials: 'GS',
     color: 'var(--color-slate-500)',
   },

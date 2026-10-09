@@ -11,6 +11,8 @@ export const EXPENSE_TYPES = [
 export const TRANSACTION_TYPES = [...INCOME_TYPES, ...EXPENSE_TYPES] as const;
 
 import { ACCOUNT_DETAILS } from './accounts';
+import { parseLocalDate, getToday, formatShort, formatMonthYear } from './dates';
+
 export const ACCOUNTS = Object.keys(ACCOUNT_DETAILS) as any as ['Bank of America', 'Citigroup', 'Goldman Sachs'];
 
 export const TRANSACTION_DIRECTIONS = ['income', 'expense'] as const;
@@ -30,7 +32,7 @@ export type InstallmentInfo = {
 
 export type Transaction = {
   id: string;
-  date: string;
+  date: Date;
   description: string;
   type: TransactionType;
   direction: TransactionDirection;
@@ -45,7 +47,7 @@ export type TransactionDraft =
   | { kind: 'single'; transaction: Omit<Transaction, 'id'> }
   | {
       kind: 'transfer';
-      date: string;
+      date: Date;
       value: number;
       fromAccount: Account;
       toAccount: Account;
@@ -53,7 +55,7 @@ export type TransactionDraft =
   | {
       kind: 'installments';
       transaction: Omit<Transaction, 'id' | 'date' | 'value' | 'installment'>;
-      firstDate: string;
+      firstDate: Date;
       totalValue: number;
       count: number;
     };
@@ -147,27 +149,6 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 });
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-});
-
-export function parseTransactionDate(date: string) {
-  return new Date(`${date}T00:00:00`);
-}
-
-export function toTransactionDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export function formatTransactionDate(date: string) {
-  return dateFormatter.format(parseTransactionDate(date));
-}
-
 export function formatCurrency(amount: number) {
   return currencyFormatter.format(amount);
 }
@@ -179,18 +160,17 @@ export function formatSignedValue(transaction: Transaction) {
 
 export function getLatestMonthRange(transactions: Transaction[]) {
   const latestDate = transactions.reduce(
-    (latest, transaction) => (transaction.date > latest ? transaction.date : latest),
-    transactions[0]?.date ?? toTransactionDate(new Date()),
+    (latest, transaction) => (transaction.date.getTime() > latest.getTime() ? transaction.date : latest),
+    transactions[0]?.date ?? getToday(),
   );
-  const date = parseTransactionDate(latestDate);
   return {
-    from: new Date(date.getFullYear(), date.getMonth(), 1),
-    to: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+    from: new Date(latestDate.getFullYear(), latestDate.getMonth(), 1, 0, 0, 0, 0),
+    to: new Date(latestDate.getFullYear(), latestDate.getMonth() + 1, 0, 0, 0, 0, 0),
   };
 }
 
 export function sortTransactionsAscending(transactions: Transaction[]) {
-  return [...transactions].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  return [...transactions].sort((a, b) => a.date.getTime() - b.date.getTime() || a.id.localeCompare(b.id));
 }
 
 export function aggregateExpensesByCategory(transactions: Transaction[]): CategoryTotal[] {
@@ -222,15 +202,15 @@ export type PeriodFilter =
   | { kind: 'up-to-today' }
   | { kind: 'all' }
   | { kind: 'preset'; days: (typeof PERIOD_PRESETS)[number] }
-  | { kind: 'custom'; from: string; to: string };
+  | { kind: 'custom'; from: Date; to: Date };
 
-export function resolvePeriodRange(period: PeriodFilter, today = new Date()) {
+export function resolvePeriodRange(period: PeriodFilter, today = getToday()) {
   if (period.kind === 'all') return null;
 
   if (period.kind === 'up-to-today') {
     return {
-      from: '1970-01-01',
-      to: toTransactionDate(today),
+      from: parseLocalDate('1970-01-01'),
+      to: today,
     };
   }
 
@@ -238,8 +218,8 @@ export function resolvePeriodRange(period: PeriodFilter, today = new Date()) {
     const fromDate = new Date(today);
     fromDate.setDate(today.getDate() - (period.days - 1));
     return {
-      from: toTransactionDate(fromDate),
-      to: toTransactionDate(today),
+      from: fromDate,
+      to: today,
     };
   }
 
@@ -247,21 +227,16 @@ export function resolvePeriodRange(period: PeriodFilter, today = new Date()) {
 }
 
 export function sortTransactionsDescending(transactions: Transaction[]) {
-  return [...transactions].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  return [...transactions].sort((a, b) => b.date.getTime() - a.date.getTime() || b.id.localeCompare(a.id));
 }
 
 export function groupTransactionsByMonth(transactions: Transaction[]) {
   const groups = new Map<string, { key: string; label: string; transactions: Transaction[] }>();
 
   for (const transaction of transactions) {
-    // extract YYYY-MM
-    const key = transaction.date.slice(0, 7);
+    const key = `${transaction.date.getFullYear()}-${String(transaction.date.getMonth() + 1).padStart(2, '0')}`;
     if (!groups.has(key)) {
-      const date = parseTransactionDate(transaction.date);
-      const label = new Intl.DateTimeFormat('en-US', {
-        month: 'long',
-        year: 'numeric',
-      }).format(date);
+      const label = formatMonthYear(transaction.date);
       groups.set(key, { key, label, transactions: [] });
     }
     groups.get(key)!.transactions.push(transaction);
@@ -270,26 +245,8 @@ export function groupTransactionsByMonth(transactions: Transaction[]) {
   return Array.from(groups.values());
 }
 
-export function formatRowDate(dateString: string) {
-  const date = parseTransactionDate(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
-}
-
-export function formatPeriodLabel(from: Date | string, to: Date | string) {
-  const fromDate = typeof from === 'string' ? parseTransactionDate(from) : from;
-  const toDate = typeof to === 'string' ? parseTransactionDate(to) : to;
-
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-  return `${formatter.format(fromDate)} – ${formatter.format(toDate)}`;
+export function formatPeriodLabel(from: Date, to: Date) {
+  return `${formatShort(from)} – ${formatShort(to)}`;
 }
 
 export function groupToAccrualBasis(transactions: Transaction[]): Transaction[] {

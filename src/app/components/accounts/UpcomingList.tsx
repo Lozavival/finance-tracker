@@ -1,5 +1,6 @@
 import { type CashMovement } from '../../data/ledger';
 import { formatCurrency } from '../../data/transactions';
+import { formatShort } from '../../data/dates';
 
 export function UpcomingList({
   upcoming,
@@ -19,7 +20,7 @@ export function UpcomingList({
     <div className="space-y-2">
       {items.map((m, i) => {
         runningBalance += m.amount;
-        const dateStr = new Date(m.date).toLocaleString('en-US', { month: 'short', day: 'numeric' });
+        const dateStr = formatShort(m.date);
 
         if (variant === 'compact') {
           return (

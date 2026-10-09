@@ -1,6 +1,6 @@
 import { type Transaction, type Account } from './transactions';
-import { clampedDate } from './dates';
 import { type CreditCardConfig, ACCOUNT_DETAILS } from './accounts';
+import { toLocalDateString } from './dates';
 
 export type StatementStatus = 'open' | 'closed' | 'paid';
 
@@ -8,9 +8,9 @@ export type CardStatement = {
   id: string;
   account: Account;
   cardName: string;
-  periodStart: string;
-  closingDate: string;
-  dueDate: string;
+  periodStart: Date;
+  closingDate: Date;
+  dueDate: Date;
   items: Transaction[];
   charges: number; // cents
   credits: number; // cents
@@ -18,8 +18,10 @@ export type CardStatement = {
   status: StatementStatus;
 };
 
-export function getStatementDates(card: CreditCardConfig, purchaseDate: string) {
-  const [y, m, d] = purchaseDate.split('-').map(Number);
+export function getStatementDates(card: CreditCardConfig, purchaseDate: Date) {
+  const y = purchaseDate.getFullYear();
+  const m = purchaseDate.getMonth() + 1;
+  const d = purchaseDate.getDate();
 
   let closeY = y;
   let closeM = m;
@@ -31,7 +33,8 @@ export function getStatementDates(card: CreditCardConfig, purchaseDate: string) 
     }
   }
 
-  const closingDate = clampedDate(closeY, closeM, card.closingDay);
+  const closingDayClamped = Math.min(card.closingDay, new Date(closeY, closeM, 0).getDate());
+  const closingDate = new Date(closeY, closeM - 1, closingDayClamped, 0, 0, 0, 0);
 
   let dueY = closeY;
   let dueM = closeM;
@@ -42,7 +45,8 @@ export function getStatementDates(card: CreditCardConfig, purchaseDate: string) 
       dueY += 1;
     }
   }
-  const dueDate = clampedDate(dueY, dueM, card.dueDay);
+  const dueDayClamped = Math.min(card.dueDay, new Date(dueY, dueM, 0).getDate());
+  const dueDate = new Date(dueY, dueM - 1, dueDayClamped, 0, 0, 0, 0);
 
   let startM = closeM - 1;
   let startY = closeY;
@@ -50,15 +54,14 @@ export function getStatementDates(card: CreditCardConfig, purchaseDate: string) 
     startM = 12;
     startY -= 1;
   }
-  const periodStartClamped = clampedDate(startY, startM, card.closingDay);
-  const periodStartDate = new Date(`${periodStartClamped}T12:00:00`);
-  periodStartDate.setDate(periodStartDate.getDate() + 1);
-  const realPeriodStart = `${periodStartDate.getFullYear()}-${String(periodStartDate.getMonth() + 1).padStart(2, '0')}-${String(periodStartDate.getDate()).padStart(2, '0')}`;
+  const startDayClamped = Math.min(card.closingDay, new Date(startY, startM, 0).getDate());
+  const periodStart = new Date(startY, startM - 1, startDayClamped, 0, 0, 0, 0);
+  periodStart.setDate(periodStart.getDate() + 1);
 
-  return { periodStart: realPeriodStart, closingDate, dueDate };
+  return { periodStart, closingDate, dueDate };
 }
 
-export function buildStatements(transactions: Transaction[], today: string): CardStatement[] {
+export function buildStatements(transactions: Transaction[], today: Date): CardStatement[] {
   const statementMap = new Map<string, CardStatement>();
 
   for (const tx of transactions) {
@@ -68,12 +71,12 @@ export function buildStatements(transactions: Transaction[], today: string): Car
     if (!accountDetails.card) continue;
 
     const dates = getStatementDates(accountDetails.card, tx.date);
-    const id = `${tx.account}:${dates.closingDate}`;
+    const id = `${tx.account}:${toLocalDateString(dates.closingDate)}`;
 
     if (!statementMap.has(id)) {
       let status: StatementStatus = 'open';
-      if (today >= dates.dueDate) status = 'paid';
-      else if (today > dates.closingDate) status = 'closed';
+      if (today.getTime() >= dates.dueDate.getTime()) status = 'paid';
+      else if (today.getTime() > dates.closingDate.getTime()) status = 'closed';
 
       statementMap.set(id, {
         id,
@@ -102,10 +105,10 @@ export function buildStatements(transactions: Transaction[], today: string): Car
 
   for (const stmt of statementMap.values()) {
     stmt.total = Math.max(0, stmt.charges - stmt.credits);
-    stmt.items.sort((a, b) => a.date.localeCompare(b.date));
+    stmt.items.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
-  return Array.from(statementMap.values()).sort((a, b) => a.closingDate.localeCompare(b.closingDate));
+  return Array.from(statementMap.values()).sort((a, b) => a.closingDate.getTime() - b.closingDate.getTime());
 }
 
 export function getCardUsage(statements: CardStatement[], account: Account) {

@@ -9,12 +9,13 @@ import { useState, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
 import { formatCurrency } from '../../data/transactions';
+import { parseLocalDate, formatShort } from '../../data/dates';
 
 type AccountsPageProps = {
   finance: {
     statements: CardStatement[];
     ledgers: Record<Account, AccountLedger>;
-    today: string;
+    today: Date;
   };
   transactions: any[];
   onAccountSelect: (acc: Account) => void;
@@ -24,16 +25,17 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
 
   const horizonEnd = useMemo(() => {
-    if (upcomingPeriod.kind === 'all') return '2030-01-01';
-    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || '2030-01-01';
+    if (upcomingPeriod.kind === 'all') return parseLocalDate('2030-01-01');
+    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || parseLocalDate('2030-01-01');
     if (upcomingPeriod.kind === 'end-of-month') {
-      const [y, m] = finance.today.split('-').map(Number);
+      const y = finance.today.getFullYear();
+      const m = finance.today.getMonth() + 1;
       const lastDay = new Date(y, m, 0).getDate();
-      return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
     }
-    const d = new Date(`${finance.today}T12:00:00`);
+    const d = new Date(finance.today);
     d.setDate(d.getDate() + upcomingPeriod.days);
-    return d.toISOString().split('T')[0];
+    return d;
   }, [finance.today, upcomingPeriod]);
 
   let totalBalance = 0;
@@ -45,8 +47,6 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
     const details = ACCOUNT_DETAILS[accName];
     const ledger = finance.ledgers[accName];
     const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
-    const dFrom = new Date(`${finance.today}T12:00:00`);
-    dFrom.setDate(dFrom.getDate() - 30);
 
     totalBalance += forecast.current;
     totalIn += forecast.upcomingIn;
@@ -100,7 +100,7 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
 
           {forecast.lowest.balance < Math.min(forecast.current, forecast.projected) && (
             <div className="text-xs text-theme-orange mt-2 p-2 bg-orange-500/10 rounded-md">
-              ⚠ Dips to {formatCurrency(forecast.lowest.balance / 100)} on {forecast.lowest.date}
+              ⚠ Dips to {formatCurrency(forecast.lowest.balance / 100)} on {formatShort(forecast.lowest.date)}
             </div>
           )}
 

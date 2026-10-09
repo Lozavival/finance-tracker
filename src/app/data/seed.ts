@@ -1,7 +1,7 @@
 import { type Transaction, type Account } from './transactions';
 import { getToday, addDays, addMonthsClamped } from './dates';
 
-export function daysFromToday(days: number): string {
+export function daysFromToday(days: number): Date {
   return addDays(getToday(), days);
 }
 
@@ -17,7 +17,7 @@ function addTx(tx: Omit<Transaction, 'id'>) {
   SEEDED_TRANSACTIONS.push({ id: nextId(), ...tx });
 }
 
-function addTransfer(date: string, value: number, from: Account, to: Account) {
+function addTransfer(date: Date, value: number, from: Account, to: Account) {
   const transferId = `tf-${seedIdCounter++}`;
   addTx({
     date,

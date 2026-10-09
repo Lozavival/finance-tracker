@@ -3,14 +3,9 @@ import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import {
-  formatRowDate,
-  formatSignedValue,
-  groupTransactionsByMonth,
-  Transaction,
-  parseTransactionDate,
-} from '../../data/transactions';
+import { formatSignedValue, groupTransactionsByMonth, Transaction } from '../../data/transactions';
 import { formatInstallmentLabel } from '../../data/installments';
+import { formatRowDate, getToday } from '../../data/dates';
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];
@@ -30,8 +25,7 @@ export function TransactionsMonthTable({
     return null;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getToday();
 
   return (
     <div className="overflow-x-auto">
@@ -61,7 +55,7 @@ export function TransactionsMonthTable({
                 </TableCell>
               </TableRow>
               {group.transactions.map(transaction => {
-                const isFuture = parseTransactionDate(transaction.date) > today;
+                const isFuture = transaction.date.getTime() > today.getTime();
                 return (
                   <TableRow
                     key={transaction.id}

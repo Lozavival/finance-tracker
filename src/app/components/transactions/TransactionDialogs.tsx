@@ -1,3 +1,4 @@
+import { formatFull } from '../../data/dates';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +10,7 @@ import {
   AlertDialogTitle,
 } from '../ui/alert-dialog';
 import { TransactionDialog, type EditingTarget } from '../TransactionDialog';
-import { formatTransactionDate, type Transaction, type TransactionDraft, type Account } from '../../data/transactions';
+import { type Transaction, type TransactionDraft, type Account } from '../../data/transactions';
 
 type TransactionDialogsProps = {
   dialogOpen: boolean;
@@ -65,7 +66,7 @@ export function TransactionDialogs({
                   ? 'Both sides of this transfer will be removed.'
                   : deleteTarget.installment
                     ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
-                    : `${deleteTarget.description} from ${formatTransactionDate(deleteTarget.date)} will be removed.`
+                    : `${deleteTarget.description} from ${formatFull(deleteTarget.date)} will be removed.`
                 : 'This transaction will be removed for this session.'}
             </AlertDialogDescription>
           </AlertDialogHeader>

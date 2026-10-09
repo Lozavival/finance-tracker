@@ -3,10 +3,10 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
 import { Button } from '../ui/button';
-import { parseTransactionDate } from '../../data/transactions';
+import { formatFull } from '../../data/dates';
 
 export type UpcomingPeriodType =
-  { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: string };
+  { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: Date };
 
 const UPCOMING_PRESETS = [7, 15, 30] as const;
 
@@ -33,8 +33,7 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
     label = 'End of month';
   } else if (value.kind === 'custom') {
     if (value.until) {
-      const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      label = `Until ${formatter.format(parseTransactionDate(value.until))}`;
+      label = `Until ${formatFull(value.until)}`;
     } else {
       label = 'Custom date';
     }

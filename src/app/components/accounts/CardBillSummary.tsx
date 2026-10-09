@@ -1,3 +1,4 @@
+import { formatFull } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
 import { type Account } from '../../data/transactions';
 import { formatCurrency } from '../../data/transactions';
@@ -28,9 +29,7 @@ export function CardBillSummary({ account, statements }: { account: Account; sta
               <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">est.</span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">
-            due {new Date(stmt.dueDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          </div>
+          <div className="text-xs text-muted-foreground">due {formatFull(stmt.dueDate)}</div>
         </div>
         <div className="w-16">
           <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">

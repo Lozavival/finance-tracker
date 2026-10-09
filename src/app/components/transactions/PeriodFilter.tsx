@@ -3,12 +3,7 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
 import { Button } from '../ui/button';
-import {
-  parseTransactionDate,
-  PERIOD_PRESETS,
-  PeriodFilter as PeriodFilterType,
-  formatPeriodLabel,
-} from '../../data/transactions';
+import { PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from '../../data/transactions';
 
 type PeriodFilterProps = {
   value: PeriodFilterType;
@@ -36,7 +31,8 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
     label = 'Including future';
   }
 
-  const applyDisabled = draft.kind === 'custom' && (!draft.from || !draft.to || draft.from > draft.to);
+  const applyDisabled =
+    draft.kind === 'custom' && (!draft.from || !draft.to || draft.from.getTime() > draft.to.getTime());
 
   return (
     <FilterPanel
@@ -103,12 +99,12 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
               setDraft(prev => ({
                 kind: 'custom',
                 from: date,
-                to: prev.kind === 'custom' ? prev.to : '',
+                to: prev.kind === 'custom' ? prev.to : date,
               }))
             }
             disabledDays={d => {
               if (draft.kind !== 'custom' || !draft.to) return false;
-              return d > parseTransactionDate(draft.to);
+              return d.getTime() > draft.to.getTime();
             }}
           />
           <DateField
@@ -117,13 +113,13 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
             onChange={date =>
               setDraft(prev => ({
                 kind: 'custom',
-                from: prev.kind === 'custom' ? prev.from : '',
+                from: prev.kind === 'custom' ? prev.from : date,
                 to: date,
               }))
             }
             disabledDays={d => {
               if (draft.kind !== 'custom' || !draft.from) return false;
-              return d < parseTransactionDate(draft.from);
+              return d.getTime() < draft.from.getTime();
             }}
           />
         </div>

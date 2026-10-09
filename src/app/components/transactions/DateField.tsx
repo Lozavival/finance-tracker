@@ -4,18 +4,17 @@ import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '../ui/utils';
-import { formatTransactionDate, parseTransactionDate, toTransactionDate } from '../../data/transactions';
+import { formatFull } from '../../data/dates';
 
 type DateFieldProps = {
   placeholder: string;
-  value: string | undefined;
-  onChange: (date: string) => void;
+  value: Date | undefined;
+  onChange: (date: Date) => void;
   disabledDays?: (date: Date) => boolean;
 };
 
 export function DateField({ placeholder, value, onChange, disabledDays }: DateFieldProps) {
   const [open, setOpen] = useState(false);
-  const dateValue = value ? parseTransactionDate(value) : undefined;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -26,17 +25,17 @@ export function DateField({ placeholder, value, onChange, disabledDays }: DateFi
             !value && 'text-muted-foreground',
           )}
         >
-          {value ? formatTransactionDate(value) : placeholder}
+          {value ? formatFull(value) : placeholder}
           <CalendarIcon className="h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 border-border bg-popover text-foreground" align="start">
         <Calendar
           mode="single"
-          selected={dateValue}
+          selected={value}
           onSelect={d => {
             if (d) {
-              onChange(toTransactionDate(d));
+              onChange(d);
               setOpen(false);
             }
           }}

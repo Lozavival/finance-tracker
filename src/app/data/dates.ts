@@ -1,47 +1,65 @@
-export function getToday(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+export function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-export function clampedDate(year: number, month: number, day: number): string {
-  const lastDay = new Date(year, month, 0).getDate();
-  const targetDay = Math.min(day, lastDay);
-  const y = String(year);
-  const m = String(month).padStart(2, '0');
-  const d = String(targetDay).padStart(2, '0');
+export function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-export function addMonthsClamped(dateString: string, monthsToAdd: number): string {
-  const [yearStr, monthStr, dayStr] = dateString.split('-');
-  let year = parseInt(yearStr, 10);
-  let month = parseInt(monthStr, 10);
-  const day = parseInt(dayStr, 10);
+export function getToday(): Date {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+}
 
-  month += monthsToAdd;
-  year += Math.floor((month - 1) / 12);
-  month = ((month - 1) % 12) + 1;
-  if (month <= 0) {
-    month += 12;
+export function isBefore(a: Date, b: Date): boolean {
+  return a.getTime() < b.getTime();
+}
+
+export function isAfter(a: Date, b: Date): boolean {
+  return a.getTime() > b.getTime();
+}
+
+export function isSameDay(a: Date, b: Date): boolean {
+  return a.getTime() === b.getTime();
+}
+
+export function isBetween(date: Date, start: Date, end: Date): boolean {
+  return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
+}
+
+export function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+export function addMonthsClamped(date: Date, months: number): Date {
+  const d = new Date(date);
+  const targetMonth = d.getMonth() + months;
+  d.setMonth(targetMonth);
+  // Handle month overflow clamping (e.g., Jan 31 + 1 mo -> Feb 28)
+  if (d.getMonth() !== ((targetMonth % 12) + 12) % 12) {
+    d.setDate(0);
   }
-
-  return clampedDate(year, month, day);
+  return d;
 }
 
-export function addDays(dateString: string, days: number): string {
-  const date = new Date(`${dateString}T12:00:00`);
-  date.setDate(date.getDate() + days);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+export function formatShort(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
 }
 
-export function daysBetween(from: string, to: string): number {
-  const d1 = new Date(`${from}T12:00:00`);
-  const d2 = new Date(`${to}T12:00:00`);
-  return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+export function formatRowDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+}
+
+export function formatMonthYear(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
+}
+
+export function formatFull(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }
