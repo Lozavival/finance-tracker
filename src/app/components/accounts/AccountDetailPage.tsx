@@ -64,14 +64,20 @@ export function AccountDetailPage({
   // Forecast used in header cards and upcoming list
   const fullForecast = getAccountForecast(ledger, finance.today, upcomingLimitDate);
 
-  const y = finance.today.getFullYear();
-  const m = finance.today.getMonth() + 1;
-  const lastDay = new Date(y, m, 0).getDate();
-  const eom = new Date(y, m - 1, lastDay, 0, 0, 0, 0);
+  let chartEndDate = upcomingLimitDate;
+  if (upcomingPeriod.kind === 'all' || (upcomingPeriod.kind === 'custom' && !upcomingPeriod.until)) {
+    if (fullForecast.upcoming.length > 0) {
+      chartEndDate = fullForecast.upcoming[fullForecast.upcoming.length - 1].date;
+    } else {
+      const fallback = new Date(finance.today);
+      fallback.setDate(fallback.getDate() + 30);
+      chartEndDate = fallback;
+    }
+  }
 
   const dFrom = new Date(finance.today);
   dFrom.setDate(dFrom.getDate() - 30);
-  const series = buildDailySeries(ledger, dFrom, eom, finance.today);
+  const series = buildDailySeries(ledger, dFrom, chartEndDate, finance.today);
 
   const {
     dialogOpen,
