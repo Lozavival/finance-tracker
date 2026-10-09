@@ -120,18 +120,23 @@ export function AccountDetailPage({
         <ArrowLeft className="w-4 h-4" /> Back to Accounts
       </button>
 
-      <div className="flex items-center gap-4">
-        <div
-          className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg`}
-          style={{ backgroundColor: details.color }}
-        >
-          {details.initials}
-        </div>
-        <div>
-          <div role="heading" aria-level={1} className="text-foreground text-3xl mb-1">
-            {details.name}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg`}
+            style={{ backgroundColor: details.color }}
+          >
+            {details.initials}
           </div>
-          <div className="text-muted-foreground">{details.kind}</div>
+          <div>
+            <div role="heading" aria-level={1} className="text-foreground text-3xl mb-1">
+              {details.name}
+            </div>
+            <div className="text-muted-foreground">{details.kind}</div>
+          </div>
+        </div>
+        <div className="flex gap-2 mb-1">
+          <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
         </div>
       </div>
 
@@ -154,23 +159,19 @@ export function AccountDetailPage({
         </Card>
       </div>
 
-      <Card className="p-6 bg-foreground/5 border-border">
-        <div className="text-xl text-foreground mb-4">Balance Projection</div>
-        <BalanceProjectionChart series={series} today={finance.today} />
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="p-6 bg-foreground/5 border-border lg:col-span-2">
+          <div className="text-xl text-foreground mb-4">Balance Projection</div>
+          <BalanceProjectionChart series={series} today={finance.today} />
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <Card className="p-6 bg-foreground/5 border-border">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-            <div className="text-xl text-foreground">Upcoming</div>
-            <div>
-              <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
-            </div>
-          </div>
+          <div className="text-xl text-foreground mb-4">Upcoming</div>
           <UpcomingList upcoming={fullForecast.upcoming} currentBalance={fullForecast.current} variant="full" />
         </Card>
-        <CardStatementsPanel account={account} statements={finance.statements} />
       </div>
+
+      <CardStatementsPanel account={account} statements={finance.statements} />
 
       <Card className="p-6 bg-foreground/5 border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
