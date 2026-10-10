@@ -118,8 +118,8 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
         )}
 
         {hasTransactions && !replacementTypeId && !isOnlyTypeInDirection && (
-          <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
             <span>Select a replacement type to proceed with deletion.</span>
           </div>
         )}

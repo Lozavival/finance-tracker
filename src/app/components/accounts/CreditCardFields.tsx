@@ -30,8 +30,8 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
   return (
     <div className="space-y-4 rounded-xl border border-border/70 bg-foreground/[0.02] p-4">
       {isEditing && (
-        <div className="flex items-start gap-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-300">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+        <div className="flex items-start gap-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-800 dark:text-amber-300">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <span>
             Note: Changing closing or due dates will recalculate statements and payment due dates for both upcoming and
             past cycles.

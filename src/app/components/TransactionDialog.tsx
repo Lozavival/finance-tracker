@@ -361,7 +361,7 @@ export function TransactionDialog({
               )}
             </div>
             {isEditingSeries && !canUseInstallments && (
-              <div className="rounded-lg bg-orange-500/10 p-3 text-sm text-orange-400">
+              <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-3 text-sm text-orange-800 dark:text-orange-400">
                 Installments are only available for credit card. This will be saved as a single expense.
               </div>
             )}

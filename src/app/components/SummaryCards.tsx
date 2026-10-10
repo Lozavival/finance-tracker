@@ -44,28 +44,28 @@ export function SummaryCards() {
         const colorClasses = {
           cyan: {
             border: 'border-cyan-500/30',
-            shadow: 'hover:shadow-[0_0_25px_rgba(34,211,238,0.3)]',
+            shadow: 'hover:shadow-[0_0_25px_var(--shadow-glow-cyan)]',
             iconBg: 'bg-cyan-500/20',
             iconColor: 'text-theme-cyan',
             textColor: 'text-theme-cyan',
           },
           green: {
             border: 'border-green-500/30',
-            shadow: 'hover:shadow-[0_0_25px_rgba(34,197,94,0.3)]',
+            shadow: 'hover:shadow-[0_0_25px_var(--shadow-glow-green)]',
             iconBg: 'bg-green-500/20',
             iconColor: 'text-theme-green',
             textColor: 'text-theme-green',
           },
           blue: {
             border: 'border-blue-500/30',
-            shadow: 'hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]',
+            shadow: 'hover:shadow-[0_0_25px_var(--shadow-glow-blue)]',
             iconBg: 'bg-blue-500/20',
             iconColor: 'text-theme-blue',
             textColor: 'text-theme-blue',
           },
           orange: {
             border: 'border-orange-500/30',
-            shadow: 'hover:shadow-[0_0_25px_rgba(249,115,22,0.3)]',
+            shadow: 'hover:shadow-[0_0_25px_var(--shadow-glow-orange)]',
             iconBg: 'bg-orange-500/20',
             iconColor: 'text-theme-orange',
             textColor: 'text-theme-orange',

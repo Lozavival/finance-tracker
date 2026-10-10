@@ -39,6 +39,88 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --theme-cyan: #0891b2;
+  --theme-green: #16a34a;
+  --theme-blue: #2563eb;
+  --theme-orange: #ea580c;
+  --theme-purple: #9333ea;
+  --theme-red: #dc2626;
+  --theme-cyan-btn: #0891b2;
+  --theme-cyan-btn-hover: #0e7490;
+
+  --badge-text-cyan: #0891b2;
+  --badge-text-blue: #2563eb;
+  --badge-text-violet: #7c3aed;
+  --badge-text-pink: #db2777;
+  --badge-text-amber: #b45309;
+  --badge-text-emerald: #059669;
+  --badge-text-teal: #0d9488;
+  --badge-text-indigo: #4f46e5;
+  --badge-text-rose: #e11d48;
+  --badge-text-orange: #ea580c;
+  --badge-text-lime: #4d7c0f;
+  --badge-text-slate: #475569;
+
+  --color-cyan-raw: #0891b2;
+  --color-blue-raw: #2563eb;
+  --color-violet-raw: #7c3aed;
+  --color-pink-raw: #db2777;
+  --color-amber-raw: #d97706;
+  --color-emerald-raw: #059669;
+  --color-teal-raw: #0d9488;
+  --color-indigo-raw: #4f46e5;
+  --color-rose-raw: #e11d48;
+  --color-orange-raw: #ea580c;
+  --color-lime-raw: #65a30d;
+  --color-slate-raw: #475569;
+
+  --color-cyan-dot: #0891b2;
+  --color-blue-dot: #2563eb;
+  --color-violet-dot: #7c3aed;
+  --color-pink-dot: #db2777;
+  --color-amber-dot: #d97706;
+  --color-emerald-dot: #059669;
+  --color-teal-dot: #0d9488;
+  --color-indigo-dot: #4f46e5;
+  --color-rose-dot: #e11d48;
+  --color-orange-dot: #ea580c;
+  --color-lime-dot: #65a30d;
+  --color-slate-dot: #475569;
+
+  --color-cyan-badge-bg: rgba(8, 145, 178, 0.12);
+  --color-blue-badge-bg: rgba(37, 99, 235, 0.12);
+  --color-violet-badge-bg: rgba(124, 58, 237, 0.12);
+  --color-pink-badge-bg: rgba(219, 39, 119, 0.12);
+  --color-amber-badge-bg: rgba(217, 119, 6, 0.12);
+  --color-emerald-badge-bg: rgba(5, 150, 105, 0.12);
+  --color-teal-badge-bg: rgba(13, 148, 136, 0.12);
+  --color-indigo-badge-bg: rgba(79, 70, 229, 0.12);
+  --color-rose-badge-bg: rgba(225, 29, 72, 0.12);
+  --color-orange-badge-bg: rgba(234, 88, 12, 0.12);
+  --color-lime-badge-bg: rgba(101, 163, 13, 0.12);
+  --color-slate-badge-bg: rgba(71, 85, 105, 0.12);
+
+  --color-cyan-badge-border: rgba(8, 145, 178, 0.3);
+  --color-blue-badge-border: rgba(37, 99, 235, 0.3);
+  --color-violet-badge-border: rgba(124, 58, 237, 0.3);
+  --color-pink-badge-border: rgba(219, 39, 119, 0.3);
+  --color-amber-badge-border: rgba(217, 119, 6, 0.4);
+  --color-emerald-badge-border: rgba(5, 150, 105, 0.3);
+  --color-teal-badge-border: rgba(13, 148, 136, 0.3);
+  --color-indigo-badge-border: rgba(79, 70, 229, 0.3);
+  --color-rose-badge-border: rgba(225, 29, 72, 0.3);
+  --color-orange-badge-border: rgba(234, 88, 12, 0.3);
+  --color-lime-badge-border: rgba(101, 163, 13, 0.3);
+  --color-slate-badge-border: rgba(71, 85, 105, 0.3);
+
+  --badge-border-amber: var(--color-amber-badge-border);
+
+  --shadow-glow-cyan: rgba(8, 145, 178, 0.25);
+  --shadow-glow-cyan-intense: rgba(8, 145, 178, 0.6);
+  --shadow-glow-green: rgba(22, 163, 74, 0.25);
+  --shadow-glow-blue: rgba(37, 99, 235, 0.25);
+  --shadow-glow-orange: rgba(234, 88, 12, 0.25);
 }
 
 .dark {
@@ -76,6 +158,88 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  --theme-cyan: #22d3ee;
+  --theme-green: #4ade80;
+  --theme-blue: #60a5fa;
+  --theme-orange: #fb923c;
+  --theme-purple: #c084fc;
+  --theme-red: #f87171;
+  --theme-cyan-btn: #06b6d4;
+  --theme-cyan-btn-hover: #22d3ee;
+
+  --badge-text-cyan: #22d3ee;
+  --badge-text-blue: #60a5fa;
+  --badge-text-violet: #a78bfa;
+  --badge-text-pink: #f472b6;
+  --badge-text-amber: #fbbf24;
+  --badge-text-emerald: #34d399;
+  --badge-text-teal: #2dd4bf;
+  --badge-text-indigo: #818cf8;
+  --badge-text-rose: #fb7185;
+  --badge-text-orange: #fb923c;
+  --badge-text-lime: #a3e635;
+  --badge-text-slate: #94a3b8;
+
+  --color-cyan-raw: #06b6d4;
+  --color-blue-raw: #3b82f6;
+  --color-violet-raw: #8b5cf6;
+  --color-pink-raw: #ec4899;
+  --color-amber-raw: #f59e0b;
+  --color-emerald-raw: #10b981;
+  --color-teal-raw: #14b8a6;
+  --color-indigo-raw: #6366f1;
+  --color-rose-raw: #f43f5e;
+  --color-orange-raw: #f97316;
+  --color-lime-raw: #84cc16;
+  --color-slate-raw: #64748b;
+
+  --color-cyan-dot: #22d3ee;
+  --color-blue-dot: #60a5fa;
+  --color-violet-dot: #a78bfa;
+  --color-pink-dot: #f472b6;
+  --color-amber-dot: #fbbf24;
+  --color-emerald-dot: #34d399;
+  --color-teal-dot: #2dd4bf;
+  --color-indigo-dot: #818cf8;
+  --color-rose-dot: #fb7185;
+  --color-orange-dot: #fb923c;
+  --color-lime-dot: #a3e635;
+  --color-slate-dot: #94a3b8;
+
+  --color-cyan-badge-bg: rgba(6, 182, 212, 0.15);
+  --color-blue-badge-bg: rgba(59, 130, 246, 0.15);
+  --color-violet-badge-bg: rgba(139, 92, 246, 0.15);
+  --color-pink-badge-bg: rgba(236, 72, 153, 0.15);
+  --color-amber-badge-bg: rgba(245, 158, 11, 0.15);
+  --color-emerald-badge-bg: rgba(16, 185, 129, 0.15);
+  --color-teal-badge-bg: rgba(20, 184, 166, 0.15);
+  --color-indigo-badge-bg: rgba(99, 102, 241, 0.15);
+  --color-rose-badge-bg: rgba(244, 63, 94, 0.15);
+  --color-orange-badge-bg: rgba(249, 115, 22, 0.15);
+  --color-lime-badge-bg: rgba(132, 204, 22, 0.15);
+  --color-slate-badge-bg: rgba(100, 116, 139, 0.15);
+
+  --color-cyan-badge-border: rgba(34, 211, 238, 0.3);
+  --color-blue-badge-border: rgba(96, 165, 250, 0.3);
+  --color-violet-badge-border: rgba(167, 139, 250, 0.3);
+  --color-pink-badge-border: rgba(244, 114, 182, 0.3);
+  --color-amber-badge-border: rgba(251, 191, 36, 0.3);
+  --color-emerald-badge-border: rgba(52, 211, 153, 0.3);
+  --color-teal-badge-border: rgba(45, 212, 191, 0.3);
+  --color-indigo-badge-border: rgba(129, 140, 248, 0.3);
+  --color-rose-badge-border: rgba(251, 113, 133, 0.3);
+  --color-orange-badge-border: rgba(251, 146, 60, 0.3);
+  --color-lime-badge-border: rgba(163, 230, 53, 0.3);
+  --color-slate-badge-border: rgba(148, 163, 184, 0.3);
+
+  --badge-border-amber: var(--color-amber-badge-border);
+
+  --shadow-glow-cyan: rgba(34, 211, 238, 0.3);
+  --shadow-glow-cyan-intense: rgba(34, 211, 238, 0.8);
+  --shadow-glow-green: rgba(34, 197, 94, 0.3);
+  --shadow-glow-blue: rgba(59, 130, 246, 0.3);
+  --shadow-glow-orange: rgba(249, 115, 22, 0.3);
 }
 
 @theme inline {

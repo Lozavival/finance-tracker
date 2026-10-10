@@ -48,11 +48,11 @@ const revenueData = {
 };
 
 const categoryData: CategoryTotal[] = [
-  { typeId: 'shopping', name: 'Shopping', value: 4500, color: '#22d3ee' },
-  { typeId: 'food-dining', name: 'Food & Dining', value: 3200, color: '#60a5fa' },
-  { typeId: 'transportation', name: 'Transportation', value: 2100, color: '#a78bfa' },
-  { typeId: 'entertainment', name: 'Entertainment', value: 1800, color: '#f472b6' },
-  { typeId: 'bills', name: 'Bills', value: 2800, color: '#fbbf24' },
+  { typeId: 'shopping', name: 'Shopping', value: 4500, color: 'var(--color-cyan-dot)' },
+  { typeId: 'food-dining', name: 'Food & Dining', value: 3200, color: 'var(--color-blue-dot)' },
+  { typeId: 'transportation', name: 'Transportation', value: 2100, color: 'var(--color-violet-dot)' },
+  { typeId: 'entertainment', name: 'Entertainment', value: 1800, color: 'var(--color-pink-dot)' },
+  { typeId: 'bills', name: 'Bills', value: 2800, color: 'var(--color-amber-dot)' },
 ];
 
 type SpendingByCategoryChartProps = {
