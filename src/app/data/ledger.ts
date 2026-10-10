@@ -1,13 +1,14 @@
-import { type Transaction, type Account } from './transactions';
+import { type Transaction } from './transactions';
 import { type CardStatement } from './cardStatements';
-import { ACCOUNT_DETAILS } from './accounts';
+import { type Settings, findAccount, isCreditCard, TRANSFER_TYPE_ID } from './settings';
 import { addDays, formatShort } from './dates';
 
 export type CashMovementKind = 'opening' | 'transaction' | 'card-bill';
 
 export type CashMovement = {
   id: string;
-  account: Account;
+  accountId: string;
+  account: string; // compatibility alias
   date: Date;
   amount: number; // cents
   kind: CashMovementKind;
@@ -18,13 +19,18 @@ export type CashMovement = {
   statementId?: string;
 };
 
-export function buildCashMovements(transactions: Transaction[], statements: CardStatement[]): CashMovement[] {
+export function buildCashMovements(
+  transactions: Transaction[],
+  statements: CardStatement[],
+  settings: Settings,
+): CashMovement[] {
   const movements: CashMovement[] = [];
 
-  for (const acc of Object.values(ACCOUNT_DETAILS)) {
+  for (const acc of settings.accounts) {
     movements.push({
-      id: `opening-${acc.name}`,
-      account: acc.name,
+      id: `opening-${acc.id}`,
+      accountId: acc.id,
+      account: acc.id,
       date: acc.openingDate,
       amount: acc.openingBalance,
       kind: 'opening',
@@ -35,13 +41,14 @@ export function buildCashMovements(transactions: Transaction[], statements: Card
   }
 
   for (const tx of transactions) {
-    if (tx.paymentMethod === 'Credit card') continue;
-    const isTransfer = tx.type === 'Transfer' && !!tx.transferId;
+    if (isCreditCard(settings, tx.paymentMethodId)) continue;
+    const isTransfer = tx.typeId === TRANSFER_TYPE_ID && !!tx.transferId;
     const amount = Math.round(tx.value * 100) * (tx.direction === 'income' ? 1 : -1);
 
     movements.push({
       id: `tx-${tx.id}`,
-      account: tx.account,
+      accountId: tx.accountId,
+      account: tx.accountId,
       date: tx.date,
       amount,
       kind: 'transaction',
@@ -55,7 +62,8 @@ export function buildCashMovements(transactions: Transaction[], statements: Card
   for (const stmt of statements) {
     movements.push({
       id: `bill-${stmt.id}`,
-      account: stmt.account,
+      accountId: stmt.accountId,
+      account: stmt.accountId,
       date: stmt.dueDate,
       amount: -stmt.total,
       kind: 'card-bill',
@@ -66,22 +74,26 @@ export function buildCashMovements(transactions: Transaction[], statements: Card
     });
   }
 
-  return movements.filter(m => m.date.getTime() >= ACCOUNT_DETAILS[m.account].openingDate.getTime());
+  return movements.filter(m => {
+    const acc = findAccount(settings, m.accountId);
+    return acc ? m.date.getTime() >= acc.openingDate.getTime() : false;
+  });
 }
 
 export type BalancePoint = { date: Date; balance: number };
 
 export type AccountLedger = {
-  account: Account;
+  accountId: string;
+  account: string; // compatibility alias
   movements: CashMovement[];
   points: BalancePoint[];
 };
 
-export function buildLedgers(movements: CashMovement[]): Record<Account, AccountLedger> {
+export function buildLedgers(movements: CashMovement[], settings: Settings): Record<string, AccountLedger> {
   const ledgers: Record<string, AccountLedger> = {};
 
-  for (const acc of Object.keys(ACCOUNT_DETAILS)) {
-    ledgers[acc as Account] = { account: acc as Account, movements: [], points: [] };
+  for (const acc of settings.accounts) {
+    ledgers[acc.id] = { accountId: acc.id, account: acc.id, movements: [], points: [] };
   }
 
   const sortedMovements = [...movements].sort(
@@ -89,7 +101,9 @@ export function buildLedgers(movements: CashMovement[]): Record<Account, Account
   );
 
   for (const m of sortedMovements) {
-    ledgers[m.account].movements.push(m);
+    if (ledgers[m.accountId]) {
+      ledgers[m.accountId].movements.push(m);
+    }
   }
 
   for (const acc of Object.values(ledgers)) {
@@ -102,10 +116,11 @@ export function buildLedgers(movements: CashMovement[]): Record<Account, Account
     acc.points = Array.from(pointsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
-  return ledgers as Record<Account, AccountLedger>;
+  return ledgers;
 }
 
 export function balanceAt(ledger: AccountLedger, date: Date): number {
+  if (!ledger || !ledger.points) return 0;
   let low = 0;
   let high = ledger.points.length - 1;
   let ans = 0;
@@ -146,6 +161,19 @@ export type AccountForecast = {
 };
 
 export function getAccountForecast(ledger: AccountLedger, today: Date, horizonEnd: Date): AccountForecast {
+  if (!ledger) {
+    return {
+      current: 0,
+      upcoming: [],
+      upcomingIn: 0,
+      upcomingOut: 0,
+      projected: 0,
+      lowest: { date: today, balance: 0 },
+      firstNegativeDate: undefined,
+      monthChange: 0,
+    };
+  }
+
   const current = balanceAt(ledger, today);
   const upcoming = ledger.movements.filter(
     m => m.date.getTime() > today.getTime() && m.date.getTime() <= horizonEnd.getTime(),
@@ -203,6 +231,7 @@ export type DailyBalance = { date: Date; actual?: number; projected?: number };
 
 export function buildDailySeries(ledger: AccountLedger, from: Date, to: Date, today: Date): DailyBalance[] {
   const series: DailyBalance[] = [];
+  if (!ledger) return series;
   let d = from;
   while (d.getTime() <= to.getTime()) {
     const bal = balanceAt(ledger, d);

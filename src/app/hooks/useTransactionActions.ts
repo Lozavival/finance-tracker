@@ -8,8 +8,10 @@ import {
 } from '../data/transactions';
 import { type EditingTarget } from '../components/TransactionDialog';
 import { findInstallmentSeries, buildInstallments } from '../data/installments';
+import { useSettings } from '../state/SettingsContext';
 
 export function useTransactionActions(transactions: Transaction[], onTransactionsChange: (txs: Transaction[]) => void) {
+  const { isCreditCard, findAccount } = useSettings();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
@@ -58,10 +60,15 @@ export function useTransactionActions(transactions: Transaction[], onTransaction
       nextTransactions.push({ ...draft.transaction, id });
     } else if (draft.kind === 'transfer') {
       const ids: [string, string] = [existingIds[0] ?? createTransactionId(), existingIds[1] ?? createTransactionId()];
-      const legs = buildTransferLegs(draft, transferId, ids);
+      const fromAcc = findAccount(draft.fromAccountId);
+      const toAcc = findAccount(draft.toAccountId);
+      const legs = buildTransferLegs(draft, transferId, ids, {
+        fromName: fromAcc?.name,
+        toName: toAcc?.name,
+      });
       nextTransactions.push(legs[0], legs[1]);
     } else if (draft.kind === 'installments') {
-      if (draft.transaction.paymentMethod !== 'Credit card') {
+      if (!isCreditCard(draft.transaction.paymentMethodId)) {
         const id = existingIds[0] ?? createTransactionId();
         nextTransactions.push({
           ...draft.transaction,

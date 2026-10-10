@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
-import { PAYMENT_METHODS, PaymentMethod } from '../../data/transactions';
+import { useSettings } from '../../state/SettingsContext';
+import { type PaymentMethodConfig } from '../../data/settings';
 import { Toggle } from '../ui/toggle';
+import { getIcon } from '../../data/icons';
 
 type PaymentFilterProps = {
-  value: PaymentMethod[];
-  onChange: (value: PaymentMethod[]) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
 };
 
 export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
+  const { settings, findMethod } = useSettings();
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<PaymentMethod[]>(value);
+  const [draft, setDraft] = useState<string[]>(value);
 
   useEffect(() => {
     if (open) {
@@ -22,28 +25,34 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   const active = value.length > 0;
   let label = 'Payment';
   if (value.length === 1) {
-    label = value[0];
+    const m = findMethod(value[0]);
+    label = m ? m.name : value[0];
   } else if (value.length > 1) {
-    label = `${value[0]} +${value.length - 1}`;
+    const firstMethod = findMethod(value[0]);
+    const firstName = firstMethod ? firstMethod.name : value[0];
+    label = `${firstName} +${value.length - 1}`;
   }
 
-  const renderToggle = (payment: PaymentMethod) => {
-    const isSelected = draft.includes(payment);
+  const renderToggle = (payment: PaymentMethodConfig) => {
+    const isSelected = draft.includes(payment.id);
+    const Icon = getIcon(payment.icon);
+
     return (
       <Toggle
-        key={payment}
+        key={payment.id}
         pressed={isSelected}
         onPressedChange={pressed => {
           if (pressed) {
-            setDraft([...draft, payment]);
+            setDraft([...draft, payment.id]);
           } else {
-            setDraft(draft.filter(t => t !== payment));
+            setDraft(draft.filter(t => t !== payment.id));
           }
         }}
         variant="outline"
-        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20"
+        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20 text-xs px-3 py-1 flex items-center gap-1.5"
       >
-        {payment}
+        <Icon className="w-3.5 h-3.5" />
+        <span>{payment.name}</span>
       </Toggle>
     );
   };
@@ -57,7 +66,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
       onApply={() => onChange(draft)}
       onClear={() => onChange([])}
     >
-      <div className="flex flex-wrap gap-2">{PAYMENT_METHODS.map(renderToggle)}</div>
+      <div className="flex flex-wrap gap-2">{settings.paymentMethods.map(renderToggle)}</div>
     </FilterPanel>
   );
 }

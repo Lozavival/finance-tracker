@@ -1,0 +1,73 @@
+import {
+  ShoppingBag,
+  Utensils,
+  Car,
+  Film,
+  Receipt,
+  ArrowLeftRight,
+  Banknote,
+  CreditCard,
+  Wallet,
+  Landmark,
+  QrCode,
+  Gift,
+  Heart,
+  Home,
+  Plane,
+  GraduationCap,
+  Briefcase,
+  Coffee,
+  Dumbbell,
+  Gamepad2,
+  Music,
+  Smartphone,
+  Tag,
+  Tv,
+  Zap,
+  ShieldCheck,
+  Coins,
+  PiggyBank,
+  DollarSign,
+  type LucideIcon,
+} from 'lucide-react';
+
+export const ICONS = {
+  ShoppingBag,
+  Utensils,
+  Car,
+  Film,
+  Receipt,
+  ArrowLeftRight,
+  Banknote,
+  CreditCard,
+  Wallet,
+  Landmark,
+  QrCode,
+  Gift,
+  Heart,
+  Home,
+  Plane,
+  GraduationCap,
+  Briefcase,
+  Coffee,
+  Dumbbell,
+  Gamepad2,
+  Music,
+  Smartphone,
+  Tag,
+  Tv,
+  Zap,
+  ShieldCheck,
+  Coins,
+  PiggyBank,
+  DollarSign,
+} as const satisfies Record<string, LucideIcon>;
+
+export type IconKey = keyof typeof ICONS;
+
+export function getIcon(key?: string): LucideIcon {
+  if (key && key in ICONS) {
+    return ICONS[key as IconKey];
+  }
+  return Tag;
+}

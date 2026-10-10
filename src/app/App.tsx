@@ -9,27 +9,30 @@ import { SummaryCards } from './components/SummaryCards';
 import { AnalyticsChart } from './components/AnalyticsChart';
 import { TransactionsTable } from './components/TransactionsTable';
 import { TransactionsPage } from './components/TransactionsPage';
-import { type Transaction, type Account } from './data/transactions';
+import { type Transaction } from './data/transactions';
 import { AccountsPage } from './components/accounts/AccountsPage';
 import { AccountDetailPage } from './components/accounts/AccountDetailPage';
+import { SettingsPage } from './components/settings/SettingsPage';
+import { SettingsProvider, useSettings } from './state/SettingsContext';
 
-export default function App() {
+function AppContent() {
+  const { settings } = useSettings();
   const [activePage, setActivePage] = useState('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   const today = useMemo(() => getToday(), []);
 
   const finance = useMemo(() => {
-    const statements = buildStatements(transactions, today);
-    const movements = buildCashMovements(transactions, statements);
-    const ledgers = buildLedgers(movements);
+    const statements = buildStatements(transactions, settings, today);
+    const movements = buildCashMovements(transactions, statements, settings);
+    const ledgers = buildLedgers(movements, settings);
     return { statements, ledgers, today };
-  }, [transactions, today]);
+  }, [transactions, settings, today]);
 
   const handleSidebarSelect = (id: string) => {
     setActivePage(id);
-    setSelectedAccount(null);
+    setSelectedAccountId(null);
   };
 
   return (
@@ -42,17 +45,19 @@ export default function App() {
           {activePage === 'transactions' ? (
             <TransactionsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : activePage === 'accounts' ? (
-            selectedAccount ? (
+            selectedAccountId ? (
               <AccountDetailPage
-                account={selectedAccount}
+                accountId={selectedAccountId}
                 finance={finance}
                 transactions={transactions}
                 onTransactionsChange={setTransactions}
-                onBack={() => setSelectedAccount(null)}
+                onBack={() => setSelectedAccountId(null)}
               />
             ) : (
-              <AccountsPage finance={finance} transactions={transactions} onAccountSelect={setSelectedAccount} />
+              <AccountsPage finance={finance} transactions={transactions} onAccountSelect={setSelectedAccountId} />
             )
+          ) : activePage === 'settings' ? (
+            <SettingsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : (
             <div className="space-y-8">
               <div>
@@ -69,5 +74,13 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }

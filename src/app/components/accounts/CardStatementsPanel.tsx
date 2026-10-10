@@ -1,16 +1,23 @@
 import { formatMonthYear, formatFull, getToday } from '../../data/dates';
 import { formatShort } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
-import { type Account, formatCurrency } from '../../data/transactions';
+import { formatCurrency } from '../../data/transactions';
 import { Card } from '../ui/card';
 import { CreditCard, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
+import { useSettings } from '../../state/SettingsContext';
 
-export function CardStatementsPanel({ account, statements }: { account: Account; statements: CardStatement[] }) {
-  const usage = getCardUsage(statements, account);
-  const accountStatements = statements.filter(s => s.account === account).reverse();
+type CardStatementsPanelProps = {
+  accountId: string;
+  statements: CardStatement[];
+};
+
+export function CardStatementsPanel({ accountId, statements }: CardStatementsPanelProps) {
+  const { settings } = useSettings();
+  const usage = getCardUsage(statements, accountId, settings);
+  const accountStatements = statements.filter(s => s.accountId === accountId).reverse();
 
   function getDefaultStatement(accStmts: CardStatement[]) {
     const todayTime = getToday().getTime();
@@ -26,9 +33,9 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
 
   // If the account changes, we need to update the selection
   useEffect(() => {
-    const accStmts = statements.filter(s => s.account === account).reverse();
+    const accStmts = statements.filter(s => s.accountId === accountId).reverse();
     setSelectedId(getDefaultStatement(accStmts)?.id);
-  }, [account, statements]);
+  }, [accountId, statements]);
 
   const statementsByYear = useMemo(() => {
     const grouped: Record<number, CardStatement[]> = {};
@@ -103,7 +110,9 @@ export function CardStatementsPanel({ account, statements }: { account: Account;
                               <Button
                                 key={monthIndex}
                                 variant={s?.id === selectedId ? 'default' : 'outline'}
-                                className={`text-xs h-9 ${!s ? 'opacity-30' : 'hover:bg-accent hover:text-accent-foreground'} ${s?.id === selectedId ? 'bg-primary text-primary-foreground' : ''}`}
+                                className={`text-xs h-9 ${
+                                  !s ? 'opacity-30' : 'hover:bg-accent hover:text-accent-foreground'
+                                } ${s?.id === selectedId ? 'bg-primary text-primary-foreground' : ''}`}
                                 disabled={!s}
                                 onClick={() => {
                                   if (s) {

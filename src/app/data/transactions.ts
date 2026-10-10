@@ -1,28 +1,13 @@
-export const INCOME_TYPES = ['Income', 'Refund'] as const;
-export const EXPENSE_TYPES = [
-  'Shopping',
-  'Entertainment',
-  'Transportation',
-  'Transfer',
-  'Food & Dining',
-  'Bills',
-] as const;
-
-export const TRANSACTION_TYPES = [...INCOME_TYPES, ...EXPENSE_TYPES] as const;
-
-import { ACCOUNT_DETAILS } from './accounts';
 import { parseLocalDate, getToday, formatShort, formatMonthYear } from './dates';
+import { type TransactionTypeConfig, TRANSFER_TYPE_ID, colorVar } from './settings';
 
-export const ACCOUNTS = Object.keys(ACCOUNT_DETAILS) as any as ['Bank of America', 'Citigroup', 'Goldman Sachs'];
-
+export type TransactionDirection = 'income' | 'expense';
 export const TRANSACTION_DIRECTIONS = ['income', 'expense'] as const;
 
-export const PAYMENT_METHODS = ['Credit card', 'Debit card', 'Cash', 'PIX', 'Bank transfer'] as const;
-
-export type TransactionType = (typeof TRANSACTION_TYPES)[number];
-export type Account = (typeof ACCOUNTS)[number];
-export type TransactionDirection = (typeof TRANSACTION_DIRECTIONS)[number];
-export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+// Backward-compat aliases
+export type TransactionType = string;
+export type Account = string;
+export type PaymentMethod = string;
 
 export type InstallmentInfo = {
   groupId: string;
@@ -34,11 +19,11 @@ export type Transaction = {
   id: string;
   date: Date;
   description: string;
-  type: TransactionType;
+  typeId: string;
   direction: TransactionDirection;
   value: number;
-  account: Account;
-  paymentMethod?: PaymentMethod;
+  accountId: string;
+  paymentMethodId?: string;
   transferId?: string;
   installment?: InstallmentInfo;
 };
@@ -49,8 +34,8 @@ export type TransactionDraft =
       kind: 'transfer';
       date: Date;
       value: number;
-      fromAccount: Account;
-      toAccount: Account;
+      fromAccountId: string;
+      toAccountId: string;
     }
   | {
       kind: 'installments';
@@ -64,26 +49,30 @@ export function buildTransferLegs(
   draft: Extract<TransactionDraft, { kind: 'transfer' }>,
   transferId: string,
   ids: [string, string],
+  accountNames?: { fromName?: string; toName?: string },
 ): [Transaction, Transaction] {
+  const toLabel = accountNames?.toName ? ` to ${accountNames.toName}` : '';
+  const fromLabel = accountNames?.fromName ? ` from ${accountNames.fromName}` : '';
+
   return [
     {
       id: ids[0],
       date: draft.date,
-      description: `Transfer to ${draft.toAccount}`,
-      type: 'Transfer',
+      description: `Transfer${toLabel}`,
+      typeId: TRANSFER_TYPE_ID,
       direction: 'expense',
       value: draft.value,
-      account: draft.fromAccount,
+      accountId: draft.fromAccountId,
       transferId,
     },
     {
       id: ids[1],
       date: draft.date,
-      description: `Transfer from ${draft.fromAccount}`,
-      type: 'Transfer',
+      description: `Transfer${fromLabel}`,
+      typeId: TRANSFER_TYPE_ID,
       direction: 'income',
       value: draft.value,
-      account: draft.toAccount,
+      accountId: draft.toAccountId,
       transferId,
     },
   ];
@@ -103,45 +92,11 @@ export function findTransferLegs(
 }
 
 export type CategoryTotal = {
-  name: TransactionType;
+  typeId: string;
+  name: string;
   value: number;
   color: string;
-  dotClassName: string;
-};
-
-export const CATEGORY_STYLES: Record<TransactionType, { color: string; dotClassName: string }> = {
-  Shopping: {
-    color: 'var(--color-cyan-400)',
-    dotClassName: 'bg-cyan-400',
-  },
-  'Food & Dining': {
-    color: 'var(--color-blue-400)',
-    dotClassName: 'bg-blue-400',
-  },
-  Transportation: {
-    color: 'var(--color-violet-400)',
-    dotClassName: 'bg-violet-400',
-  },
-  Entertainment: {
-    color: 'var(--color-pink-400)',
-    dotClassName: 'bg-pink-400',
-  },
-  Bills: {
-    color: 'var(--color-amber-400)',
-    dotClassName: 'bg-amber-400',
-  },
-  Income: {
-    color: 'var(--color-emerald-400)',
-    dotClassName: 'bg-emerald-400',
-  },
-  Refund: {
-    color: 'var(--color-teal-400)',
-    dotClassName: 'bg-teal-400',
-  },
-  Transfer: {
-    color: 'var(--color-indigo-400)',
-    dotClassName: 'bg-indigo-400',
-  },
+  dotClassName?: string;
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -173,19 +128,29 @@ export function sortTransactionsAscending(transactions: Transaction[]) {
   return [...transactions].sort((a, b) => a.date.getTime() - b.date.getTime() || a.id.localeCompare(b.id));
 }
 
-export function aggregateExpensesByCategory(transactions: Transaction[]): CategoryTotal[] {
-  const totals = new Map<TransactionType, number>();
+export function aggregateExpensesByCategory(
+  transactions: Transaction[],
+  types: TransactionTypeConfig[],
+): CategoryTotal[] {
+  const totals = new Map<string, number>();
 
   transactions.forEach(transaction => {
     if (transaction.direction === 'expense' && !transaction.transferId) {
-      totals.set(transaction.type, (totals.get(transaction.type) ?? 0) + transaction.value);
+      totals.set(transaction.typeId, (totals.get(transaction.typeId) ?? 0) + transaction.value);
     }
   });
 
-  return TRANSACTION_TYPES.flatMap(name => {
-    const value = totals.get(name) ?? 0;
+  return types.flatMap(typeConfig => {
+    const value = totals.get(typeConfig.id) ?? 0;
     if (value === 0) return [];
-    return [{ name, value, ...CATEGORY_STYLES[name] }];
+    return [
+      {
+        typeId: typeConfig.id,
+        name: typeConfig.name,
+        value,
+        color: colorVar(typeConfig.color),
+      },
+    ];
   });
 }
 

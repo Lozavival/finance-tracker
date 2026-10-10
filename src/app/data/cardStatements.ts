@@ -1,12 +1,13 @@
-import { type Transaction, type Account } from './transactions';
-import { type CreditCardConfig, ACCOUNT_DETAILS } from './accounts';
+import { type Transaction } from './transactions';
+import { type CreditCardConfig, type Settings, findAccount, isCreditCard } from './settings';
 import { toLocalDateString } from './dates';
 
 export type StatementStatus = 'open' | 'closed' | 'paid';
 
 export type CardStatement = {
   id: string;
-  account: Account;
+  accountId: string;
+  account: string; // compatibility alias with accountId
   cardName: string;
   periodStart: Date;
   closingDate: Date;
@@ -61,17 +62,17 @@ export function getStatementDates(card: CreditCardConfig, purchaseDate: Date) {
   return { periodStart, closingDate, dueDate };
 }
 
-export function buildStatements(transactions: Transaction[], today: Date): CardStatement[] {
+export function buildStatements(transactions: Transaction[], settings: Settings, today: Date): CardStatement[] {
   const statementMap = new Map<string, CardStatement>();
 
   for (const tx of transactions) {
-    if (tx.paymentMethod !== 'Credit card') continue;
+    if (!isCreditCard(settings, tx.paymentMethodId)) continue;
 
-    const accountDetails = ACCOUNT_DETAILS[tx.account];
-    if (!accountDetails.card) continue;
+    const accountDetails = findAccount(settings, tx.accountId);
+    if (!accountDetails || !accountDetails.card) continue;
 
     const dates = getStatementDates(accountDetails.card, tx.date);
-    const id = `${tx.account}:${toLocalDateString(dates.closingDate)}`;
+    const id = `${tx.accountId}:${toLocalDateString(dates.closingDate)}`;
 
     if (!statementMap.has(id)) {
       let status: StatementStatus = 'open';
@@ -80,7 +81,8 @@ export function buildStatements(transactions: Transaction[], today: Date): CardS
 
       statementMap.set(id, {
         id,
-        account: tx.account,
+        accountId: tx.accountId,
+        account: tx.accountId,
         cardName: accountDetails.card.name,
         periodStart: dates.periodStart,
         closingDate: dates.closingDate,
@@ -111,14 +113,14 @@ export function buildStatements(transactions: Transaction[], today: Date): CardS
   return Array.from(statementMap.values()).sort((a, b) => a.closingDate.getTime() - b.closingDate.getTime());
 }
 
-export function getCardUsage(statements: CardStatement[], account: Account) {
-  const details = ACCOUNT_DETAILS[account];
+export function getCardUsage(statements: CardStatement[], accountId: string, settings: Settings) {
+  const details = findAccount(settings, accountId);
   if (!details || !details.card) return { limit: 0, used: 0, available: 0 };
 
   const limit = details.card.limit;
   let used = 0;
   for (const stmt of statements) {
-    if (stmt.account === account && stmt.status !== 'paid') {
+    if (stmt.accountId === accountId && stmt.status !== 'paid') {
       used += stmt.total;
     }
   }

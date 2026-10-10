@@ -1,4 +1,4 @@
-import { type Transaction, type Account } from './transactions';
+import { type Transaction } from './transactions';
 import { getToday, addDays, addMonthsClamped } from './dates';
 
 export function daysFromToday(days: number): Date {
@@ -17,24 +17,31 @@ function addTx(tx: Omit<Transaction, 'id'>) {
   SEEDED_TRANSACTIONS.push({ id: nextId(), ...tx });
 }
 
-function addTransfer(date: Date, value: number, from: Account, to: Account) {
+function addTransfer(
+  date: Date,
+  value: number,
+  fromAccountId: string,
+  toAccountId: string,
+  fromName = 'Bank of America',
+  toName = 'Goldman Sachs',
+) {
   const transferId = `tf-${seedIdCounter++}`;
   addTx({
     date,
-    description: `Transfer to ${to}`,
-    type: 'Transfer',
+    description: `Transfer to ${toName}`,
+    typeId: 'transfer',
     direction: 'expense',
     value,
-    account: from,
+    accountId: fromAccountId,
     transferId,
   });
   addTx({
     date,
-    description: `Transfer from ${from}`,
-    type: 'Transfer',
+    description: `Transfer from ${fromName}`,
+    typeId: 'transfer',
     direction: 'income',
     value,
-    account: to,
+    accountId: toAccountId,
     transferId,
   });
 }
@@ -54,48 +61,48 @@ function createMonthly(count: number, startDays: number, txBase: Omit<Transactio
 
 createMonthly(6, -70, {
   description: 'Salary Deposit',
-  type: 'Income',
+  typeId: 'income',
   direction: 'income',
   value: 5200,
-  account: 'Bank of America',
+  accountId: 'boa',
 });
 
 createMonthly(6, -72, {
   description: 'Rent',
-  type: 'Bills',
+  typeId: 'bills',
   direction: 'expense',
   value: 1800,
-  account: 'Bank of America',
-  paymentMethod: 'Bank transfer',
+  accountId: 'boa',
+  paymentMethodId: 'bank-transfer',
 });
 
 // Some BOA expenses
 addTx({
   date: daysFromToday(-15),
   description: 'Grocery Store',
-  type: 'Food & Dining',
+  typeId: 'food-dining',
   direction: 'expense',
   value: 145.2,
-  account: 'Bank of America',
-  paymentMethod: 'Debit card',
+  accountId: 'boa',
+  paymentMethodId: 'debit-card',
 });
 addTx({
   date: daysFromToday(-5),
   description: 'Uber',
-  type: 'Transportation',
+  typeId: 'transportation',
   direction: 'expense',
   value: 24.5,
-  account: 'Bank of America',
-  paymentMethod: 'PIX',
+  accountId: 'boa',
+  paymentMethodId: 'pix',
 });
 addTx({
   date: daysFromToday(10),
   description: 'Electric Bill',
-  type: 'Bills',
+  typeId: 'bills',
   direction: 'expense',
   value: 132,
-  account: 'Bank of America',
-  paymentMethod: 'Bank transfer',
+  accountId: 'boa',
+  paymentMethodId: 'bank-transfer',
 });
 
 // BoA Visa (Credit Card)
@@ -106,11 +113,11 @@ for (let i = 0; i < 10; i++) {
   addTx({
     date: addMonthsClamped(macbookStart, i),
     description: 'MacBook Pro M3',
-    type: 'Shopping',
+    typeId: 'shopping',
     direction: 'expense',
     value: 199.99,
-    account: 'Bank of America',
-    paymentMethod: 'Credit card',
+    accountId: 'boa',
+    paymentMethodId: 'credit-card',
     installment: { groupId: macGroupId, number: i + 1, total: 10 },
   });
 }
@@ -119,20 +126,20 @@ for (let i = 0; i < 10; i++) {
 addTx({
   date: daysFromToday(-20),
   description: 'Amazon Purchase',
-  type: 'Shopping',
+  typeId: 'shopping',
   direction: 'expense',
   value: 124.99,
-  account: 'Bank of America',
-  paymentMethod: 'Credit card',
+  accountId: 'boa',
+  paymentMethodId: 'credit-card',
 });
 addTx({
   date: daysFromToday(-2),
   description: "Dinner at Mario's",
-  type: 'Food & Dining',
+  typeId: 'food-dining',
   direction: 'expense',
   value: 85.0,
-  account: 'Bank of America',
-  paymentMethod: 'Credit card',
+  accountId: 'boa',
+  paymentMethodId: 'credit-card',
 });
 
 // ---------------------------------------------------------
@@ -140,49 +147,49 @@ addTx({
 addTx({
   date: daysFromToday(-45),
   description: 'Freelance Design',
-  type: 'Income',
+  typeId: 'income',
   direction: 'income',
   value: 1500,
-  account: 'Citigroup',
-  paymentMethod: 'Bank transfer',
+  accountId: 'citi',
+  paymentMethodId: 'bank-transfer',
 });
 addTx({
   date: daysFromToday(-10),
   description: 'Freelance Coding',
-  type: 'Income',
+  typeId: 'income',
   direction: 'income',
   value: 800,
-  account: 'Citigroup',
-  paymentMethod: 'Bank transfer',
+  accountId: 'citi',
+  paymentMethodId: 'bank-transfer',
 });
 
 // Citi Mastercard
 createMonthly(6, -80, {
   description: 'Netflix Subscription',
-  type: 'Entertainment',
+  typeId: 'entertainment',
   direction: 'expense',
   value: 15.99,
-  account: 'Citigroup',
-  paymentMethod: 'Credit card',
+  accountId: 'citi',
+  paymentMethodId: 'credit-card',
 });
 createMonthly(6, -85, {
   description: 'Gym Membership',
-  type: 'Entertainment',
+  typeId: 'entertainment',
   direction: 'expense',
   value: 45.0,
-  account: 'Citigroup',
-  paymentMethod: 'Credit card',
+  accountId: 'citi',
+  paymentMethodId: 'credit-card',
 });
 
 // A card refund
 addTx({
   date: daysFromToday(-12),
   description: 'Online Store Refund',
-  type: 'Refund',
+  typeId: 'refund',
   direction: 'income',
   value: 45.0,
-  account: 'Citigroup',
-  paymentMethod: 'Credit card',
+  accountId: 'citi',
+  paymentMethodId: 'credit-card',
 });
 
 // ---------------------------------------------------------
@@ -190,15 +197,15 @@ addTx({
 // Monthly transfer from BoA
 let tfCur = daysFromToday(-60);
 for (let i = 0; i < 4; i++) {
-  addTransfer(tfCur, 1000, 'Bank of America', 'Goldman Sachs');
+  addTransfer(tfCur, 1000, 'boa', 'gs', 'Bank of America', 'Goldman Sachs');
   tfCur = addMonthsClamped(tfCur, 1);
 }
 
 // Monthly interest
 createMonthly(6, -88, {
   description: 'Interest Yield',
-  type: 'Income',
+  typeId: 'income',
   direction: 'income',
   value: 45.32,
-  account: 'Goldman Sachs',
+  accountId: 'gs',
 });

@@ -1,60 +1,8 @@
-import { type Account } from './transactions';
-import { parseLocalDate } from './dates';
+import { type AccountKind, type CreditCardConfig, type AccountConfig, DEFAULT_SETTINGS } from './settings';
 
-export type AccountKind = 'Checking' | 'Savings';
+export type { AccountKind, CreditCardConfig };
+export type AccountDetails = AccountConfig;
 
-export type CreditCardConfig = {
-  name: string;
-  closingDay: number;
-  dueDay: number;
-  limit: number;
-};
-
-export type AccountDetails = {
-  name: Account;
-  kind: AccountKind;
-  openingBalance: number; // cents
-  openingDate: Date;
-  initials: string;
-  color: string;
-  card?: CreditCardConfig;
-};
-
-export const ACCOUNT_DETAILS: Record<Account, AccountDetails> = {
-  'Bank of America': {
-    name: 'Bank of America',
-    kind: 'Checking',
-    openingBalance: 320000, // $3200
-    openingDate: parseLocalDate('2025-01-01'),
-    initials: 'BA',
-    color: 'var(--color-blue-500)',
-    card: {
-      name: 'BoA Visa',
-      closingDay: 25,
-      dueDay: 5,
-      limit: 800000, // $8000
-    },
-  },
-  Citigroup: {
-    name: 'Citigroup',
-    kind: 'Checking',
-    openingBalance: 120000, // $1200
-    openingDate: parseLocalDate('2025-01-01'),
-    initials: 'CI',
-    color: 'var(--color-cyan-500)',
-    card: {
-      name: 'Citi Mastercard',
-      closingDay: 1,
-      dueDay: 10,
-      limit: 300000, // $3000
-    },
-  },
-  'Goldman Sachs': {
-    name: 'Goldman Sachs',
-    kind: 'Savings',
-    openingBalance: 1800000, // $18000
-    openingDate: parseLocalDate('2025-01-01'),
-    initials: 'GS',
-    color: 'var(--color-slate-500)',
-  },
-};
+export const ACCOUNT_DETAILS: Record<string, AccountConfig> = Object.fromEntries(
+  DEFAULT_SETTINGS.accounts.map(acc => [acc.id, acc]),
+);

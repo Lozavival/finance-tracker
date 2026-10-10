@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
@@ -8,17 +8,11 @@ import { DirectionToggle, DialogMode } from './transactions/DirectionToggle';
 import { OptionSelect } from './transactions/OptionSelect';
 import { DateField } from './transactions/DateField';
 import { InstallmentsField } from './transactions/InstallmentsField';
-import {
-  ACCOUNTS,
-  EXPENSE_TYPES,
-  INCOME_TYPES,
-  PAYMENT_METHODS,
-  type Account,
-  type Transaction,
-  type TransactionType,
-  type PaymentMethod,
-  type TransactionDraft,
-} from '../data/transactions';
+import { type Transaction, type TransactionDraft } from '../data/transactions';
+import { useSettings } from '../state/SettingsContext';
+import { CategoryChip } from './shared/CategoryChip';
+import { getIcon } from '../data/icons';
+import { TRANSFER_TYPE_ID } from '../data/settings';
 
 export type EditingTarget =
   | { kind: 'single'; transaction: Transaction }
@@ -29,7 +23,7 @@ type TransactionDialogProps = {
   open: boolean;
   editing: EditingTarget | null;
   defaultDate: Date;
-  defaultAccount?: Account;
+  defaultAccount?: string;
   onOpenChange: (open: boolean) => void;
   onSave: (draft: TransactionDraft) => void;
 };
@@ -44,39 +38,63 @@ export function TransactionDialog({
   onOpenChange,
   onSave,
 }: TransactionDialogProps) {
+  const { settings, typesByDirection, findAccount, isCreditCard } = useSettings();
+
   const [mode, setMode] = useState<DialogMode>('expense');
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
   const [date, setDate] = useState<Date | undefined>(defaultDate);
-  const [type, setType] = useState<TransactionType>('Shopping');
-  const [account, setAccount] = useState<Account>(defaultAccount || 'Bank of America');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Credit card');
+  const [typeId, setTypeId] = useState<string>('');
+  const [accountId, setAccountId] = useState<string>('');
+  const [paymentMethodId, setPaymentMethodId] = useState<string>('');
   const [installments, setInstallments] = useState<number | ''>(1);
 
   // Transfer specific
-  const [fromAccount, setFromAccount] = useState<Account>(ACCOUNTS[0]);
-  const [toAccount, setToAccount] = useState<Account>(ACCOUNTS[1]);
+  const [fromAccountId, setFromAccountId] = useState<string>('');
+  const [toAccountId, setToAccountId] = useState<string>('');
 
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const canUseInstallments = mode === 'expense' && paymentMethod === 'Credit card';
+  const selectedAccount = useMemo(() => findAccount(accountId), [findAccount, accountId]);
+  const hasCard = Boolean(selectedAccount?.card);
+
+  // Filter payment methods: hide credit card if the account does not have a card
+  const availablePaymentMethods = useMemo(() => {
+    return settings.paymentMethods.filter(m => {
+      if (m.behavior === 'credit-card') {
+        return hasCard;
+      }
+      return true;
+    });
+  }, [settings.paymentMethods, hasCard]);
+
+  const canUseInstallments = mode === 'expense' && isCreditCard(paymentMethodId);
   const effectiveInstallments = canUseInstallments ? Number(installments) || 1 : 1;
 
   useEffect(() => {
     if (!open) return;
 
     setErrors({});
+    const firstAcc = settings.accounts[0]?.id || '';
+    const secondAcc = settings.accounts[1]?.id || settings.accounts[0]?.id || '';
+    const initialAcc = defaultAccount || firstAcc;
+
     if (!editing) {
       setMode('expense');
       setDescription('');
       setValue('');
       setDate(defaultDate);
-      setType('Shopping');
-      setAccount(ACCOUNTS[0]);
-      setPaymentMethod('Credit card');
+      setTypeId(typesByDirection.expense[0]?.id || '');
+      setAccountId(initialAcc);
+      // Determine initial payment method
+      const acc = findAccount(initialAcc);
+      const allowedMethods = settings.paymentMethods.filter(m =>
+        m.behavior === 'credit-card' ? Boolean(acc?.card) : true,
+      );
+      setPaymentMethodId(allowedMethods[0]?.id || '');
       setInstallments(1);
-      setFromAccount(ACCOUNTS[0]);
-      setToAccount(ACCOUNTS[1]);
+      setFromAccountId(firstAcc);
+      setToAccountId(secondAcc);
       return;
     }
 
@@ -84,13 +102,12 @@ export function TransactionDialog({
       setMode('transfer');
       setValue(String(editing.outgoing.value));
       setDate(editing.outgoing.date);
-      setFromAccount(editing.outgoing.account);
-      setToAccount(editing.incoming.account);
-      // reset others
+      setFromAccountId(editing.outgoing.accountId);
+      setToAccountId(editing.incoming.accountId);
       setDescription('');
-      setType('Transfer');
-      setAccount(editing.outgoing.account);
-      setPaymentMethod('Credit card');
+      setTypeId(TRANSFER_TYPE_ID);
+      setAccountId(editing.outgoing.accountId);
+      setPaymentMethodId(settings.paymentMethods[0]?.id || '');
       setInstallments(1);
     } else if (editing.kind === 'installments') {
       const first = editing.series[0];
@@ -99,33 +116,47 @@ export function TransactionDialog({
       const total = editing.series.reduce((sum, tx) => sum + tx.value, 0);
       setValue(total.toFixed(2));
       setDate(first.date);
-      setType(first.type);
-      setAccount(first.account);
-      if (first.paymentMethod) setPaymentMethod(first.paymentMethod);
+      setTypeId(first.typeId);
+      setAccountId(first.accountId);
+      if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(editing.series.length);
-      setFromAccount(ACCOUNTS[0]);
-      setToAccount(ACCOUNTS[1]);
+      setFromAccountId(firstAcc);
+      setToAccountId(secondAcc);
     } else {
       const tx = editing.transaction;
       setMode(tx.direction);
       setDescription(tx.description);
       setValue(String(tx.value));
       setDate(tx.date);
-      setType(tx.type);
-      setAccount(tx.account);
-      if (tx.paymentMethod) setPaymentMethod(tx.paymentMethod);
+      setTypeId(tx.typeId);
+      setAccountId(tx.accountId);
+      if (tx.paymentMethodId) setPaymentMethodId(tx.paymentMethodId);
       setInstallments(1);
-      setFromAccount(ACCOUNTS[0]);
-      setToAccount(ACCOUNTS[1]);
+      setFromAccountId(firstAcc);
+      setToAccountId(secondAcc);
     }
-  }, [open, editing, defaultDate]);
+  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount]);
+
+  // Adjust paymentMethodId if selected account changes and doesn't have a card
+  useEffect(() => {
+    if (paymentMethodId && isCreditCard(paymentMethodId) && !hasCard) {
+      const fallback = availablePaymentMethods[0]?.id || '';
+      setPaymentMethodId(fallback);
+    }
+  }, [hasCard, paymentMethodId, availablePaymentMethods, isCreditCard]);
 
   function handleModeChange(nextMode: DialogMode) {
     setMode(nextMode);
-    if (nextMode === 'income' && !INCOME_TYPES.includes(type as any)) {
-      setType(INCOME_TYPES[0]);
-    } else if (nextMode === 'expense' && !EXPENSE_TYPES.includes(type as any)) {
-      setType(EXPENSE_TYPES[0]);
+    if (nextMode === 'income') {
+      const isCurrentIncome = typesByDirection.income.some(t => t.id === typeId);
+      if (!isCurrentIncome) {
+        setTypeId(typesByDirection.income[0]?.id || '');
+      }
+    } else if (nextMode === 'expense') {
+      const isCurrentExpense = typesByDirection.expense.some(t => t.id === typeId && !t.system);
+      if (!isCurrentExpense) {
+        setTypeId(typesByDirection.expense.find(t => !t.system)?.id || typesByDirection.expense[0]?.id || '');
+      }
     }
   }
 
@@ -147,7 +178,7 @@ export function TransactionDialog({
     if (!date) {
       nextErrors.date = 'Choose a transaction date.';
     }
-    if (mode === 'transfer' && fromAccount === toAccount) {
+    if (mode === 'transfer' && fromAccountId === toAccountId) {
       nextErrors.banks = 'Origin and destination must be different.';
     }
 
@@ -159,8 +190,8 @@ export function TransactionDialog({
         kind: 'transfer',
         date,
         value: normalizedValue,
-        fromAccount,
-        toAccount,
+        fromAccountId,
+        toAccountId,
       });
     } else if (effectiveInstallments > 1) {
       onSave({
@@ -168,9 +199,9 @@ export function TransactionDialog({
         transaction: {
           description: normalizedDescription,
           direction: mode,
-          type,
-          account,
-          paymentMethod,
+          typeId,
+          accountId,
+          paymentMethodId,
         },
         firstDate: date,
         totalValue: normalizedValue,
@@ -184,9 +215,9 @@ export function TransactionDialog({
           value: normalizedValue,
           date,
           direction: mode,
-          type,
-          account,
-          ...(mode === 'expense' ? { paymentMethod } : {}),
+          typeId,
+          accountId,
+          ...(mode === 'expense' ? { paymentMethodId } : {}),
         },
       });
     }
@@ -194,6 +225,33 @@ export function TransactionDialog({
 
   const isTransfer = mode === 'transfer';
   const isEditingSeries = editing?.kind === 'installments';
+
+  const typeOptions = useMemo(() => {
+    const list = mode === 'income' ? typesByDirection.income : typesByDirection.expense;
+    return list.map(t => ({
+      value: t.id,
+      label: t.name,
+      customContent: <CategoryChip typeConfig={t} size="sm" />,
+    }));
+  }, [mode, typesByDirection]);
+
+  const accountOptions = useMemo(() => {
+    return settings.accounts.map(a => ({
+      value: a.id,
+      label: a.name,
+    }));
+  }, [settings.accounts]);
+
+  const paymentOptions = useMemo(() => {
+    return availablePaymentMethods.map(m => {
+      const Icon = getIcon(m.icon);
+      return {
+        value: m.id,
+        label: m.name,
+        icon: <Icon className="w-3.5 h-3.5 text-muted-foreground" />,
+      };
+    });
+  }, [availablePaymentMethods]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -263,20 +321,15 @@ export function TransactionDialog({
 
               {!isTransfer ? (
                 <>
-                  <OptionSelect
-                    label="Type"
-                    value={type}
-                    options={mode === 'income' ? INCOME_TYPES : EXPENSE_TYPES}
-                    onChange={setType}
-                  />
-                  <OptionSelect label="Account" value={account} options={ACCOUNTS} onChange={setAccount} />
+                  <OptionSelect label="Type" value={typeId} options={typeOptions} onChange={setTypeId} />
+                  <OptionSelect label="Account" value={accountId} options={accountOptions} onChange={setAccountId} />
                   {mode === 'expense' && (
                     <>
                       <OptionSelect
                         label="Form of payment"
-                        value={paymentMethod}
-                        options={PAYMENT_METHODS}
-                        onChange={setPaymentMethod}
+                        value={paymentMethodId}
+                        options={paymentOptions}
+                        onChange={setPaymentMethodId}
                       />
                       {canUseInstallments && (
                         <InstallmentsField
@@ -292,16 +345,16 @@ export function TransactionDialog({
                 <>
                   <OptionSelect
                     label="From account"
-                    value={fromAccount}
-                    options={ACCOUNTS}
-                    onChange={setFromAccount}
+                    value={fromAccountId}
+                    options={accountOptions}
+                    onChange={setFromAccountId}
                     error={errors.banks}
                   />
                   <OptionSelect
                     label="To account"
-                    value={toAccount}
-                    options={ACCOUNTS}
-                    onChange={setToAccount}
+                    value={toAccountId}
+                    options={accountOptions}
+                    onChange={setToAccountId}
                     error={errors.banks}
                   />
                 </>

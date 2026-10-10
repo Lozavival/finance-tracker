@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { formatSignedValue, groupTransactionsByMonth, Transaction } from '../../data/transactions';
 import { formatInstallmentLabel } from '../../data/installments';
 import { formatRowDate, getToday } from '../../data/dates';
+import { useSettings } from '../../state/SettingsContext';
+import { CategoryChip } from '../shared/CategoryChip';
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];
@@ -19,6 +21,7 @@ export function TransactionsMonthTable({
   onDelete,
   showAccount = true,
 }: TransactionsMonthTableProps & { showAccount?: boolean }) {
+  const { findType, findAccount, findMethod } = useSettings();
   const groups = groupTransactionsByMonth(transactions);
 
   if (transactions.length === 0) {
@@ -56,10 +59,16 @@ export function TransactionsMonthTable({
               </TableRow>
               {group.transactions.map(transaction => {
                 const isFuture = transaction.date.getTime() > today.getTime();
+                const typeConfig = findType(transaction.typeId);
+                const accountConfig = findAccount(transaction.accountId);
+                const methodConfig = findMethod(transaction.paymentMethodId);
+
                 return (
                   <TableRow
                     key={transaction.id}
-                    className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${isFuture ? 'opacity-60' : ''}`}
+                    className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${
+                      isFuture ? 'opacity-60' : ''
+                    }`}
                     title={isFuture ? 'Scheduled' : undefined}
                   >
                     <TableCell className="text-foreground whitespace-nowrap">
@@ -75,12 +84,16 @@ export function TransactionsMonthTable({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.type}</TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      <CategoryChip typeConfig={typeConfig} label={transaction.typeId} />
+                    </TableCell>
                     {showAccount && (
-                      <TableCell className="text-muted-foreground whitespace-nowrap">{transaction.account}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {accountConfig?.name ?? transaction.accountId}
+                      </TableCell>
                     )}
                     <TableCell className="text-muted-foreground whitespace-nowrap">
-                      {transaction.paymentMethod ?? '—'}
+                      {methodConfig?.name ?? '—'}
                     </TableCell>
                     <TableCell
                       className={`text-right whitespace-nowrap ${

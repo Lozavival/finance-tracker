@@ -1,20 +1,20 @@
 import { getToday } from '../../data/dates';
-import { type Account } from '../../data/transactions';
 import { type CardStatement } from '../../data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '../../data/ledger';
 import { buildDailySeries } from '../../data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardStatementsPanel } from './CardStatementsPanel';
 import { BalanceProjectionChart } from './BalanceProjectionChart';
-import { ACCOUNT_DETAILS } from '../../data/accounts';
 import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import {
   formatCurrency,
   resolvePeriodRange,
   type PeriodFilter as PeriodFilterType,
   sortTransactionsDescending,
+  type Transaction,
 } from '../../data/transactions';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { TransactionsMonthTable } from '../transactions/TransactionsMonthTable';
 import { useTransactionActions } from '../../hooks/useTransactionActions';
 import { TransactionDialogs } from '../transactions/TransactionDialogs';
@@ -22,29 +22,34 @@ import { useMemo, useState } from 'react';
 import { PeriodFilter } from '../transactions/PeriodFilter';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
 import { parseLocalDate } from '../../data/dates';
+import { useSettings } from '../../state/SettingsContext';
+import { getAccountColor, type AccountConfig } from '../../data/settings';
+import { AccountFormDialog } from './AccountFormDialog';
 
 type AccountDetailPageProps = {
-  account: Account;
+  accountId: string;
   finance: {
     statements: CardStatement[];
-    ledgers: Record<Account, AccountLedger>;
+    ledgers: Record<string, AccountLedger>;
     today: Date;
   };
-  transactions: any[];
-  onTransactionsChange: (txs: any[]) => void;
+  transactions: Transaction[];
+  onTransactionsChange: (txs: Transaction[]) => void;
   onBack: () => void;
 };
 
 export function AccountDetailPage({
-  account,
+  accountId,
   finance,
   transactions,
   onTransactionsChange,
   onBack,
 }: AccountDetailPageProps) {
-  const details = ACCOUNT_DETAILS[account];
-  const ledger = finance.ledgers[account];
+  const { findAccount, dispatch } = useSettings();
+  const details = findAccount(accountId);
+  const ledger = finance.ledgers[accountId];
 
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
 
   const upcomingLimitDate = useMemo(() => {
@@ -96,7 +101,7 @@ export function AccountDetailPage({
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period, finance.today);
     const filtered = transactions
-      .filter(t => t.account === account)
+      .filter(t => t.accountId === accountId)
       .filter(transaction => {
         if (periodRange) {
           if (
@@ -109,7 +114,39 @@ export function AccountDetailPage({
         return true;
       });
     return sortTransactionsDescending(filtered);
-  }, [period, transactions, account, finance.today]);
+  }, [period, transactions, accountId, finance.today]);
+
+  if (!details) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={onBack}
+          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Accounts
+        </button>
+        <div className="text-foreground text-xl">Account not found</div>
+      </div>
+    );
+  }
+
+  function handleSaveAccount(updated: AccountConfig) {
+    dispatch({
+      type: 'account/update',
+      payload: {
+        id: updated.id,
+        changes: {
+          name: updated.name,
+          kind: updated.kind,
+          initials: updated.initials,
+          color: updated.color,
+          openingBalance: updated.openingBalance,
+          openingDate: updated.openingDate,
+          card: updated.card,
+        },
+      },
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -123,14 +160,25 @@ export function AccountDetailPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg`}
-            style={{ backgroundColor: details.color }}
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-medium shadow-sm flex-shrink-0"
+            style={{ backgroundColor: getAccountColor(details.color) }}
           >
             {details.initials}
           </div>
           <div>
-            <div role="heading" aria-level={1} className="text-foreground text-3xl mb-1">
-              {details.name}
+            <div className="flex items-center gap-3">
+              <div role="heading" aria-level={1} className="text-foreground text-3xl mb-1">
+                {details.name}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditDialogOpen(true)}
+                className="h-8 gap-1.5 border-border bg-foreground/5 text-foreground hover:bg-foreground/10 text-xs"
+              >
+                <Pencil className="w-3.5 h-3.5 text-theme-cyan" />
+                Edit account
+              </Button>
             </div>
             <div className="text-muted-foreground">{details.kind}</div>
           </div>
@@ -171,7 +219,7 @@ export function AccountDetailPage({
         </Card>
       </div>
 
-      <CardStatementsPanel account={account} statements={finance.statements} />
+      <CardStatementsPanel accountId={accountId} statements={finance.statements} />
 
       <Card className="p-6 bg-foreground/5 border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
@@ -196,9 +244,17 @@ export function AccountDetailPage({
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
         defaultDate={getToday()}
-        defaultAccount={account}
+        defaultAccount={accountId}
         onSave={saveTransaction}
         onDelete={deleteTransaction}
+      />
+
+      <AccountFormDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        account={details}
+        transactions={transactions}
+        onSave={handleSaveAccount}
       />
     </div>
   );

@@ -13,7 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import { useState } from 'react';
-import { CATEGORY_STYLES, formatCurrency, type CategoryTotal } from '../data/transactions';
+import { formatCurrency, type CategoryTotal } from '../data/transactions';
 
 const revenueData = {
   '7D': [
@@ -48,11 +48,11 @@ const revenueData = {
 };
 
 const categoryData: CategoryTotal[] = [
-  { name: 'Shopping', value: 4500, ...CATEGORY_STYLES.Shopping },
-  { name: 'Food & Dining', value: 3200, ...CATEGORY_STYLES['Food & Dining'] },
-  { name: 'Transportation', value: 2100, ...CATEGORY_STYLES.Transportation },
-  { name: 'Entertainment', value: 1800, ...CATEGORY_STYLES.Entertainment },
-  { name: 'Bills', value: 2800, ...CATEGORY_STYLES.Bills },
+  { typeId: 'shopping', name: 'Shopping', value: 4500, color: '#22d3ee' },
+  { typeId: 'food-dining', name: 'Food & Dining', value: 3200, color: '#60a5fa' },
+  { typeId: 'transportation', name: 'Transportation', value: 2100, color: '#a78bfa' },
+  { typeId: 'entertainment', name: 'Entertainment', value: 1800, color: '#f472b6' },
+  { typeId: 'bills', name: 'Bills', value: 2800, color: '#fbbf24' },
 ];
 
 type SpendingByCategoryChartProps = {
@@ -115,7 +115,7 @@ export function SpendingByCategoryChart({
             {data.map(category => (
               <div key={category.name} className="flex items-center justify-between gap-4 text-sm">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`size-3 shrink-0 rounded-full ${category.dotClassName}`} />
+                  <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
                   <span className="text-muted-foreground truncate">{category.name}</span>
                 </div>
                 <span className="text-foreground">{formatCurrency(category.value)}</span>

@@ -3,12 +3,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { formatSignedValue, type Transaction } from '../data/transactions';
 import { formatInstallmentLabel } from '../data/installments';
 import { formatFull, getToday } from '../data/dates';
+import { useSettings } from '../state/SettingsContext';
+import { CategoryChip } from './shared/CategoryChip';
 
 type TransactionsTableProps = {
   transactions: Transaction[];
 };
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
+  const { findType, findAccount } = useSettings();
   const today = getToday();
 
   const recentTransactions = [...transactions]
@@ -34,31 +37,40 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentTransactions.map(transaction => (
-              <TableRow
-                key={transaction.id}
-                className="border-b border-border/50 hover:bg-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
-              >
-                <TableCell className="text-foreground">{formatFull(transaction.date)}</TableCell>
-                <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
-                  <div className="inline-flex items-center gap-2">
-                    {transaction.description}
-                    {transaction.installment && (
-                      <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
-                        {formatInstallmentLabel(transaction.installment)}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
-                <TableCell className="text-muted-foreground">{transaction.account}</TableCell>
-                <TableCell
-                  className={`text-right ${transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'}`}
+            {recentTransactions.map(transaction => {
+              const typeConfig = findType(transaction.typeId);
+              const accountConfig = findAccount(transaction.accountId);
+
+              return (
+                <TableRow
+                  key={transaction.id}
+                  className="border-b border-border/50 hover:bg-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
                 >
-                  {formatSignedValue(transaction)}
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell className="text-foreground">{formatFull(transaction.date)}</TableCell>
+                  <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
+                    <div className="inline-flex items-center gap-2">
+                      {transaction.description}
+                      {transaction.installment && (
+                        <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
+                          {formatInstallmentLabel(transaction.installment)}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <CategoryChip typeConfig={typeConfig} label={transaction.typeId} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {accountConfig?.name ?? transaction.accountId}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right ${transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'}`}
+                  >
+                    {formatSignedValue(transaction)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

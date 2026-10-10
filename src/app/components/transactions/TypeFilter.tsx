@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
-import { EXPENSE_TYPES, INCOME_TYPES, TransactionType } from '../../data/transactions';
+import { useSettings } from '../../state/SettingsContext';
+import { type TransactionTypeConfig } from '../../data/settings';
 import { Toggle } from '../ui/toggle';
+import { getIcon } from '../../data/icons';
+import { COLOR_CONFIG } from '../../data/settings';
 
 type TypeFilterProps = {
-  value: TransactionType[];
-  onChange: (value: TransactionType[]) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
 };
 
 export function TypeFilter({ value, onChange }: TypeFilterProps) {
+  const { incomeTypes, expenseTypes, findType } = useSettings();
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<TransactionType[]>(value);
+  const [draft, setDraft] = useState<string[]>(value);
 
   useEffect(() => {
     if (open) {
@@ -22,28 +26,36 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
   const active = value.length > 0;
   let label = 'Type';
   if (value.length === 1) {
-    label = value[0];
+    const t = findType(value[0]);
+    label = t ? t.name : value[0];
   } else if (value.length > 1) {
-    label = `${value[0]} +${value.length - 1}`;
+    const firstType = findType(value[0]);
+    const firstName = firstType ? firstType.name : value[0];
+    label = `${firstName} +${value.length - 1}`;
   }
 
-  const renderToggle = (type: TransactionType) => {
-    const isSelected = draft.includes(type);
+  const renderToggle = (type: TransactionTypeConfig) => {
+    const isSelected = draft.includes(type.id);
+    const Icon = getIcon(type.icon);
+    const colorMeta = COLOR_CONFIG[type.color] ?? COLOR_CONFIG.slate;
+
     return (
       <Toggle
-        key={type}
+        key={type.id}
         pressed={isSelected}
         onPressedChange={pressed => {
           if (pressed) {
-            setDraft([...draft, type]);
+            setDraft([...draft, type.id]);
           } else {
-            setDraft(draft.filter(t => t !== type));
+            setDraft(draft.filter(t => t !== type.id));
           }
         }}
         variant="outline"
-        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20"
+        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20 text-xs px-3 py-1 flex items-center gap-1.5"
       >
-        {type}
+        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: colorMeta.dotColor }} />
+        <Icon className="w-3.5 h-3.5" />
+        <span>{type.name}</span>
       </Toggle>
     );
   };
@@ -60,12 +72,12 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
         <div className="space-y-2">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Income</div>
-          <div className="flex flex-wrap gap-2">{INCOME_TYPES.map(renderToggle)}</div>
+          <div className="flex flex-wrap gap-2">{incomeTypes.map(renderToggle)}</div>
         </div>
 
         <div className="space-y-2">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Expense</div>
-          <div className="flex flex-wrap gap-2">{EXPENSE_TYPES.map(renderToggle)}</div>
+          <div className="flex flex-wrap gap-2">{expenseTypes.map(renderToggle)}</div>
         </div>
       </div>
     </FilterPanel>

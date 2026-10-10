@@ -1,28 +1,31 @@
-import { type Account } from '../../data/transactions';
 import { type CardStatement } from '../../data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '../../data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardBillSummary } from './CardBillSummary';
-import { ACCOUNT_DETAILS } from '../../data/accounts';
 import { Card } from '../ui/card';
 import { useState, useMemo } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
-import { formatCurrency } from '../../data/transactions';
+import { formatCurrency, type Transaction } from '../../data/transactions';
 import { parseLocalDate, formatShort } from '../../data/dates';
+import { useSettings } from '../../state/SettingsContext';
+import { getAccountColor, type AccountConfig } from '../../data/settings';
+import { AccountFormDialog } from './AccountFormDialog';
 
 type AccountsPageProps = {
   finance: {
     statements: CardStatement[];
-    ledgers: Record<Account, AccountLedger>;
+    ledgers: Record<string, AccountLedger>;
     today: Date;
   };
-  transactions: any[];
-  onAccountSelect: (acc: Account) => void;
+  transactions: Transaction[];
+  onAccountSelect: (accountId: string) => void;
 };
 
-export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
+export function AccountsPage({ finance, transactions, onAccountSelect }: AccountsPageProps) {
+  const { settings, dispatch } = useSettings();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const horizonEnd = useMemo(() => {
     if (upcomingPeriod.kind === 'all') return parseLocalDate('2030-01-01');
@@ -43,9 +46,9 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
   let totalOut = 0;
   let totalProjected = 0;
 
-  const cards = (Object.keys(ACCOUNT_DETAILS) as Account[]).map(accName => {
-    const details = ACCOUNT_DETAILS[accName];
-    const ledger = finance.ledgers[accName];
+  const cards = settings.accounts.map(acc => {
+    const details = acc;
+    const ledger = finance.ledgers[acc.id];
     const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
 
     totalBalance += forecast.current;
@@ -55,15 +58,15 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
 
     return (
       <Card
-        key={accName}
+        key={acc.id}
         className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all cursor-pointer group"
-        onClick={() => onAccountSelect(accName)}
+        onClick={() => onAccountSelect(acc.id)}
       >
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-white`}
-              style={{ backgroundColor: details.color }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm"
+              style={{ backgroundColor: getAccountColor(details.color) }}
             >
               {details.initials}
             </div>
@@ -80,7 +83,7 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
         </div>
 
         <div className="mb-2">
-          <CardBillSummary account={accName} statements={finance.statements} />
+          <CardBillSummary accountId={acc.id} statements={finance.statements} />
           <div className="text-xs text-muted-foreground mb-2 mt-4 font-medium uppercase tracking-wider">Next up</div>
           <UpcomingList upcoming={forecast.upcoming} currentBalance={forecast.current} variant="compact" />
         </div>
@@ -113,6 +116,10 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
     );
   });
 
+  function handleSaveAccount(newAccount: AccountConfig) {
+    dispatch({ type: 'account/add', payload: newAccount });
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -122,7 +129,7 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
           </div>
           <div className="text-muted-foreground">Manage your cash flow and upcoming bills.</div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
           <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
         </div>
       </div>
@@ -147,7 +154,28 @@ export function AccountsPage({ finance, onAccountSelect }: AccountsPageProps) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{cards}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cards}
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="group relative flex h-full min-h-[350px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/80 bg-foreground/[0.02] p-6 text-center transition-all hover:border-cyan-500/50 hover:bg-cyan-500/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 cursor-pointer"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border/80 text-muted-foreground shadow-sm transition-all group-hover:scale-105 group-hover:border-cyan-500/60 group-hover:bg-cyan-500/10 group-hover:text-theme-cyan">
+            <Plus className="h-6 w-6" />
+          </div>
+          <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-theme-cyan">
+            Add account
+          </span>
+        </button>
+      </div>
+
+      <AccountFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        transactions={transactions}
+        onSave={handleSaveAccount}
+      />
     </div>
   );
 }

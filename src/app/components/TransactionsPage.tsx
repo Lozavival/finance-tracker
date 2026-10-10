@@ -14,8 +14,6 @@ import {
   type PeriodFilter as PeriodFilterType,
   type Transaction,
   type TransactionDirection,
-  type TransactionType,
-  type PaymentMethod,
   groupToAccrualBasis,
 } from '../data/transactions';
 import { TransactionDialogs } from './transactions/TransactionDialogs';
@@ -28,9 +26,9 @@ type TransactionsPageProps = {
 
 export function TransactionsPage({ transactions, onTransactionsChange }: TransactionsPageProps) {
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
-  const [selectedTypes, setSelectedTypes] = useState<TransactionType[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
-  const [selectedPayments, setSelectedPayments] = useState<PaymentMethod[]>([]);
+  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
 
   const {
     dialogOpen,
@@ -55,14 +53,14 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
           return false;
         }
       }
-      if (selectedTypes.length > 0 && !selectedTypes.includes(transaction.type)) {
+      if (selectedTypes.length > 0 && !selectedTypes.includes(transaction.typeId)) {
         return false;
       }
       if (direction !== 'all' && transaction.direction !== direction) {
         return false;
       }
       if (selectedPayments.length > 0) {
-        if (!transaction.paymentMethod || !selectedPayments.includes(transaction.paymentMethod)) {
+        if (!transaction.paymentMethodId || !selectedPayments.includes(transaction.paymentMethodId)) {
           return false;
         }
       }

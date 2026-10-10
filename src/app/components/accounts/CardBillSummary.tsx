@@ -1,16 +1,22 @@
 import { formatFull } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
-import { type Account } from '../../data/transactions';
 import { formatCurrency } from '../../data/transactions';
 import { CreditCard } from 'lucide-react';
+import { useSettings } from '../../state/SettingsContext';
 
-export function CardBillSummary({ account, statements }: { account: Account; statements: CardStatement[] }) {
-  const usage = getCardUsage(statements, account);
+type CardBillSummaryProps = {
+  accountId: string;
+  statements: CardStatement[];
+};
+
+export function CardBillSummary({ accountId, statements }: CardBillSummaryProps) {
+  const { settings } = useSettings();
+  const usage = getCardUsage(statements, accountId, settings);
   if (usage.limit === 0) return null; // No card
 
   const stmt =
-    statements.find(s => s.account === account && s.status !== 'paid') ||
-    statements.filter(s => s.account === account).pop();
+    statements.find(s => s.accountId === accountId && s.status !== 'paid') ||
+    statements.filter(s => s.accountId === accountId).pop();
   if (!stmt) return null;
 
   const pct = Math.min(100, Math.round((usage.used / usage.limit) * 100));
