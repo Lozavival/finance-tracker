@@ -234,6 +234,9 @@ export function AccountDetailPage({
           onDelete={setDeleteTarget}
           showAccount={false}
         />
+        {visibleTransactions.length === 0 && (
+          <div className="text-muted-foreground text-sm">No transactions found.</div>
+        )}
       </Card>
 
       <TransactionDialogs

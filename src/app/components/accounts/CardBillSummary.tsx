@@ -4,22 +4,48 @@ import { formatCurrency } from '../../data/transactions';
 import { CreditCard } from 'lucide-react';
 import { useSettings } from '../../state/SettingsContext';
 
+import { type AccountConfig } from '../../data/settings';
+
 type CardBillSummaryProps = {
   accountId: string;
+  account?: AccountConfig;
   statements: CardStatement[];
 };
 
-export function CardBillSummary({ accountId, statements }: CardBillSummaryProps) {
-  const { settings } = useSettings();
-  const usage = getCardUsage(statements, accountId, settings);
-  if (usage.limit === 0) return null; // No card
+export function CardBillSummary({ accountId, account: propAccount, statements }: CardBillSummaryProps) {
+  const { settings, findAccount } = useSettings();
+  const account = propAccount ?? findAccount(accountId);
+  if (!account?.card) return null; // No card
 
+  const usage = getCardUsage(statements, accountId, settings);
   const stmt =
     statements.find(s => s.accountId === accountId && s.status !== 'paid') ||
     statements.filter(s => s.accountId === accountId).pop();
-  if (!stmt) return null;
 
-  const pct = Math.min(100, Math.round((usage.used / usage.limit) * 100));
+  const pct = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
+
+  if (!stmt) {
+    return (
+      <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6">
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-theme-cyan" />
+          <span className="text-foreground">{account.card.name}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <div className="text-foreground font-medium">{formatCurrency(0)}</div>
+            <div className="text-xs text-muted-foreground">No open bill</div>
+          </div>
+          <div className="w-16">
+            <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
+              <div className="h-full bg-theme-cyan transition-all" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-1 text-right">{pct}% limit</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6">

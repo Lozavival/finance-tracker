@@ -83,7 +83,7 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
         </div>
 
         <div className="mb-2">
-          <CardBillSummary accountId={acc.id} statements={finance.statements} />
+          <CardBillSummary accountId={acc.id} account={acc} statements={finance.statements} />
           <div className="text-xs text-muted-foreground mb-2 mt-4 font-medium uppercase tracking-wider">Next up</div>
           <UpcomingList upcoming={forecast.upcoming} currentBalance={forecast.current} variant="compact" />
         </div>
