@@ -1,0 +1,68 @@
+import { useState } from 'react';
+import { useSettings } from '../../state/SettingsContext';
+import { type Transaction } from '../../data/transactions';
+import { type GoalCategory } from '../../data/goals';
+import { BudgetOverview } from './BudgetOverview';
+import { GoalsConfigPanel } from './GoalsConfigPanel';
+
+type GoalsPageProps = {
+  transactions: Transaction[];
+  onTransactionsChange: (txs: Transaction[]) => void;
+};
+
+export function GoalsPage({ transactions }: GoalsPageProps) {
+  const { settings, dispatch } = useSettings();
+  const [view, setView] = useState<'overview' | 'config'>('overview');
+
+  function handleUpdateReferenceIncome(income: number) {
+    dispatch({ type: 'goals/updateReferenceIncome', payload: { income } });
+  }
+
+  function handleUpdateMode(mode: 'percentage' | 'currency') {
+    dispatch({ type: 'goals/updateMode', payload: { mode } });
+  }
+
+  function handleUpdateAllocations(categories: GoalCategory[]) {
+    dispatch({ type: 'goals/updateAllocations', payload: { categories } });
+  }
+
+  function handleAddCategory(category: GoalCategory) {
+    dispatch({ type: 'goals/addCategory', payload: { category } });
+  }
+
+  function handleUpdateCategory(id: string, changes: Partial<Omit<GoalCategory, 'id'>>) {
+    dispatch({ type: 'goals/updateCategory', payload: { id, changes } });
+  }
+
+  function handleDeleteCategory(id: string) {
+    dispatch({ type: 'goals/deleteCategory', payload: { id } });
+  }
+
+  function handleResetDefaults() {
+    dispatch({ type: 'goals/resetAllocations' });
+  }
+
+  return (
+    <div>
+      {view === 'overview' ? (
+        <BudgetOverview
+          transactions={transactions}
+          goalsConfig={settings.goals}
+          onAdjustGoals={() => setView('config')}
+        />
+      ) : (
+        <GoalsConfigPanel
+          goalsConfig={settings.goals}
+          onUpdateReferenceIncome={handleUpdateReferenceIncome}
+          onUpdateMode={handleUpdateMode}
+          onUpdateAllocations={handleUpdateAllocations}
+          onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
+          onResetDefaults={handleResetDefaults}
+          onBackToBudget={() => setView('overview')}
+        />
+      )}
+    </div>
+  );
+}

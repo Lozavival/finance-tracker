@@ -170,10 +170,13 @@ export type AccountConfig = {
   allowedPaymentMethods?: string[];
 };
 
+import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';
+
 export type Settings = {
   transactionTypes: TransactionTypeConfig[];
   paymentMethods: PaymentMethodConfig[];
   accounts: AccountConfig[];
+  goals: GoalsConfig;
 };
 
 export const TRANSFER_TYPE_ID = 'transfer';
@@ -325,6 +328,7 @@ export const DEFAULT_SETTINGS: Settings = {
       allowedPaymentMethods: ['cash'],
     },
   ],
+  goals: DEFAULT_GOALS_CONFIG,
 };
 
 export function findType(settings: Settings, id: string): TransactionTypeConfig | undefined {

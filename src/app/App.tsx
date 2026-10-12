@@ -13,6 +13,8 @@ import { type Transaction } from './data/transactions';
 import { AccountsPage } from './components/accounts/AccountsPage';
 import { AccountDetailPage } from './components/accounts/AccountDetailPage';
 import { SettingsPage } from './components/settings/SettingsPage';
+import { GoalsPage } from './components/goals/GoalsPage';
+import { Toaster } from './components/ui/sonner';
 import { SettingsProvider, useSettings } from './state/SettingsContext';
 
 function AppContent() {
@@ -56,6 +58,8 @@ function AppContent() {
             ) : (
               <AccountsPage finance={finance} transactions={transactions} onAccountSelect={setSelectedAccountId} />
             )
+          ) : activePage === 'goals' ? (
+            <GoalsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : activePage === 'settings' ? (
             <SettingsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : (
@@ -81,6 +85,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <AppContent />
+      <Toaster position="bottom-right" />
     </SettingsProvider>
   );
 }

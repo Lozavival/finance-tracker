@@ -1,10 +1,11 @@
-import { LayoutDashboard, ArrowLeftRight, Wallet, Settings } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Wallet, Target, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
   { icon: ArrowLeftRight, label: 'Transactions', id: 'transactions' },
   { icon: Wallet, label: 'Accounts', id: 'accounts' },
+  { icon: Target, label: 'Budget & Goals', id: 'goals' },
   { icon: Settings, label: 'Settings', id: 'settings' },
 ];
 
@@ -54,8 +55,8 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
                 </span>
               </Button>
 
-              {/* Neon separator after Transactions and Wallets */}
-              {index === 2 && (
+              {/* Neon separator before Settings */}
+              {index === 3 && (
                 <div className="my-4 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
               )}
             </div>

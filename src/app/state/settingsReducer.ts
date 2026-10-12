@@ -4,6 +4,7 @@ import {
   type PaymentMethodConfig,
   type AccountConfig,
 } from '../data/settings';
+import { type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '../data/goals';
 
 export type SettingsAction =
   | { type: 'type/add'; payload: TransactionTypeConfig }
@@ -20,7 +21,15 @@ export type SettingsAction =
     }
   | { type: 'method/reorder'; payload: { methods: PaymentMethodConfig[] } }
   | { type: 'account/add'; payload: AccountConfig }
-  | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } };
+  | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } }
+  | { type: 'goals/updateReferenceIncome'; payload: { income: number } }
+  | { type: 'goals/updateMode'; payload: { mode: 'percentage' | 'currency' } }
+  | { type: 'goals/updateAllocations'; payload: { categories: GoalCategory[] } }
+  | { type: 'goals/addCategory'; payload: { category: GoalCategory } }
+  | { type: 'goals/updateCategory'; payload: { id: string; changes: Partial<Omit<GoalCategory, 'id'>> } }
+  | { type: 'goals/deleteCategory'; payload: { id: string } }
+  | { type: 'goals/resetAllocations' }
+  | { type: 'goals/updateTypeMappings'; payload: { mappings: Record<string, string> } };
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
   switch (action.type) {
@@ -116,6 +125,88 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
           if (a.id !== action.payload.id) return a;
           return { ...a, ...action.payload.changes };
         }),
+      };
+    }
+
+    case 'goals/updateReferenceIncome': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          referenceMonthlyIncome: action.payload.income,
+        },
+      };
+    }
+
+    case 'goals/updateMode': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          mode: action.payload.mode,
+        },
+      };
+    }
+
+    case 'goals/updateAllocations': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: action.payload.categories,
+        },
+      };
+    }
+
+    case 'goals/addCategory': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: [...state.goals.categories, action.payload.category],
+        },
+      };
+    }
+
+    case 'goals/updateCategory': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: state.goals.categories.map(c =>
+            c.id === action.payload.id ? { ...c, ...action.payload.changes } : c,
+          ),
+        },
+      };
+    }
+
+    case 'goals/deleteCategory': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: state.goals.categories.filter(c => c.id !== action.payload.id),
+        },
+      };
+    }
+
+    case 'goals/resetAllocations': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: DEFAULT_GOAL_CATEGORIES,
+        },
+      };
+    }
+
+    case 'goals/updateTypeMappings': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          typeMappings: action.payload.mappings,
+        },
       };
     }
 
