@@ -42,6 +42,10 @@ export function GoalsPage({ transactions }: GoalsPageProps) {
     dispatch({ type: 'goals/resetAllocations' });
   }
 
+  function handleUpdateTypeMappings(mappings: Record<string, string>) {
+    dispatch({ type: 'goals/updateTypeMappings', payload: { mappings } });
+  }
+
   return (
     <div>
       {view === 'overview' ? (
@@ -60,6 +64,7 @@ export function GoalsPage({ transactions }: GoalsPageProps) {
           onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
           onResetDefaults={handleResetDefaults}
+          onUpdateTypeMappings={handleUpdateTypeMappings}
           onBackToBudget={() => setView('overview')}
         />
       )}

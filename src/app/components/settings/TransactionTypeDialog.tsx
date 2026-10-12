@@ -4,14 +4,15 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ColorPicker } from './ColorPicker';
 import { IconPicker } from './IconPicker';
 import { CategoryChip } from '../shared/CategoryChip';
-import { type TransactionTypeConfig, type Direction, type ColorToken } from '../../data/settings';
-import { type IconKey } from '../../data/icons';
+import { type TransactionTypeConfig, type Direction, type ColorToken, COLOR_CONFIG } from '../../data/settings';
+import { type IconKey, getIcon } from '../../data/icons';
 import { type Transaction } from '../../data/transactions';
 import { useSettings } from '../../state/SettingsContext';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Target } from 'lucide-react';
 
 type TransactionTypeDialogProps = {
   open: boolean;
@@ -19,7 +20,7 @@ type TransactionTypeDialogProps = {
   typeConfig?: TransactionTypeConfig | null;
   defaultDirection?: Direction;
   transactions: Transaction[];
-  onSave: (saved: TransactionTypeConfig) => void;
+  onSave: (saved: TransactionTypeConfig, linkedGoalId?: string) => void;
 };
 
 export function TransactionTypeDialog({
@@ -37,6 +38,7 @@ export function TransactionTypeDialog({
   const [direction, setDirection] = useState<Direction>(defaultDirection);
   const [color, setColor] = useState<ColorToken>('cyan');
   const [icon, setIcon] = useState<IconKey>('Tag');
+  const [linkedGoalId, setLinkedGoalId] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isSystem = Boolean(typeConfig?.system);
@@ -59,12 +61,15 @@ export function TransactionTypeDialog({
       setDirection(typeConfig.direction);
       setColor(typeConfig.color);
       setIcon(typeConfig.icon);
+      setLinkedGoalId(settings.goals?.typeMappings?.[typeConfig.id] || '');
     } else {
       setName('');
       setDirection(defaultDirection);
       setColor(defaultDirection === 'income' ? 'emerald' : 'cyan');
       setIcon(defaultDirection === 'income' ? 'Banknote' : 'ShoppingBag');
+      setLinkedGoalId('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, typeConfig, defaultDirection]);
 
   function handleSubmit(e: FormEvent) {
@@ -107,7 +112,7 @@ export function TransactionTypeDialog({
       system: typeConfig?.system,
     };
 
-    onSave(result);
+    onSave(result, direction === 'expense' && linkedGoalId ? linkedGoalId : undefined);
     onOpenChange(false);
   }
 
@@ -119,20 +124,22 @@ export function TransactionTypeDialog({
     icon,
   };
 
+  const goalCategories = settings.goals?.categories || [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-md">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-border p-6 pr-14">
+      <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-md max-h-[90vh] flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <DialogHeader className="border-b border-border p-6 pr-14 flex-shrink-0">
             <DialogTitle>{isEditing ? 'Edit transaction type' : 'Add transaction type'}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               {isEditing
-                ? 'Update how this category is named, styled, and displayed.'
-                : 'Create a custom category for your income or expenses.'}
+                ? 'Update how this category is named, styled, and mapped to financial goals.'
+                : 'Create a custom category for your income or expenses and link it to your budget goals.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5 p-6">
+          <div className="space-y-4 p-6 overflow-y-auto flex-1">
             <div className="space-y-2">
               <Label className="text-foreground">Type Name</Label>
               <Input
@@ -183,12 +190,63 @@ export function TransactionTypeDialog({
               )}
             </div>
 
+            {/* Linked Goal Category (Prompted for Expense Types) */}
+            {direction === 'expense' && (
+              <div className="space-y-2 pt-1 border-t border-border/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Target className="w-4 h-4 text-theme-cyan" />
+                    <Label className="text-foreground text-sm font-semibold">Linked Financial Goal</Label>
+                  </div>
+                  {linkedGoalId && (
+                    <span className="text-[11px] text-theme-cyan font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/20">
+                      Linked
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Expenses with this type will automatically contribute to this goal&apos;s budget allocation.
+                </p>
+
+                <Select
+                  value={linkedGoalId || 'none'}
+                  onValueChange={val => setLinkedGoalId(val === 'none' ? '' : val)}
+                >
+                  <SelectTrigger className="h-11 border-border bg-foreground/5 text-foreground">
+                    <SelectValue placeholder="Select a financial goal..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="none">
+                      <span className="text-muted-foreground">None (Unassigned)</span>
+                    </SelectItem>
+                    {goalCategories.map(cat => {
+                      const c = COLOR_CONFIG[cat.color];
+                      const CatIcon = getIcon(cat.icon);
+                      return (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: c?.dotColor || '#3b82f6' }}
+                            />
+                            <CatIcon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="font-medium">{cat.name}</span>
+                            <span className="text-xs text-muted-foreground">({cat.percentage}%)</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <ColorPicker value={color} onChange={setColor} label="Badge Color" />
               <IconPicker value={icon} onChange={setIcon} label="Icon" />
             </div>
 
-            <div className="pt-3 border-t border-border/60">
+            <div className="pt-2 border-t border-border/60">
               <div className="text-xs text-muted-foreground mb-2">Live Preview</div>
               <div className="p-3 rounded-lg border border-border/60 bg-foreground/5 flex items-center justify-center">
                 <CategoryChip typeConfig={previewConfig} size="md" />
@@ -196,7 +254,7 @@ export function TransactionTypeDialog({
             </div>
           </div>
 
-          <DialogFooter className="border-t border-border p-6 sm:justify-between">
+          <DialogFooter className="border-t border-border p-6 sm:justify-between flex-shrink-0">
             <Button
               type="button"
               variant="ghost"
@@ -207,7 +265,7 @@ export function TransactionTypeDialog({
             </Button>
             <Button
               type="submit"
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
+              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20 cursor-pointer"
             >
               {isEditing ? 'Save changes' : 'Add type'}
             </Button>

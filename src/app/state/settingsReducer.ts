@@ -4,7 +4,7 @@ import {
   type PaymentMethodConfig,
   type AccountConfig,
 } from '../data/settings';
-import { type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '../data/goals';
+import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '../data/goals';
 
 export type SettingsAction =
   | { type: 'type/add'; payload: TransactionTypeConfig }
@@ -70,9 +70,15 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
       if (remainingInDirection.length === 0) {
         return state; // At least one type per direction is required
       }
+      const nextMappings = { ...state.goals.typeMappings };
+      delete nextMappings[action.payload.id];
       return {
         ...state,
         transactionTypes: state.transactionTypes.filter(t => t.id !== action.payload.id),
+        goals: {
+          ...state.goals,
+          typeMappings: nextMappings,
+        },
       };
     }
 
@@ -181,11 +187,18 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
     }
 
     case 'goals/deleteCategory': {
+      const nextMappings = { ...state.goals.typeMappings };
+      for (const [typeId, catId] of Object.entries(nextMappings)) {
+        if (catId === action.payload.id) {
+          delete nextMappings[typeId];
+        }
+      }
       return {
         ...state,
         goals: {
           ...state.goals,
           categories: state.goals.categories.filter(c => c.id !== action.payload.id),
+          typeMappings: nextMappings,
         },
       };
     }
@@ -196,6 +209,7 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
         goals: {
           ...state.goals,
           categories: DEFAULT_GOAL_CATEGORIES,
+          typeMappings: DEFAULT_TYPE_MAPPINGS,
         },
       };
     }

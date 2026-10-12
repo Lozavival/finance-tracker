@@ -26,6 +26,8 @@ import {
 import { COLOR_CONFIG } from '../../data/settings';
 import { addMonthsClamped, formatMonthYear } from '../../data/dates';
 import { CategoryTransactionsDialog } from './CategoryTransactionsDialog';
+import { CategoryChip } from '../shared/CategoryChip';
+import { useSettings } from '../../state/SettingsContext';
 
 type BudgetOverviewProps = {
   transactions: Transaction[];
@@ -34,6 +36,7 @@ type BudgetOverviewProps = {
 };
 
 export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: BudgetOverviewProps) {
+  const { settings } = useSettings();
   // Current selected month: default to current month (e.g. October 2026)
   const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
     const now = new Date();
@@ -245,6 +248,10 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             // Clamped progress bar width (0% to 100%)
             const progressWidth = Math.min(Math.max(percentageUsed, 0), 100);
 
+            const linkedTypes = settings.transactionTypes.filter(
+              t => t.direction === 'expense' && !t.system && goalsConfig.typeMappings[t.id] === category.id,
+            );
+
             return (
               <Card
                 key={category.id}
@@ -252,13 +259,22 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
               >
                 <div>
                   {/* Category Card Header */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-start gap-2.5 min-w-0">
                       <span
-                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
+                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm mt-1"
                         style={{ backgroundColor: colorConfig.dotColor }}
                       />
-                      <span className="font-semibold text-foreground text-sm truncate">{category.name}</span>
+                      <div className="min-w-0">
+                        <span className="font-semibold text-foreground text-sm truncate block">{category.name}</span>
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          {linkedTypes.length > 0 ? (
+                            linkedTypes.map(lt => <CategoryChip key={lt.id} typeConfig={lt} size="sm" />)
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground/60 italic">No types linked</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex-shrink-0">

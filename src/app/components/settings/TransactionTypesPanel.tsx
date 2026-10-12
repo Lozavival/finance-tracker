@@ -3,7 +3,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useSettings } from '../../state/SettingsContext';
-import { type TransactionTypeConfig, type Direction } from '../../data/settings';
+import { type TransactionTypeConfig, type Direction, COLOR_CONFIG } from '../../data/settings';
 import { type Transaction } from '../../data/transactions';
 import { CategoryChip } from '../shared/CategoryChip';
 import { SortableRow, useReorder } from './SortableList';
@@ -39,7 +39,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
     return counts;
   }, [transactions]);
 
-  function handleSaveType(saved: TransactionTypeConfig) {
+  function handleSaveType(saved: TransactionTypeConfig, linkedGoalId?: string) {
     const isExisting = settings.transactionTypes.some(t => t.id === saved.id);
     if (isExisting) {
       dispatch({
@@ -56,6 +56,24 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
       });
     } else {
       dispatch({ type: 'type/add', payload: saved });
+    }
+
+    // Update goals typeMappings if direction is expense
+    if (saved.direction === 'expense') {
+      const nextMappings = { ...settings.goals.typeMappings };
+      if (linkedGoalId) {
+        nextMappings[saved.id] = linkedGoalId;
+      } else {
+        delete nextMappings[saved.id];
+      }
+      dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
+    } else {
+      // Clear mapping if converted to income
+      if (settings.goals.typeMappings[saved.id]) {
+        const nextMappings = { ...settings.goals.typeMappings };
+        delete nextMappings[saved.id];
+        dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
+      }
     }
   }
 
@@ -82,6 +100,9 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
       <div className="space-y-2">
         {types.map((t, idx) => {
           const count = typeCounts.get(t.id) || 0;
+          const linkedGoalCatId = settings.goals?.typeMappings?.[t.id];
+          const linkedGoal = linkedGoalCatId ? settings.goals?.categories.find(c => c.id === linkedGoalCatId) : null;
+
           return (
             <SortableRow
               key={t.id}
@@ -103,6 +124,29 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                       System
                     </span>
                   )}
+                  {direction === 'expense' &&
+                    !t.system &&
+                    (linkedGoal ? (
+                      <span
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1.5 max-w-[150px] truncate"
+                        style={{
+                          backgroundColor: COLOR_CONFIG[linkedGoal.color]?.badgeBg,
+                          color: COLOR_CONFIG[linkedGoal.color]?.textColor,
+                          borderColor: COLOR_CONFIG[linkedGoal.color]?.badgeBorder,
+                        }}
+                        title={`Linked goal: ${linkedGoal.name}`}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: COLOR_CONFIG[linkedGoal.color]?.dotColor }}
+                        />
+                        <span className="truncate">{linkedGoal.name}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden md:inline">
+                        No goal linked
+                      </span>
+                    ))}
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -10,6 +10,8 @@ import { COLOR_CONFIG } from '../../data/settings';
 import { formatCurrency } from '../../data/transactions';
 import { GoalCategoryDialog } from './GoalCategoryDialog';
 import { DeleteCategoryDialog } from './DeleteCategoryDialog';
+import { CategoryChip } from '../shared/CategoryChip';
+import { useSettings } from '../../state/SettingsContext';
 import { toast } from 'sonner';
 
 type GoalsConfigPanelProps = {
@@ -21,6 +23,7 @@ type GoalsConfigPanelProps = {
   onUpdateCategory: (id: string, changes: Partial<Omit<GoalCategory, 'id'>>) => void;
   onDeleteCategory: (id: string) => void;
   onResetDefaults: () => void;
+  onUpdateTypeMappings: (mappings: Record<string, string>) => void;
   onBackToBudget: () => void;
 };
 
@@ -33,8 +36,10 @@ export function GoalsConfigPanel({
   onUpdateCategory,
   onDeleteCategory,
   onResetDefaults,
+  onUpdateTypeMappings,
   onBackToBudget,
 }: GoalsConfigPanelProps) {
+  const { settings, expenseTypes } = useSettings();
   const [referenceIncomeInput, setReferenceIncomeInput] = useState<string>(() =>
     String(goalsConfig.referenceMonthlyIncome),
   );
@@ -43,9 +48,14 @@ export function GoalsConfigPanel({
   const [localCategories, setLocalCategories] = useState<GoalCategory[]>(goalsConfig.categories);
 
   // Sync if external categories change
-  useMemo(() => {
+  useEffect(() => {
     setLocalCategories(goalsConfig.categories);
   }, [goalsConfig.categories]);
+
+  // Memoize stable expense types list
+  const availableExpenseTypes = useMemo(() => {
+    return expenseTypes.filter(t => !t.system);
+  }, [expenseTypes]);
 
   // Dialog state for adding/editing categories
   const [categoryModal, setCategoryModal] = useState<{
@@ -343,6 +353,10 @@ export function GoalsConfigPanel({
                 const c = COLOR_CONFIG[cat.color];
                 const monthlyEquivalent = (numericReferenceIncome * (cat.percentage || 0)) / 100;
 
+                const linkedTypes = settings.transactionTypes.filter(
+                  t => t.direction === 'expense' && !t.system && goalsConfig.typeMappings[t.id] === cat.id,
+                );
+
                 return (
                   <div key={cat.id} className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
@@ -435,13 +449,24 @@ export function GoalsConfigPanel({
                       )}
                     </div>
 
-                    {/* Recalculated Monthly Equivalent */}
-                    <div className="flex justify-end text-xs text-muted-foreground">
-                      {isCurrencyMode ? (
-                        <span>≈ {cat.percentage.toFixed(1)}% of reference income</span>
-                      ) : (
-                        <span>≈ {formatCurrency(monthlyEquivalent)} / mo</span>
-                      )}
+                    {/* Contributing Types & Monthly Equivalent */}
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                        <span className="text-[11px] text-muted-foreground/80 font-medium mr-0.5">Types:</span>
+                        {linkedTypes.length > 0 ? (
+                          linkedTypes.map(lt => <CategoryChip key={lt.id} typeConfig={lt} size="sm" />)
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground/60 italic">None linked</span>
+                        )}
+                      </div>
+
+                      <div className="text-muted-foreground flex-shrink-0 text-right">
+                        {isCurrencyMode ? (
+                          <span>≈ {cat.percentage.toFixed(1)}% of income</span>
+                        ) : (
+                          <span>≈ {formatCurrency(monthlyEquivalent)} / mo</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -515,7 +540,10 @@ export function GoalsConfigPanel({
         open={categoryModal.open}
         onOpenChange={open => setCategoryModal(prev => ({ ...prev, open }))}
         category={categoryModal.category}
-        onSave={saved => {
+        availableTypes={availableExpenseTypes}
+        typeMappings={goalsConfig.typeMappings}
+        allCategories={goalsConfig.categories}
+        onSave={(saved, mappedTypeIds) => {
           if (categoryModal.category) {
             onUpdateCategory(saved.id, {
               name: saved.name,
@@ -532,6 +560,20 @@ export function GoalsConfigPanel({
             setLocalCategories(prev => [...prev, saved]);
             toast.success(`Category "${saved.name}" added`);
           }
+
+          // Update type mappings
+          const nextMappings = { ...goalsConfig.typeMappings };
+          // Remove any types previously mapped to this category that were unselected
+          for (const [tId, cId] of Object.entries(nextMappings)) {
+            if (cId === saved.id && !mappedTypeIds.includes(tId)) {
+              delete nextMappings[tId];
+            }
+          }
+          // Assign newly selected types to this category
+          for (const tId of mappedTypeIds) {
+            nextMappings[tId] = saved.id;
+          }
+          onUpdateTypeMappings(nextMappings);
         }}
       />
 
