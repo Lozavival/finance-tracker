@@ -209,3 +209,19 @@ createMonthly(6, -88, {
   value: 45.32,
   accountId: 'gs',
 });
+
+// ---------------------------------------------------------
+// Cash / Wallet
+// ATM withdrawal from BoA to physical cash
+addTransfer(daysFromToday(-18), 100, 'boa', 'cash-wallet', 'Bank of America', 'Cash / Wallet');
+
+// Cash expense paid with physical cash
+addTx({
+  date: daysFromToday(-8),
+  description: "Farmer's Market",
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 35.0,
+  accountId: 'cash-wallet',
+  paymentMethodId: 'cash',
+});

@@ -38,7 +38,7 @@ export function TransactionDialog({
   onOpenChange,
   onSave,
 }: TransactionDialogProps) {
-  const { settings, typesByDirection, findAccount, isCreditCard } = useSettings();
+  const { settings, typesByDirection, findAccount, isCreditCard, getAllowedPaymentMethodIds } = useSettings();
 
   const [mode, setMode] = useState<DialogMode>('expense');
   const [description, setDescription] = useState('');
@@ -56,17 +56,13 @@ export function TransactionDialog({
   const [errors, setErrors] = useState<FormErrors>({});
 
   const selectedAccount = useMemo(() => findAccount(accountId), [findAccount, accountId]);
-  const hasCard = Boolean(selectedAccount?.card);
 
-  // Filter payment methods: hide credit card if the account does not have a card
+  // Filter payment methods: only allow methods configured for this account
   const availablePaymentMethods = useMemo(() => {
-    return settings.paymentMethods.filter(m => {
-      if (m.behavior === 'credit-card') {
-        return hasCard;
-      }
-      return true;
-    });
-  }, [settings.paymentMethods, hasCard]);
+    if (!selectedAccount) return settings.paymentMethods;
+    const allowedIds = getAllowedPaymentMethodIds(selectedAccount);
+    return settings.paymentMethods.filter(m => allowedIds.includes(m.id));
+  }, [selectedAccount, settings.paymentMethods, getAllowedPaymentMethodIds]);
 
   const canUseInstallments = mode === 'expense' && isCreditCard(paymentMethodId);
   const effectiveInstallments = canUseInstallments ? Number(installments) || 1 : 1;
@@ -88,9 +84,8 @@ export function TransactionDialog({
       setAccountId(initialAcc);
       // Determine initial payment method
       const acc = findAccount(initialAcc);
-      const allowedMethods = settings.paymentMethods.filter(m =>
-        m.behavior === 'credit-card' ? Boolean(acc?.card) : true,
-      );
+      const allowedIds = getAllowedPaymentMethodIds(acc);
+      const allowedMethods = settings.paymentMethods.filter(m => allowedIds.includes(m.id));
       setPaymentMethodId(allowedMethods[0]?.id || '');
       setInstallments(1);
       setFromAccountId(firstAcc);
@@ -135,15 +130,15 @@ export function TransactionDialog({
       setFromAccountId(firstAcc);
       setToAccountId(secondAcc);
     }
-  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount]);
+  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount, getAllowedPaymentMethodIds]);
 
-  // Adjust paymentMethodId if selected account changes and doesn't have a card
+  // Adjust paymentMethodId if selected account changes and current method is not allowed
   useEffect(() => {
-    if (paymentMethodId && isCreditCard(paymentMethodId) && !hasCard) {
+    if (paymentMethodId && !availablePaymentMethods.some(m => m.id === paymentMethodId)) {
       const fallback = availablePaymentMethods[0]?.id || '';
       setPaymentMethodId(fallback);
     }
-  }, [hasCard, paymentMethodId, availablePaymentMethods, isCreditCard]);
+  }, [paymentMethodId, availablePaymentMethods]);
 
   function handleModeChange(nextMode: DialogMode) {
     setMode(nextMode);

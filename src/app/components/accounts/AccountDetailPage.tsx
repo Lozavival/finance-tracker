@@ -24,6 +24,7 @@ import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/U
 import { parseLocalDate } from '../../data/dates';
 import { useSettings } from '../../state/SettingsContext';
 import { getAccountColor, type AccountConfig } from '../../data/settings';
+import { getIcon } from '../../data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
 
 type AccountDetailPageProps = {
@@ -45,9 +46,17 @@ export function AccountDetailPage({
   onTransactionsChange,
   onBack,
 }: AccountDetailPageProps) {
-  const { findAccount, dispatch } = useSettings();
+  const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
   const details = findAccount(accountId);
   const ledger = finance.ledgers[accountId];
+
+  const allowedMethodIds = useMemo(() => {
+    return getAllowedPaymentMethodIds(details);
+  }, [details, getAllowedPaymentMethodIds]);
+
+  const allowedMethods = useMemo(() => {
+    return settings.paymentMethods.filter(m => allowedMethodIds.includes(m.id));
+  }, [settings.paymentMethods, allowedMethodIds]);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
@@ -143,6 +152,7 @@ export function AccountDetailPage({
           openingBalance: updated.openingBalance,
           openingDate: updated.openingDate,
           card: updated.card,
+          allowedPaymentMethods: updated.allowedPaymentMethods,
         },
       },
     });
@@ -180,7 +190,28 @@ export function AccountDetailPage({
                 Edit account
               </Button>
             </div>
-            <div className="text-muted-foreground">{details.kind}</div>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="text-muted-foreground text-sm">{details.kind}</span>
+              {allowedMethods.length > 0 && (
+                <>
+                  <span className="text-muted-foreground/40 text-xs">•</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {allowedMethods.map(m => {
+                      const Icon = getIcon(m.icon);
+                      return (
+                        <span
+                          key={m.id}
+                          className="inline-flex items-center gap-1 rounded-full bg-foreground/5 border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          <Icon className="w-3 h-3 text-theme-cyan" />
+                          <span>{m.name}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2 mb-1">
