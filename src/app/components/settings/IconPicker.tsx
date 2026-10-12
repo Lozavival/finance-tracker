@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ICONS, type IconKey, getIcon } from '../../data/icons';
 import { Search } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 type IconPickerProps = {
   value: IconKey;
@@ -14,17 +15,24 @@ type IconPickerProps = {
 
 const ALL_ICONS = Object.keys(ICONS) as IconKey[];
 
-export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps) {
+export function IconPicker({ value, onChange, label }: IconPickerProps) {
+  const { t } = useI18n();
+  const displayLabel = label ?? t('common.icon');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const CurrentIcon = getIcon(value);
 
-  const filteredIcons = ALL_ICONS.filter(k => k.toLowerCase().includes(search.trim().toLowerCase()));
+  const getIconLabel = (k: IconKey) => t(`defaults.icons.${k}` as any) || k;
+
+  const filteredIcons = ALL_ICONS.filter(k => {
+    const q = search.trim().toLowerCase();
+    return k.toLowerCase().includes(q) || getIconLabel(k).toLowerCase().includes(q);
+  });
 
   return (
     <div className="space-y-2">
-      {label && <Label className="text-foreground">{label}</Label>}
+      {displayLabel && <Label className="text-foreground">{displayLabel}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -33,7 +41,7 @@ export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps)
             className="w-full justify-start gap-2.5 h-11 border-border bg-foreground/5 text-foreground hover:bg-foreground/10"
           >
             <CurrentIcon className="w-4 h-4 text-theme-cyan" />
-            <span>{value}</span>
+            <span>{getIconLabel(value)}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-72 p-3 bg-popover border-border shadow-xl">
@@ -42,7 +50,7 @@ export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps)
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search icons..."
+              placeholder={t('common.searchIcons')}
               className="h-9 pl-8 text-xs border-border bg-foreground/5 text-foreground"
             />
           </div>
@@ -64,14 +72,16 @@ export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps)
                       ? 'bg-cyan-500/20 text-theme-cyan border border-cyan-500/40 shadow-sm'
                       : 'hover:bg-foreground/10 text-muted-foreground hover:text-foreground'
                   }`}
-                  title={key}
+                  title={getIconLabel(key)}
                 >
                   <Icon className="w-4 h-4" />
                 </button>
               );
             })}
             {filteredIcons.length === 0 && (
-              <div className="col-span-5 text-center py-4 text-xs text-muted-foreground">No icons found.</div>
+              <div className="col-span-5 text-center py-4 text-xs text-muted-foreground">
+                {t('common.noIconsFound')}
+              </div>
             )}
           </div>
         </PopoverContent>

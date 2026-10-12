@@ -8,7 +8,6 @@ import { BalanceProjectionChart } from './BalanceProjectionChart';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import {
-  formatCurrency,
   resolvePeriodRange,
   type PeriodFilter as PeriodFilterType,
   sortTransactionsDescending,
@@ -26,6 +25,7 @@ import { useSettings } from '../../state/SettingsContext';
 import { getAccountColor, type AccountConfig } from '../../data/settings';
 import { getIcon } from '../../data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
+import { useI18n } from '../../i18n';
 
 type AccountDetailPageProps = {
   accountId: string;
@@ -47,6 +47,7 @@ export function AccountDetailPage({
   onBack,
 }: AccountDetailPageProps) {
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
+  const { t, formatCurrency, getTranslatedMethodName } = useI18n();
   const details = findAccount(accountId);
   const ledger = finance.ledgers[accountId];
 
@@ -110,7 +111,7 @@ export function AccountDetailPage({
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period, finance.today);
     const filtered = transactions
-      .filter(t => t.accountId === accountId)
+      .filter(transaction => transaction.accountId === accountId)
       .filter(transaction => {
         if (periodRange) {
           if (
@@ -132,9 +133,9 @@ export function AccountDetailPage({
           onClick={onBack}
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Accounts
+          <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}
         </button>
-        <div className="text-foreground text-xl">Account not found</div>
+        <div className="text-foreground text-xl">{t('accounts.accountNotFound')}</div>
       </div>
     );
   }
@@ -164,7 +165,7 @@ export function AccountDetailPage({
         onClick={onBack}
         className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Accounts
+        <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}
       </button>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -187,11 +188,19 @@ export function AccountDetailPage({
                 className="h-8 gap-1.5 border-border bg-foreground/5 text-foreground hover:bg-foreground/10 text-xs"
               >
                 <Pencil className="w-3.5 h-3.5 text-theme-cyan" />
-                Edit account
+                {t('accounts.editAccount')}
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1">
-              <span className="text-muted-foreground text-sm">{details.kind}</span>
+              <span className="text-muted-foreground text-sm">
+                {details.kind === 'Checking'
+                  ? t('accounts.dialog.checking')
+                  : details.kind === 'Savings'
+                    ? t('accounts.dialog.savings')
+                    : details.kind === 'Cash'
+                      ? t('accounts.dialog.cash')
+                      : details.kind}
+              </span>
               {allowedMethods.length > 0 && (
                 <>
                   <span className="text-muted-foreground/40 text-xs">•</span>
@@ -204,7 +213,7 @@ export function AccountDetailPage({
                           className="inline-flex items-center gap-1 rounded-full bg-foreground/5 border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
                         >
                           <Icon className="w-3 h-3 text-theme-cyan" />
-                          <span>{m.name}</span>
+                          <span>{getTranslatedMethodName(m.id, m.name)}</span>
                         </span>
                       );
                     })}
@@ -221,31 +230,31 @@ export function AccountDetailPage({
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.currentBalance')}</div>
           <div className="text-2xl text-foreground">{formatCurrency(fullForecast.current / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Upcoming In</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
           <div className="text-2xl text-theme-green">+{formatCurrency(fullForecast.upcomingIn / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Upcoming Out</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
           <div className="text-2xl text-theme-red">{formatCurrency(fullForecast.upcomingOut / 100)}</div>
         </Card>
         <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
-          <div className="text-sm text-theme-cyan mb-1">Projected</div>
+          <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
           <div className="text-2xl text-theme-cyan">{formatCurrency(fullForecast.projected / 100)}</div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6 bg-foreground/5 border-border lg:col-span-2">
-          <div className="text-xl text-foreground mb-4">Balance Projection</div>
+          <div className="text-xl text-foreground mb-4">{t('accounts.balanceProjection')}</div>
           <BalanceProjectionChart series={series} today={finance.today} />
         </Card>
 
         <Card className="p-6 bg-foreground/5 border-border">
-          <div className="text-xl text-foreground mb-4">Upcoming</div>
+          <div className="text-xl text-foreground mb-4">{t('accounts.upcoming')}</div>
           <UpcomingList upcoming={fullForecast.upcoming} currentBalance={fullForecast.current} variant="full" />
         </Card>
       </div>
@@ -254,7 +263,7 @@ export function AccountDetailPage({
 
       <Card className="p-6 bg-foreground/5 border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-          <div className="text-xl text-foreground">Transactions</div>
+          <div className="text-xl text-foreground">{t('accounts.transactions')}</div>
           <div className="w-[200px]">
             <PeriodFilter value={period} onChange={setPeriod} />
           </div>
@@ -266,7 +275,7 @@ export function AccountDetailPage({
           showAccount={false}
         />
         {visibleTransactions.length === 0 && (
-          <div className="text-muted-foreground text-sm">No transactions found.</div>
+          <div className="text-muted-foreground text-sm">{t('accounts.noTransactionsFound')}</div>
         )}
       </Card>
 

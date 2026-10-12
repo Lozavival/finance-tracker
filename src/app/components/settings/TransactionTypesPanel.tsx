@@ -9,6 +9,7 @@ import { CategoryChip } from '../shared/CategoryChip';
 import { SortableRow, useReorder } from './SortableList';
 import { TransactionTypeDialog } from './TransactionTypeDialog';
 import { DeleteTypeDialog } from './DeleteTypeDialog';
+import { useI18n } from '../../i18n';
 
 type TransactionTypesPanelProps = {
   transactions: Transaction[];
@@ -17,6 +18,7 @@ type TransactionTypesPanelProps = {
 
 export function TransactionTypesPanel({ transactions, onTransactionsChange }: TransactionTypesPanelProps) {
   const { settings, dispatch, incomeTypes, expenseTypes } = useSettings();
+  const { t: translate } = useI18n();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -121,7 +123,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                   <CategoryChip typeConfig={t} size="md" />
                   {t.system && (
                     <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      System
+                      {translate('settings.systemBadge')}
                     </span>
                   )}
                   {direction === 'expense' &&
@@ -134,7 +136,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                           color: COLOR_CONFIG[linkedGoal.color]?.textColor,
                           borderColor: COLOR_CONFIG[linkedGoal.color]?.badgeBorder,
                         }}
-                        title={`Linked goal: ${linkedGoal.name}`}
+                        title={translate('settings.types.linkedGoalTitle', { name: linkedGoal.name })}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -144,14 +146,16 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                       </span>
                     ) : (
                       <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden md:inline">
-                        No goal linked
+                        {translate('settings.noGoalLinked')}
                       </span>
                     ))}
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-xs text-muted-foreground hidden sm:inline">
-                    {count} {count === 1 ? 'transaction' : 'transactions'}
+                    {count === 1
+                      ? translate('common.singleTransaction')
+                      : translate('common.transactionsCount', { count: String(count) })}
                   </span>
 
                   <div className="flex items-center gap-1">
@@ -167,7 +171,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                         })
                       }
                       className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-                      title="Edit type"
+                      title={translate('settings.types.editType')}
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
@@ -178,7 +182,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                         size="icon"
                         onClick={() => setDeleteTarget(t)}
                         className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        title="Delete type"
+                        title={translate('settings.types.deleteType')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
@@ -200,8 +204,8 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
         <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-medium text-foreground">Income Categories</div>
-              <div className="text-xs text-muted-foreground">Classify sources of income and credits.</div>
+              <div className="text-lg font-medium text-foreground">{translate('settings.typesIncomeTitle')}</div>
+              <div className="text-xs text-muted-foreground">{translate('settings.typesIncomeDesc')}</div>
             </div>
             <Button
               size="sm"
@@ -215,7 +219,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
               className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover text-xs shadow-md shadow-cyan-500/20"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add income type
+              {translate('settings.addIncomeType')}
             </Button>
           </div>
 
@@ -226,8 +230,8 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
         <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-medium text-foreground">Expense Categories</div>
-              <div className="text-xs text-muted-foreground">Classify regular expenses, bills, and purchases.</div>
+              <div className="text-lg font-medium text-foreground">{translate('settings.typesExpenseTitle')}</div>
+              <div className="text-xs text-muted-foreground">{translate('settings.typesExpenseDesc')}</div>
             </div>
             <Button
               size="sm"
@@ -241,7 +245,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
               className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover text-xs shadow-md shadow-cyan-500/20"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add expense type
+              {translate('settings.addExpenseType')}
             </Button>
           </div>
 

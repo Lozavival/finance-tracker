@@ -5,6 +5,7 @@ import { useSettings } from '../../state/SettingsContext';
 import { type PaymentMethodConfig } from '../../data/settings';
 import { Toggle } from '../ui/toggle';
 import { getIcon } from '../../data/icons';
+import { useI18n } from '../../i18n';
 
 type PaymentFilterProps = {
   value: string[];
@@ -13,6 +14,7 @@ type PaymentFilterProps = {
 
 export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   const { settings, findMethod } = useSettings();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>(value);
 
@@ -23,7 +25,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   }, [open, value]);
 
   const active = value.length > 0;
-  let label = 'Payment';
+  let label = t('transactions.payment');
   if (value.length === 1) {
     const m = findMethod(value[0]);
     label = m ? m.name : value[0];
@@ -45,7 +47,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
           if (pressed) {
             setDraft([...draft, payment.id]);
           } else {
-            setDraft(draft.filter(t => t !== payment.id));
+            setDraft(draft.filter(id => id !== payment.id));
           }
         }}
         variant="outline"
@@ -61,7 +63,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
     <FilterPanel
       open={open}
       onOpenChange={setOpen}
-      title="Payment method"
+      title={t('transactions.paymentMethod')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
       onClear={() => onChange([])}

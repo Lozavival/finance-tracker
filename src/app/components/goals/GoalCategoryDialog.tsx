@@ -11,6 +11,7 @@ import { type GoalCategory } from '../../data/goals';
 import { type ColorToken, type TransactionTypeConfig } from '../../data/settings';
 import { type IconKey } from '../../data/icons';
 import { Plus, Check, ArrowRightLeft } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 type GoalCategoryDialogProps = {
   open: boolean;
@@ -31,6 +32,7 @@ export function GoalCategoryDialog({
   allCategories,
   onSave,
 }: GoalCategoryDialogProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [percentage, setPercentage] = useState<number | ''>(10);
   const [color, setColor] = useState<ColorToken>('blue');
@@ -49,7 +51,7 @@ export function GoalCategoryDialog({
       setDescription(category.description || '');
 
       // Load currently mapped types
-      const initialTypeIds = availableTypes.filter(t => typeMappings[t.id] === category.id).map(t => t.id);
+      const initialTypeIds = availableTypes.filter(tr => typeMappings[tr.id] === category.id).map(tr => tr.id);
       setSelectedTypeIds(initialTypeIds);
     } else {
       setName('');
@@ -70,13 +72,13 @@ export function GoalCategoryDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Please provide a category name.');
+      setError(t('goals.errors.categoryNameRequired'));
       return;
     }
 
     const numericPct = typeof percentage === 'number' ? percentage : parseFloat(String(percentage)) || 0;
     if (numericPct < 0 || numericPct > 100) {
-      setError('Percentage must be between 0% and 100%.');
+      setError(t('goals.errors.percentageRange'));
       return;
     }
 
@@ -102,30 +104,28 @@ export function GoalCategoryDialog({
       <DialogContent className="max-w-md max-h-[90vh] flex flex-col p-0 gap-0 bg-popover border-border">
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <DialogTitle className="text-xl text-foreground">
-            {category ? 'Edit Financial Goal' : 'Add Financial Goal'}
+            {category ? t('goals.editCategory') : t('goals.addGoalTitle')}
           </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Customize the name, allocation percentage, styling, and contributing transaction types.
-          </DialogDescription>
+          <DialogDescription className="text-sm text-muted-foreground">{t('goals.goalModalDesc')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="category-name" className="text-foreground">
-              Category Name
+              {t('goals.categoryName')}
             </Label>
             <Input
               id="category-name"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="e.g. Investments, Charity, Travel..."
+              placeholder={t('goals.categoryPlaceholder')}
               className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category-percentage" className="text-foreground">
-              Allocation Percentage (%)
+              {t('goals.allocationPercentage')}
             </Label>
             <div className="relative">
               <Input
@@ -146,19 +146,19 @@ export function GoalCategoryDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <ColorPicker value={color} onChange={setColor} label="Color Theme" />
-            <IconPicker value={icon} onChange={setIcon} label="Category Icon" />
+            <ColorPicker value={color} onChange={setColor} label={t('goals.colorTheme')} />
+            <IconPicker value={icon} onChange={setIcon} label={t('goals.categoryIcon')} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category-desc" className="text-foreground">
-              Description (optional)
+              {t('goals.descriptionOptional')}
             </Label>
             <Input
               id="category-desc"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Brief description of this bucket..."
+              placeholder={t('goals.descriptionPlaceholder')}
               className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -167,14 +167,15 @@ export function GoalCategoryDialog({
           <div className="space-y-2.5 pt-3 border-t border-border/60">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-foreground text-sm font-semibold">Contributing Transaction Types</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Select which expense types count toward this goal.
-                </p>
+                <Label className="text-foreground text-sm font-semibold">{t('goals.contributingTypes')}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('goals.contributingTypesDesc')}</p>
               </div>
               {availableTypes.length > 0 && (
                 <span className="text-xs text-muted-foreground font-medium">
-                  {selectedTypeIds.length} of {availableTypes.length}
+                  {t('goals.selectedOfAvailable', {
+                    selected: String(selectedTypeIds.length),
+                    total: String(availableTypes.length),
+                  })}
                 </span>
               )}
             </div>
@@ -182,19 +183,19 @@ export function GoalCategoryDialog({
             <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 rounded-xl border border-border/60 bg-foreground/[0.02] p-2">
               {availableTypes.length === 0 ? (
                 <div className="text-xs text-muted-foreground p-3 text-center">
-                  No expense transaction types configured.
+                  {t('goals.noExpenseTypesConfigured')}
                 </div>
               ) : (
-                availableTypes.map(t => {
-                  const isSelected = selectedTypeIds.includes(t.id);
-                  const currentMappedCatId = typeMappings[t.id];
+                availableTypes.map(tr => {
+                  const isSelected = selectedTypeIds.includes(tr.id);
+                  const currentMappedCatId = typeMappings[tr.id];
                   const isMappedToOther = currentMappedCatId && (!category || currentMappedCatId !== category.id);
                   const otherCat = isMappedToOther ? allCategories.find(c => c.id === currentMappedCatId) : null;
 
                   return (
                     <div
-                      key={t.id}
-                      onClick={() => handleToggleType(t.id)}
+                      key={tr.id}
+                      onClick={() => handleToggleType(tr.id)}
                       className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all border text-xs select-none ${
                         isSelected
                           ? 'bg-cyan-500/10 border-cyan-400/40 text-foreground'
@@ -203,24 +204,24 @@ export function GoalCategoryDialog({
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Checkbox checked={isSelected} className="pointer-events-none" />
-                        <CategoryChip typeConfig={t} size="sm" />
+                        <CategoryChip typeConfig={tr} size="sm" />
                       </div>
 
                       {otherCat && !isSelected && (
                         <span
                           className="text-[11px] text-muted-foreground truncate max-w-[130px]"
-                          title={`Mapped to ${otherCat.name}`}
+                          title={t('goals.mappedTo', { name: otherCat.name })}
                         >
-                          Mapped to {otherCat.name}
+                          {t('goals.mappedTo', { name: otherCat.name })}
                         </span>
                       )}
                       {isSelected && isMappedToOther && (
                         <span
                           className="text-[11px] text-amber-500 font-medium truncate max-w-[140px] flex items-center gap-1"
-                          title={`Will be reassigned from ${otherCat?.name}`}
+                          title={t('goals.reassignFrom', { name: otherCat?.name || '' })}
                         >
                           <ArrowRightLeft className="w-3 h-3 flex-shrink-0" />
-                          <span>Reassign from {otherCat?.name}</span>
+                          <span>{t('goals.reassignFrom', { name: otherCat?.name || '' })}</span>
                         </span>
                       )}
                     </div>
@@ -234,14 +235,14 @@ export function GoalCategoryDialog({
 
           <DialogFooter className="pt-4 border-t border-border sm:justify-between">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               className="bg-theme-cyan-btn hover:bg-theme-cyan-btn-hover text-white dark:text-gray-950 font-semibold shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
             >
               {category ? <Check className="w-4 h-4 mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-              {category ? 'Save Changes' : 'Add Category'}
+              {category ? t('goals.saveChanges') : t('goals.addCategory')}
             </Button>
           </DialogFooter>
         </form>

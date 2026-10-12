@@ -6,6 +6,7 @@ import { type TransactionTypeConfig } from '../../data/settings';
 import { Toggle } from '../ui/toggle';
 import { getIcon } from '../../data/icons';
 import { COLOR_CONFIG } from '../../data/settings';
+import { useI18n } from '../../i18n';
 
 type TypeFilterProps = {
   value: string[];
@@ -14,6 +15,7 @@ type TypeFilterProps = {
 
 export function TypeFilter({ value, onChange }: TypeFilterProps) {
   const { incomeTypes, expenseTypes, findType } = useSettings();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>(value);
 
@@ -24,10 +26,10 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
   }, [open, value]);
 
   const active = value.length > 0;
-  let label = 'Type';
+  let label = t('transactions.tableCategory');
   if (value.length === 1) {
-    const t = findType(value[0]);
-    label = t ? t.name : value[0];
+    const found = findType(value[0]);
+    label = found ? found.name : value[0];
   } else if (value.length > 1) {
     const firstType = findType(value[0]);
     const firstName = firstType ? firstType.name : value[0];
@@ -47,7 +49,7 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
           if (pressed) {
             setDraft([...draft, type.id]);
           } else {
-            setDraft(draft.filter(t => t !== type.id));
+            setDraft(draft.filter(id => id !== type.id));
           }
         }}
         variant="outline"
@@ -64,19 +66,23 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
     <FilterPanel
       open={open}
       onOpenChange={setOpen}
-      title="Transaction type"
+      title={t('transactions.type')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
       onClear={() => onChange([])}
     >
       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
         <div className="space-y-2">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Income</div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t('transactions.directionIncome')}
+          </div>
           <div className="flex flex-wrap gap-2">{incomeTypes.map(renderToggle)}</div>
         </div>
 
         <div className="space-y-2">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Expense</div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t('transactions.directionExpense')}
+          </div>
           <div className="flex flex-wrap gap-2">{expenseTypes.map(renderToggle)}</div>
         </div>
       </div>

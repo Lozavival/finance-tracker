@@ -1,6 +1,6 @@
 import { type CashMovement } from '../../data/ledger';
-import { formatCurrency } from '../../data/transactions';
 import { formatShort } from '../../data/dates';
+import { useI18n } from '../../i18n';
 
 export function UpcomingList({
   upcoming,
@@ -11,7 +11,10 @@ export function UpcomingList({
   currentBalance: number;
   variant: 'compact' | 'full';
 }) {
-  if (upcoming.length === 0) return <div className="text-muted-foreground text-sm">No upcoming items.</div>;
+  const { t, formatCurrency, locale } = useI18n();
+
+  if (upcoming.length === 0)
+    return <div className="text-muted-foreground text-sm">{t('accounts.noUpcomingItems')}</div>;
 
   const items = variant === 'compact' ? upcoming.slice(0, 3) : upcoming;
   let runningBalance = currentBalance;
@@ -20,22 +23,24 @@ export function UpcomingList({
     <div className="space-y-2">
       {items.map((m, i) => {
         runningBalance += m.amount;
-        const dateStr = formatShort(m.date);
+        const dateStr = formatShort(m.date, locale);
 
         if (variant === 'compact') {
           return (
             <div
               key={i}
-              className="flex justify-between items-center text-sm py-1 border-b border-border/50 last:border-0"
+              className="flex justify-between items-center text-sm py-1 border-b border-border/50 last:border-0 gap-3"
             >
-              <div className="flex gap-2 truncate">
-                <span className="text-muted-foreground w-12 flex-shrink-0">{dateStr}</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-muted-foreground shrink-0 whitespace-nowrap">{dateStr}</span>
                 <span className="text-foreground truncate">{m.description}</span>
-                {m.isEstimate && <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">est.</span>}
+                {m.isEstimate && (
+                  <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded shrink-0">
+                    {t('accounts.est')}
+                  </span>
+                )}
               </div>
-              <span
-                className={m.amount > 0 ? 'text-theme-green whitespace-nowrap' : 'text-theme-red whitespace-nowrap'}
-              >
+              <span className={`shrink-0 whitespace-nowrap ${m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}`}>
                 {m.amount > 0 ? '+' : '−'}
                 {formatCurrency(Math.abs(m.amount) / 100)}
               </span>
@@ -46,20 +51,22 @@ export function UpcomingList({
         return (
           <div
             key={i}
-            className="flex justify-between items-center text-sm py-2 border-b border-border/50 last:border-0 hover:bg-foreground/5 px-2 -mx-2 rounded-md transition-colors"
+            className="flex justify-between items-center text-sm py-2 border-b border-border/50 last:border-0 hover:bg-foreground/5 px-2 -mx-2 rounded-md transition-colors gap-4"
           >
-            <div className="flex gap-4">
-              <span className="text-muted-foreground w-16">{dateStr}</span>
-              <div>
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <span className="text-muted-foreground shrink-0 whitespace-nowrap">{dateStr}</span>
+              <div className="min-w-0 flex-1">
                 <div className="text-foreground flex items-center gap-2">
-                  {m.description}
+                  <span className="truncate">{m.description}</span>
                   {m.isEstimate && (
-                    <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">est.</span>
+                    <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded shrink-0">
+                      {t('accounts.est')}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className={m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}>
                 {m.amount > 0 ? '+' : '−'}
                 {formatCurrency(Math.abs(m.amount) / 100)}

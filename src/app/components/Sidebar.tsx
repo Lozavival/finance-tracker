@@ -1,12 +1,19 @@
 import { LayoutDashboard, ArrowLeftRight, Wallet, Target, Settings } from 'lucide-react';
 import { Button } from './ui/button';
+import { useI18n, type TranslationKey } from '../i18n';
 
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
-  { icon: ArrowLeftRight, label: 'Transactions', id: 'transactions' },
-  { icon: Wallet, label: 'Accounts', id: 'accounts' },
-  { icon: Target, label: 'Budget & Goals', id: 'goals' },
-  { icon: Settings, label: 'Settings', id: 'settings' },
+interface MenuItem {
+  icon: typeof LayoutDashboard;
+  key: TranslationKey;
+  id: string;
+}
+
+const menuItems: MenuItem[] = [
+  { icon: LayoutDashboard, key: 'nav.dashboard', id: 'dashboard' },
+  { icon: ArrowLeftRight, key: 'nav.transactions', id: 'transactions' },
+  { icon: Wallet, key: 'nav.accounts', id: 'accounts' },
+  { icon: Target, key: 'nav.goals', id: 'goals' },
+  { icon: Settings, key: 'nav.settings', id: 'settings' },
 ];
 
 type SidebarProps = {
@@ -15,6 +22,8 @@ type SidebarProps = {
 };
 
 export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
+  const { t } = useI18n();
+
   return (
     <div className="fixed left-0 top-16 bottom-0 w-64 bg-background/80 backdrop-blur-xl border-r border-border flex flex-col">
       {/* Menu Items */}
@@ -51,7 +60,7 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
                     isActive ? 'text-cyan-700 dark:text-cyan-300' : 'text-muted-foreground group-hover:text-foreground'
                   }`}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </span>
               </Button>
 

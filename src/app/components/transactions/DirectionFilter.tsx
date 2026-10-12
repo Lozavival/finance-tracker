@@ -3,6 +3,7 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { TransactionDirection } from '../../data/transactions';
 import { Toggle } from '../ui/toggle';
+import { useI18n } from '../../i18n';
 
 type DirectionFilterProps = {
   value: 'all' | TransactionDirection;
@@ -10,6 +11,7 @@ type DirectionFilterProps = {
 };
 
 export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<'all' | TransactionDirection>(value);
 
@@ -20,15 +22,15 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
   }, [open, value]);
 
   const active = value !== 'all';
-  let label = 'Direction';
-  if (value === 'income') label = 'Income';
-  if (value === 'expense') label = 'Expense';
+  let label = t('transactions.direction');
+  if (value === 'income') label = t('transactions.directionIncome');
+  if (value === 'expense') label = t('transactions.directionExpense');
 
   return (
     <FilterPanel
       open={open}
       onOpenChange={setOpen}
-      title="Direction"
+      title={t('transactions.direction')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
       onClear={() => onChange('all')}
@@ -40,7 +42,7 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
           variant="outline"
           className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
         >
-          Income
+          {t('transactions.directionIncome')}
         </Toggle>
         <Toggle
           pressed={draft === 'expense'}
@@ -48,7 +50,7 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
           variant="outline"
           className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
         >
-          Expense
+          {t('transactions.directionExpense')}
         </Toggle>
       </div>
     </FilterPanel>

@@ -6,11 +6,12 @@ import { Card } from '../ui/card';
 import { useState, useMemo } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
-import { formatCurrency, type Transaction } from '../../data/transactions';
+import { type Transaction } from '../../data/transactions';
 import { parseLocalDate, formatShort } from '../../data/dates';
 import { useSettings } from '../../state/SettingsContext';
 import { getAccountColor, type AccountConfig } from '../../data/settings';
 import { AccountFormDialog } from './AccountFormDialog';
+import { useI18n } from '../../i18n';
 
 type AccountsPageProps = {
   finance: {
@@ -24,6 +25,7 @@ type AccountsPageProps = {
 
 export function AccountsPage({ finance, transactions, onAccountSelect }: AccountsPageProps) {
   const { settings, dispatch } = useSettings();
+  const { t, formatCurrency, locale } = useI18n();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -74,7 +76,15 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
               <div className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
                 {details.name}
               </div>
-              <div className="text-muted-foreground text-sm">{details.kind}</div>
+              <div className="text-muted-foreground text-sm">
+                {details.kind === 'Checking'
+                  ? t('accounts.dialog.checking')
+                  : details.kind === 'Savings'
+                    ? t('accounts.dialog.savings')
+                    : details.kind === 'Cash'
+                      ? t('accounts.dialog.cash')
+                      : details.kind}
+              </div>
             </div>
           </div>
           <div className="text-right">
@@ -84,31 +94,36 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
 
         <div className="mb-2">
           <CardBillSummary accountId={acc.id} account={acc} statements={finance.statements} />
-          <div className="text-xs text-muted-foreground mb-2 mt-4 font-medium uppercase tracking-wider">Next up</div>
+          <div className="text-xs text-muted-foreground mb-2 mt-4 font-medium uppercase tracking-wider">
+            {t('accounts.nextUp')}
+          </div>
           <UpcomingList upcoming={forecast.upcoming} currentBalance={forecast.current} variant="compact" />
         </div>
         <div className="space-y-3 mt-6">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Upcoming In</span>
+            <span className="text-muted-foreground">{t('accounts.upcomingIn')}</span>
             <span className="text-theme-green">+{formatCurrency(forecast.upcomingIn / 100)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Upcoming Out</span>
+            <span className="text-muted-foreground">{t('accounts.upcomingOut')}</span>
             <span className="text-theme-red">{formatCurrency(forecast.upcomingOut / 100)}</span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-border/50">
-            <span className="text-foreground font-medium">Projected</span>
+            <span className="text-foreground font-medium">{t('accounts.projected')}</span>
             <span className="text-foreground font-medium">{formatCurrency(forecast.projected / 100)}</span>
           </div>
 
           {forecast.lowest.balance < Math.min(forecast.current, forecast.projected) && (
             <div className="text-xs text-theme-orange mt-2 p-2 bg-orange-500/10 rounded-md">
-              ⚠ Dips to {formatCurrency(forecast.lowest.balance / 100)} on {formatShort(forecast.lowest.date)}
+              {t('accounts.dipsTo', {
+                amount: formatCurrency(forecast.lowest.balance / 100),
+                date: formatShort(forecast.lowest.date, locale),
+              })}
             </div>
           )}
 
           <div className="pt-4 border-t border-border/50 flex items-center justify-between text-muted-foreground group-hover:text-theme-cyan transition-colors">
-            <span className="text-sm font-medium">View Account Details</span>
+            <span className="text-sm font-medium">{t('accounts.viewAccountDetails')}</span>
             <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </div>
         </div>
@@ -125,9 +140,9 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div role="heading" aria-level={1} className="text-foreground text-3xl mb-2">
-            Accounts
+            {t('accounts.title')}
           </div>
-          <div className="text-muted-foreground">Manage your cash flow and upcoming bills.</div>
+          <div className="text-muted-foreground">{t('accounts.subtitle')}</div>
         </div>
         <div className="flex items-center gap-3">
           <UpcomingPeriodFilter value={upcomingPeriod} onChange={setUpcomingPeriod} />
@@ -137,19 +152,19 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
       {/* Totals Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Total Balance</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.totalBalance')}</div>
           <div className="text-2xl text-foreground">{formatCurrency(totalBalance / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Upcoming In</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
           <div className="text-2xl text-theme-green">+{formatCurrency(totalIn / 100)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
-          <div className="text-sm text-muted-foreground mb-1">Upcoming Out</div>
+          <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
           <div className="text-2xl text-theme-red">{formatCurrency(totalOut / 100)}</div>
         </Card>
         <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
-          <div className="text-sm text-theme-cyan mb-1">Projected</div>
+          <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
           <div className="text-2xl text-theme-cyan">{formatCurrency(totalProjected / 100)}</div>
         </Card>
       </div>
@@ -165,7 +180,7 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
             <Plus className="h-6 w-6" />
           </div>
           <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-theme-cyan">
-            Add account
+            {t('accounts.addAccount')}
           </span>
         </button>
       </div>

@@ -15,6 +15,7 @@ import { useSettings } from '../../state/SettingsContext';
 import { OptionSelect } from '../transactions/OptionSelect';
 import { CategoryChip } from '../shared/CategoryChip';
 import { AlertCircle } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 type DeleteTypeDialogProps = {
   typeConfig: TransactionTypeConfig | null;
@@ -25,6 +26,7 @@ type DeleteTypeDialogProps = {
 
 export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransactionsChange }: DeleteTypeDialogProps) {
   const { settings, dispatch } = useSettings();
+  const { t } = useI18n();
   const [replacementTypeId, setReplacementTypeId] = useState<string>('');
 
   const open = Boolean(typeConfig);
@@ -79,29 +81,28 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
     <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <AlertDialogContent className="bg-popover border-border text-foreground sm:max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete "{typeConfig.name}"?</AlertDialogTitle>
+          <AlertDialogTitle>{t('settings.types.deleteTitle', { name: typeConfig.name })}</AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground space-y-3">
             {typeConfig.system ? (
-              <span className="block text-red-400">This is a system transaction type and cannot be deleted.</span>
+              <span className="block text-red-400">{t('settings.types.deleteSystemWarning')}</span>
             ) : isOnlyTypeInDirection ? (
               <span className="block text-red-400">
-                Cannot delete this type because there must be at least one {typeConfig.direction} type.
+                {t('settings.types.deleteLastTypeWarning', { direction: typeConfig.direction })}
               </span>
             ) : hasTransactions ? (
               <>
                 <span className="block">
-                  <strong className="text-foreground">{matchingTransactions.length}</strong> transaction
-                  {matchingTransactions.length === 1 ? '' : 's'} currently use{' '}
-                  <strong className="text-foreground">{typeConfig.name}</strong>.
+                  {t('settings.types.deleteInUseWarning', {
+                    count: matchingTransactions.length,
+                    name: typeConfig.name,
+                  })}
                 </span>
                 <span className="block text-foreground font-medium">
-                  Please select another {typeConfig.direction} type to reassign them to before deleting:
+                  {t('settings.types.reassignPrompt', { direction: typeConfig.direction })}
                 </span>
               </>
             ) : (
-              <span className="block">
-                This category is not used by any transaction and will be removed permanently.
-              </span>
+              <span className="block">{t('settings.types.deleteUnusedDesc')}</span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -109,7 +110,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
         {hasTransactions && !isOnlyTypeInDirection && (
           <div className="py-2">
             <OptionSelect
-              label="Reassign transactions to"
+              label={t('settings.types.reassignLabel')}
               value={replacementTypeId}
               options={replacementOptions}
               onChange={setReplacementTypeId}
@@ -120,7 +121,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
         {hasTransactions && !replacementTypeId && !isOnlyTypeInDirection && (
           <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
             <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-            <span>Select a replacement type to proceed with deletion.</span>
+            <span>{t('settings.types.reassignSelectPrompt')}</span>
           </div>
         )}
 
@@ -129,14 +130,14 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
             onClick={onClose}
             className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
           >
-            Cancel
+            {t('common.cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={!canDelete}
             onClick={handleDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
           >
-            {hasTransactions ? 'Reassign and delete' : 'Delete type'}
+            {hasTransactions ? t('settings.types.reassignAndDelete') : t('settings.types.deleteType')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

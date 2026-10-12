@@ -1,11 +1,12 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { type Transaction, formatCurrency } from '../../data/transactions';
+import { type Transaction } from '../../data/transactions';
 import { type GoalCategory } from '../../data/goals';
 import { formatRowDate } from '../../data/dates';
 import { COLOR_CONFIG } from '../../data/settings';
 import { getIcon } from '../../data/icons';
 import { ArrowUpRight } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 type CategoryTransactionsDialogProps = {
   open: boolean;
@@ -22,11 +23,12 @@ export function CategoryTransactionsDialog({
   transactions,
   monthLabel,
 }: CategoryTransactionsDialogProps) {
+  const { t, formatCurrency, locale } = useI18n();
   if (!category) return null;
 
   const colorConfig = COLOR_CONFIG[category.color] ?? COLOR_CONFIG.blue;
   const CategoryIcon = getIcon(category.icon);
-  const totalSpent = transactions.reduce((acc, t) => acc + t.value, 0);
+  const totalSpent = transactions.reduce((acc, tr) => acc + tr.value, 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,11 +45,13 @@ export function CategoryTransactionsDialog({
               <DialogTitle className="text-xl text-foreground flex items-center gap-2">
                 <span>{category.name}</span>
                 <span className="text-xs font-normal px-2.5 py-0.5 rounded-full bg-foreground/10 text-muted-foreground">
-                  {transactions.length} {transactions.length === 1 ? 'transaction' : 'transactions'}
+                  {transactions.length === 1
+                    ? t('common.singleTransaction')
+                    : t('common.transactionsCount', { count: String(transactions.length) })}
                 </span>
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Transactions for {monthLabel} • Total: {formatCurrency(totalSpent)}
+                {t('goals.transactionsForMonth', { month: monthLabel, amount: formatCurrency(totalSpent) })}
               </DialogDescription>
             </div>
           </div>
@@ -56,7 +60,7 @@ export function CategoryTransactionsDialog({
         <div className="flex-1 overflow-y-auto p-6 space-y-2">
           {transactions.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
-              No transactions recorded for this category in {monthLabel}.
+              {t('goals.noTransactionsRecorded', { month: monthLabel })}
             </div>
           ) : (
             transactions.map(tx => (
@@ -70,7 +74,7 @@ export function CategoryTransactionsDialog({
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-foreground truncate">{tx.description}</div>
-                    <div className="text-xs text-muted-foreground">{formatRowDate(tx.date)}</div>
+                    <div className="text-xs text-muted-foreground">{formatRowDate(tx.date, locale)}</div>
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-foreground flex-shrink-0 ml-4">
@@ -83,7 +87,7 @@ export function CategoryTransactionsDialog({
 
         <div className="p-4 border-t border-border flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </DialogContent>

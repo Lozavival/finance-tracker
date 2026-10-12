@@ -48,18 +48,18 @@ export function addMonthsClamped(date: Date, months: number): Date {
   return d;
 }
 
-export function formatShort(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
+export function formatShort(date: Date, locale = 'en-US'): string {
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(date);
 }
 
-export function formatRowDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+export function formatRowDate(date: Date, locale = 'en-US'): string {
+  return new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 }
 
-export function formatMonthYear(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
+export function formatMonthYear(date: Date, locale = 'en-US'): string {
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date);
 }
 
-export function formatFull(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+export function formatFull(date: Date, locale = 'en-US'): string {
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }

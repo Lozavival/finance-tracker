@@ -4,12 +4,17 @@ import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 
+import { useI18n } from '../../i18n';
+
 import { cn } from './utils';
 import { buttonVariants } from './button';
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: React.ComponentProps<typeof DayPicker>) {
+  const { dateLocale } = useI18n();
+
   return (
     <DayPicker
+      locale={props.locale ?? dateLocale}
       showOutsideDays={showOutsideDays}
       className={cn('p-3', className)}
       classNames={{

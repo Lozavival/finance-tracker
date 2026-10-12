@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { type Transaction, formatCurrency } from '../../data/transactions';
+import { type Transaction } from '../../data/transactions';
 import {
   type GoalsConfig,
   type GoalCategory,
@@ -28,6 +28,7 @@ import { addMonthsClamped, formatMonthYear } from '../../data/dates';
 import { CategoryTransactionsDialog } from './CategoryTransactionsDialog';
 import { CategoryChip } from '../shared/CategoryChip';
 import { useSettings } from '../../state/SettingsContext';
+import { useI18n } from '../../i18n';
 
 type BudgetOverviewProps = {
   transactions: Transaction[];
@@ -37,6 +38,7 @@ type BudgetOverviewProps = {
 
 export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: BudgetOverviewProps) {
   const { settings } = useSettings();
+  const { t, formatCurrency, locale } = useI18n();
   // Current selected month: default to current month (e.g. October 2026)
   const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
     const now = new Date();
@@ -80,8 +82,8 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
       {/* Header with Month Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground tracking-tight">Budget & Goals</h1>
-          <p className="text-muted-foreground text-sm mt-1">Control your budget based on your goals and income</p>
+          <h1 className="text-3xl font-semibold text-foreground tracking-tight">{t('goals.title')}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t('goals.subtitle')}</p>
         </div>
 
         {/* Date Controls */}
@@ -103,7 +105,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                 className="h-8 px-3 gap-2 text-sm font-medium text-foreground hover:bg-foreground/10 hover:text-theme-cyan transition-colors"
               >
                 <Calendar className="w-4 h-4 text-theme-cyan" />
-                <span>{formatMonthYear(selectedMonth)}</span>
+                <span>{formatMonthYear(selectedMonth, locale)}</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -132,7 +134,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                 {Array.from({ length: 12 }, (_, i) => i).map(monthIndex => {
                   const isCurrent =
                     selectedMonth.getFullYear() === pickerYear && selectedMonth.getMonth() === monthIndex;
-                  const monthName = new Date(pickerYear, monthIndex, 1).toLocaleString('en-US', {
+                  const monthName = new Date(pickerYear, monthIndex, 1).toLocaleString(locale, {
                     month: 'short',
                   });
                   return (
@@ -178,10 +180,10 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-theme-cyan">
               <DollarSign className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-foreground">Your Income</span>
+            <span className="text-sm font-medium text-foreground">{t('goals.yourIncome')}</span>
           </div>
           <div className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(budget.actualIncome)}</div>
-          <div className="text-xs text-muted-foreground mt-2">Sum of receipts this month</div>
+          <div className="text-xs text-muted-foreground mt-2">{t('goals.incomeReceiptsDesc')}</div>
         </Card>
 
         {/* Monthly Expenses */}
@@ -190,14 +192,14 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-theme-blue">
               <Receipt className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-foreground">Monthly Expenses</span>
+            <span className="text-sm font-medium text-foreground">{t('goals.monthlyExpenses')}</span>
           </div>
           <div className="text-3xl font-bold text-foreground tracking-tight">
             {formatCurrency(budget.totalExpenses)}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
             <span className="w-2 h-2 rounded-full border border-muted-foreground inline-block" />
-            <span>{formatPercent(budget.usedPercentage)} of income used</span>
+            <span>{t('goals.incomeUsed', { percent: formatPercent(budget.usedPercentage) })}</span>
           </div>
         </Card>
 
@@ -207,7 +209,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-theme-green">
               <PiggyBank className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-foreground">Remaining Balance</span>
+            <span className="text-sm font-medium text-foreground">{t('goals.remainingBalance')}</span>
           </div>
           <div
             className={`text-3xl font-bold tracking-tight ${
@@ -216,7 +218,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
           >
             {formatCurrency(budget.remainingBalance)}
           </div>
-          <div className="text-xs text-muted-foreground mt-2">Available to spend</div>
+          <div className="text-xs text-muted-foreground mt-2">{t('goals.availableToSpend')}</div>
         </Card>
       </div>
 
@@ -224,15 +226,15 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Financial Goals</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Distribution of your monthly income by category</p>
+            <h2 className="text-xl font-semibold text-foreground">{t('goals.financialGoals')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('goals.distributionDesc')}</p>
           </div>
 
           <button
             onClick={onAdjustGoals}
             className="group flex items-center gap-1.5 text-sm font-medium text-theme-cyan hover:text-cyan-400 transition-colors"
           >
-            <span>Adjust Goals</span>
+            <span>{t('goals.adjustGoals')}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
@@ -271,7 +273,9 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                           {linkedTypes.length > 0 ? (
                             linkedTypes.map(lt => <CategoryChip key={lt.id} typeConfig={lt} size="sm" />)
                           ) : (
-                            <span className="text-[10px] text-muted-foreground/60 italic">No types linked</span>
+                            <span className="text-[10px] text-muted-foreground/60 italic">
+                              {t('goals.noTypesLinked')}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -280,7 +284,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                     <div className="flex-shrink-0">
                       {hasNoExpenses ? (
                         <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-foreground/5 text-muted-foreground border border-border/60">
-                          No expenses
+                          {t('goals.noExpenses')}
                         </span>
                       ) : (
                         <span
@@ -311,13 +315,13 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                   <div className="grid grid-cols-2 rounded-xl bg-foreground/[0.03] dark:bg-foreground/[0.05] border border-border/60 p-3 divide-x divide-border/60 mb-4">
                     <div className="pr-3">
                       <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
-                        Spent
+                        {t('goals.spent')}
                       </div>
                       <div className="text-base font-bold text-foreground mt-0.5">{formatCurrency(spent)}</div>
                     </div>
                     <div className="pl-3">
                       <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
-                        Budgeted
+                        {t('goals.budgeted')}
                       </div>
                       <div className="text-base font-bold text-foreground mt-0.5">{formatCurrency(budgeted)}</div>
                     </div>
@@ -329,11 +333,13 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                   <div className="flex items-center gap-1 font-medium">
                     {isOverBudget ? (
                       <span className="text-destructive flex items-center gap-1">
-                        <TrendingDown className="w-3.5 h-3.5" />-{formatCurrency(Math.abs(remaining))} over budget
+                        <TrendingDown className="w-3.5 h-3.5" />
+                        {t('goals.overBudgetAmount', { amount: formatCurrency(Math.abs(remaining)) })}
                       </span>
                     ) : (
                       <span className="text-theme-green flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5" />+{formatCurrency(remaining)} remaining
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        {t('goals.remainingAmount', { amount: formatCurrency(remaining) })}
                       </span>
                     )}
                   </div>
@@ -351,7 +357,9 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                   >
                     <ListOrdered className="w-3.5 h-3.5" />
                     <span>
-                      {txCount} {txCount === 1 ? 'transaction' : 'transactions'}
+                      {txCount === 1
+                        ? t('common.singleTransaction')
+                        : t('common.transactionsCount', { count: String(txCount) })}
                     </span>
                   </button>
                 </div>
@@ -367,7 +375,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
         onOpenChange={open => setDialogState(prev => ({ ...prev, open }))}
         category={dialogState.category}
         transactions={dialogState.transactions}
-        monthLabel={formatMonthYear(selectedMonth)}
+        monthLabel={formatMonthYear(selectedMonth, locale)}
       />
     </div>
   );

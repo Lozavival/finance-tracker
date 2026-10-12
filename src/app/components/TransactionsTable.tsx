@@ -2,9 +2,10 @@ import { Card } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { formatSignedValue, type Transaction } from '../data/transactions';
 import { formatInstallmentLabel } from '../data/installments';
-import { formatFull, getToday } from '../data/dates';
+import { getToday } from '../data/dates';
 import { useSettings } from '../state/SettingsContext';
 import { CategoryChip } from './shared/CategoryChip';
+import { useI18n } from '../i18n';
 
 type TransactionsTableProps = {
   transactions: Transaction[];
@@ -12,6 +13,7 @@ type TransactionsTableProps = {
 
 export function TransactionsTable({ transactions }: TransactionsTableProps) {
   const { findType, findAccount } = useSettings();
+  const { t, formatFull, currency, locale } = useI18n();
   const today = getToday();
 
   const recentTransactions = [...transactions]
@@ -22,18 +24,18 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
   return (
     <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300">
       <div role="heading" aria-level={2} className="text-foreground text-lg mb-4">
-        Recent Transactions
+        {t('dashboard.recentTransactions')}
       </div>
 
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground">Date</TableHead>
-              <TableHead className="text-muted-foreground">Description</TableHead>
-              <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground">Account</TableHead>
-              <TableHead className="text-muted-foreground text-right">Value</TableHead>
+              <TableHead className="text-muted-foreground">{t('transactions.tableDate')}</TableHead>
+              <TableHead className="text-muted-foreground">{t('transactions.tableDescription')}</TableHead>
+              <TableHead className="text-muted-foreground">{t('transactions.tableCategory')}</TableHead>
+              <TableHead className="text-muted-foreground">{t('transactions.tableAccount')}</TableHead>
+              <TableHead className="text-muted-foreground text-right">{t('common.value')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -66,7 +68,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                   <TableCell
                     className={`text-right ${transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'}`}
                   >
-                    {formatSignedValue(transaction)}
+                    {formatSignedValue(transaction, currency, locale)}
                   </TableCell>
                 </TableRow>
               );

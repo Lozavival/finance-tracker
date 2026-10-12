@@ -1,5 +1,6 @@
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
+import { useI18n } from '../../i18n';
 
 type FilterPanelProps = {
   trigger: React.ReactNode;
@@ -22,6 +23,8 @@ export function FilterPanel({
   open,
   onOpenChange,
 }: FilterPanelProps) {
+  const { t } = useI18n();
+
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
@@ -41,7 +44,7 @@ export function FilterPanel({
             disabled={applyDisabled}
             className="w-full bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
           >
-            Apply filter
+            {t('common.applyFilter')}
           </Button>
           <Button
             variant="ghost"
@@ -51,7 +54,7 @@ export function FilterPanel({
             }}
             className="w-full text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
           >
-            Clear filter
+            {t('common.clearFilter')}
           </Button>
         </div>
       </PopoverContent>

@@ -1,6 +1,7 @@
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { AlertCircle } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 export type CreditCardFormValues = {
   name: string;
@@ -17,6 +18,8 @@ type CreditCardFieldsProps = {
 };
 
 export function CreditCardFields({ values, onChange, errors = {}, isEditing = false }: CreditCardFieldsProps) {
+  const { t } = useI18n();
+
   function updateField<K extends keyof CreditCardFormValues>(key: K, val: CreditCardFormValues[K]) {
     onChange({ ...values, [key]: val });
   }
@@ -32,20 +35,17 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
       {isEditing && (
         <div className="flex items-start gap-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-800 dark:text-amber-300">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-          <span>
-            Note: Changing closing or due dates will recalculate statements and payment due dates for both upcoming and
-            past cycles.
-          </span>
+          <span>{t('accounts.cardEditWarning')}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-foreground">Card Name</Label>
+          <Label className="text-foreground">{t('accounts.dialog.cardName')}</Label>
           <Input
             value={values.name}
             onChange={e => updateField('name', e.target.value)}
-            placeholder="e.g. Visa Platinum"
+            placeholder={t('accounts.dialog.cardNamePlaceholder')}
             aria-invalid={Boolean(errors.name)}
             className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
           />
@@ -53,7 +53,7 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
         </div>
 
         <div className="space-y-2">
-          <Label className="text-foreground">Card Limit ($)</Label>
+          <Label className="text-foreground">{t('accounts.dialog.cardLimit')}</Label>
           <Input
             type="number"
             min="0"
@@ -68,7 +68,7 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
         </div>
 
         <div className="space-y-2">
-          <Label className="text-foreground">Closing Day of Month</Label>
+          <Label className="text-foreground">{t('accounts.dialog.closingDay')}</Label>
           <Input
             type="number"
             min="1"
@@ -83,7 +83,7 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
         </div>
 
         <div className="space-y-2">
-          <Label className="text-foreground">Due Day of Month</Label>
+          <Label className="text-foreground">{t('accounts.dialog.dueDay')}</Label>
           <Input
             type="number"
             min="1"
@@ -100,8 +100,11 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
 
       {showHint && (
         <div className="text-xs text-muted-foreground bg-cyan-500/5 border border-cyan-500/20 p-2.5 rounded-md">
-          Billing cycle: Purchases close on day {closing} and payment is due on day {due}{' '}
-          {dueNextMonth ? 'of the following month' : 'of the same month'}.
+          {t('accounts.billingCycleHint', {
+            closing: String(closing),
+            due: String(due),
+            monthPlacement: dueNextMonth ? t('accounts.followingMonth') : t('accounts.sameMonth'),
+          })}
         </div>
       )}
     </div>

@@ -13,7 +13,8 @@ import {
   Cell,
 } from 'recharts';
 import { useState } from 'react';
-import { formatCurrency, type CategoryTotal } from '../data/transactions';
+import { type CategoryTotal } from '../data/transactions';
+import { useI18n } from '../i18n';
 
 const revenueData = {
   '7D': [
@@ -47,14 +48,6 @@ const revenueData = {
   ],
 };
 
-const categoryData: CategoryTotal[] = [
-  { typeId: 'shopping', name: 'Shopping', value: 4500, color: 'var(--color-cyan-dot)' },
-  { typeId: 'food-dining', name: 'Food & Dining', value: 3200, color: 'var(--color-blue-dot)' },
-  { typeId: 'transportation', name: 'Transportation', value: 2100, color: 'var(--color-violet-dot)' },
-  { typeId: 'entertainment', name: 'Entertainment', value: 1800, color: 'var(--color-pink-dot)' },
-  { typeId: 'bills', name: 'Bills', value: 2800, color: 'var(--color-amber-dot)' },
-];
-
 type SpendingByCategoryChartProps = {
   data: CategoryTotal[];
   totalSpend: number;
@@ -74,11 +67,13 @@ export function SpendingByCategoryChart({
   tertiaryValue,
   className = '',
 }: SpendingByCategoryChartProps) {
+  const { t, formatCurrency } = useI18n();
+
   return (
     <Card
       className={`p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 ${className}`}
     >
-      <div className="text-foreground text-lg">Spending by Category</div>
+      <div className="text-foreground text-lg">{t('dashboard.spendingByCategory')}</div>
 
       {data.length > 0 ? (
         <>
@@ -94,7 +89,7 @@ export function SpendingByCategoryChart({
 
           <div className="mt-6 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Spend</span>
+              <span className="text-muted-foreground">{t('dashboard.totalSpend')}</span>
               <span className="text-foreground">{formatCurrency(totalSpend)}</span>
             </div>
             {secondaryLabel && secondaryValue && (
@@ -125,10 +120,8 @@ export function SpendingByCategoryChart({
         </>
       ) : (
         <div className="min-h-64 flex flex-col items-center justify-center text-center">
-          <div className="text-muted-foreground mb-1">No spending to visualize</div>
-          <div className="text-muted-foreground text-sm max-w-xs">
-            Income-only results and empty periods do not contribute to spending.
-          </div>
+          <div className="text-muted-foreground mb-1">{t('dashboard.noSpendingToVisualize')}</div>
+          <div className="text-muted-foreground text-sm max-w-xs">{t('dashboard.noSpendingDesc')}</div>
         </div>
       )}
     </Card>
@@ -136,14 +129,28 @@ export function SpendingByCategoryChart({
 }
 
 export function AnalyticsChart() {
+  const { t, formatCurrency } = useI18n();
   const [timePeriod, setTimePeriod] = useState<'7D' | '1M' | '1Y'>('1M');
+
+  const categoryData: CategoryTotal[] = [
+    { typeId: 'shopping', name: t('defaults.types.shopping'), value: 4500, color: 'var(--color-cyan-dot)' },
+    { typeId: 'food-dining', name: t('defaults.types.foodDining'), value: 3200, color: 'var(--color-blue-dot)' },
+    {
+      typeId: 'transportation',
+      name: t('defaults.types.transportation'),
+      value: 2100,
+      color: 'var(--color-violet-dot)',
+    },
+    { typeId: 'entertainment', name: t('defaults.types.entertainment'), value: 1800, color: 'var(--color-pink-dot)' },
+    { typeId: 'bills', name: t('defaults.types.bills'), value: 2800, color: 'var(--color-amber-dot)' },
+  ];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-popover/95 backdrop-blur-xl border border-cyan-500/50 rounded-lg p-3 shadow-lg shadow-cyan-500/20">
           <p className="text-muted-foreground text-sm">{payload[0].payload.date}</p>
-          <p className="text-theme-cyan">${payload[0].value.toLocaleString()}</p>
+          <p className="text-theme-cyan">{formatCurrency(payload[0].value)}</p>
         </div>
       );
     }
@@ -156,7 +163,7 @@ export function AnalyticsChart() {
       <Card className="lg:col-span-2 p-6 bg-foreground/5 backdrop-blur-xl border border-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300">
         <div className="flex items-center justify-between mb-6">
           <div role="heading" aria-level={2} className="text-foreground text-lg">
-            Revenue Growth Over Time
+            {t('dashboard.revenueGrowth')}
           </div>
           <div className="flex gap-2">
             {(['7D', '1M', '1Y'] as const).map(period => (
@@ -211,10 +218,10 @@ export function AnalyticsChart() {
       <SpendingByCategoryChart
         data={categoryData}
         totalSpend={14400}
-        secondaryLabel="Top Merchant"
+        secondaryLabel={t('dashboard.topMerchant')}
         secondaryValue="Amazon"
-        tertiaryLabel="Top Country"
-        tertiaryValue="United States"
+        tertiaryLabel={t('dashboard.topCountry')}
+        tertiaryValue={t('dashboard.topCountryValue')}
       />
     </div>
   );

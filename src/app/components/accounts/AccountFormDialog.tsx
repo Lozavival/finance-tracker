@@ -21,6 +21,7 @@ import { useSettings } from '../../state/SettingsContext';
 import { getToday } from '../../data/dates';
 import { getIcon } from '../../data/icons';
 import { AlertCircle } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
 type AccountFormDialogProps = {
   open: boolean;
@@ -33,6 +34,7 @@ type AccountFormDialogProps = {
 export function AccountFormDialog({ open, onOpenChange, account, transactions, onSave }: AccountFormDialogProps) {
   const isEditing = Boolean(account);
   const { settings, isCreditCard } = useSettings();
+  const { t, getTranslatedMethodName } = useI18n();
 
   const [name, setName] = useState('');
   const [kind, setKind] = useState<AccountKind>('Checking');
@@ -95,7 +97,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         });
       } else {
         setCardValues({
-          name: `${account.name} Card`,
+          name: t('accounts.dialog.defaultCardName', { name: account.name }),
           limit: '5000',
           closingDay: 25,
           dueDay: 5,
@@ -117,7 +119,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         dueDay: 5,
       });
     }
-  }, [open, account, settings, getDefaultMethodsForKind]);
+  }, [open, account, settings, getDefaultMethodsForKind, t]);
 
   function handleNameChange(val: string) {
     setName(val);
@@ -140,7 +142,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         if (cardTransactionsCount > 0) {
           setErrors(prev => ({
             ...prev,
-            card: `Cannot switch to Cash: ${cardTransactionsCount} transaction(s) are using the attached credit card.`,
+            card: t('accounts.errors.cannotSwitchToCash', { count: cardTransactionsCount }),
           }));
           return;
         }
@@ -155,7 +157,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         if (cardTransactionsCount > 0) {
           setErrors(prev => ({
             ...prev,
-            card: `Cannot switch to Savings: ${cardTransactionsCount} transaction(s) are using the attached credit card.`,
+            card: t('accounts.errors.cannotSwitchToSavings', { count: cardTransactionsCount }),
           }));
           return;
         }
@@ -173,7 +175,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
     if (!checked && cardTransactionsCount > 0) {
       setErrors(prev => ({
         ...prev,
-        card: `Cannot disable credit card: ${cardTransactionsCount} transaction(s) are using it.`,
+        card: t('accounts.errors.cannotDisableCard', { count: cardTransactionsCount }),
       }));
       return;
     }
@@ -207,7 +209,10 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         if (inUseCount > 0) {
           setErrors(prev => ({
             ...prev,
-            methodWarning: `Cannot disable ${method?.name || methodId}: ${inUseCount} transaction(s) are using it.`,
+            methodWarning: t('accounts.errors.cannotDisableMethod', {
+              name: method?.name || methodId,
+              count: inUseCount,
+            }),
           }));
           return;
         }
@@ -216,7 +221,9 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
         if (cardTransactionsCount > 0) {
           setErrors(prev => ({
             ...prev,
-            methodWarning: `Cannot disable credit card: ${cardTransactionsCount} transaction(s) are using it.`,
+            methodWarning: t('accounts.errors.cannotDisableCard', {
+              count: cardTransactionsCount,
+            }),
           }));
           return;
         }
@@ -249,53 +256,53 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      nextErrors.name = 'Please provide an account name.';
+      nextErrors.name = t('accounts.errors.accountNameRequired');
     } else {
       // Check uniqueness
       const duplicate = settings.accounts.some(
         a => a.name.toLowerCase() === trimmedName.toLowerCase() && a.id !== account?.id,
       );
       if (duplicate) {
-        nextErrors.name = 'An account with this name already exists.';
+        nextErrors.name = t('accounts.errors.accountNameExists');
       }
     }
 
     const trimmedInitials = initials.trim().toUpperCase();
     if (!trimmedInitials) {
-      nextErrors.initials = 'Initials required.';
+      nextErrors.initials = t('accounts.errors.initialsRequired');
     } else if (trimmedInitials.length > 3) {
-      nextErrors.initials = 'Max 3 letters.';
+      nextErrors.initials = t('accounts.errors.initialsMax');
     }
 
     const numBalance = Number(openingBalance);
     if (isNaN(numBalance)) {
-      nextErrors.openingBalance = 'Enter a valid opening balance.';
+      nextErrors.openingBalance = t('accounts.errors.validOpeningBalance');
     }
 
     if (!openingDate) {
-      nextErrors.openingDate = 'Select an opening date.';
+      nextErrors.openingDate = t('accounts.errors.selectOpeningDate');
     }
 
     if (hasCard) {
       if (!cardValues.name.trim()) {
-        nextErrors.cardName = 'Card name is required.';
+        nextErrors.cardName = t('accounts.errors.cardNameRequired');
       }
       const numLimit = Number(cardValues.limit);
       if (isNaN(numLimit) || numLimit < 0) {
-        nextErrors.cardLimit = 'Enter a valid card limit.';
+        nextErrors.cardLimit = t('accounts.errors.validCardLimit');
       }
       const closing = Number(cardValues.closingDay);
       if (!closing || closing < 1 || closing > 31) {
-        nextErrors.cardClosing = 'Must be between 1 and 31.';
+        nextErrors.cardClosing = t('accounts.errors.dayRange');
       }
       const due = Number(cardValues.dueDay);
       if (!due || due < 1 || due > 31) {
-        nextErrors.cardDue = 'Must be between 1 and 31.';
+        nextErrors.cardDue = t('accounts.errors.dayRange');
       }
     }
 
     if (kind !== 'Cash' && selectedMethods.filter(id => id !== 'cash').length === 0) {
-      nextErrors.paymentMethods = 'Please select at least one payment method for this bank account.';
+      nextErrors.paymentMethods = t('accounts.errors.selectMethod');
     }
 
     setErrors(nextErrors);
@@ -343,11 +350,9 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
       <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-xl max-h-[90vh] flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <DialogHeader className="border-b border-border p-6 pr-14 flex-shrink-0">
-            <DialogTitle>{isEditing ? 'Edit account' : 'Add account'}</DialogTitle>
+            <DialogTitle>{isEditing ? t('accounts.dialog.editTitle') : t('accounts.dialog.newTitle')}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              {isEditing
-                ? 'Update account details and payment method settings.'
-                : 'Configure a new checking, savings, or physical cash account.'}
+              {isEditing ? t('accounts.dialog.editDesc') : t('accounts.dialog.newDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -355,13 +360,13 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="account-name" className="text-foreground">
-                  Account Name
+                  {t('accounts.dialog.nameLabel')}
                 </Label>
                 <Input
                   id="account-name"
                   value={name}
                   onChange={e => handleNameChange(e.target.value)}
-                  placeholder="e.g. Chase Total Checking"
+                  placeholder={t('accounts.dialog.namePlaceholder')}
                   aria-invalid={Boolean(errors.name)}
                   className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
                 />
@@ -369,7 +374,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
               </div>
 
               <div className="space-y-2">
-                <Label className="text-foreground">Account Type</Label>
+                <Label className="text-foreground">{t('accounts.dialog.typeLabel')}</Label>
                 <ToggleGroup
                   type="single"
                   value={kind}
@@ -380,26 +385,26 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                     value="Checking"
                     className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
-                    Checking
+                    {t('accounts.dialog.checking')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Savings"
                     className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
-                    Savings
+                    {t('accounts.dialog.savings')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Cash"
                     className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
-                    Cash
+                    {t('accounts.dialog.cash')}
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="account-initials" className="text-foreground">
-                  Initials / Avatar
+                  {t('accounts.dialog.initialsLabel')}
                 </Label>
                 <div className="flex gap-2">
                   <div
@@ -413,18 +418,18 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                     value={initials}
                     maxLength={3}
                     onChange={e => setInitials(e.target.value.toUpperCase())}
-                    placeholder="e.g. CH"
+                    placeholder={t('accounts.dialog.initialsPlaceholder')}
                     className="h-11 border-border bg-foreground/5 text-foreground uppercase"
                   />
                 </div>
                 {errors.initials && <div className="text-xs text-red-400">{errors.initials}</div>}
               </div>
 
-              <ColorPicker value={color} onChange={setColor} label="Theme Color" />
+              <ColorPicker value={color} onChange={setColor} label={t('accounts.dialog.themeColor')} />
 
               <div className="space-y-2">
                 <Label htmlFor="opening-balance" className="text-foreground">
-                  Opening Balance ($)
+                  {t('accounts.dialog.openingBalance')}
                 </Label>
                 <Input
                   id="opening-balance"
@@ -432,16 +437,16 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                   step="0.01"
                   value={openingBalance}
                   onChange={e => setOpeningBalance(e.target.value)}
-                  placeholder="0.00"
+                  placeholder={t('accounts.dialog.balancePlaceholder')}
                   className="h-11 border-border bg-foreground/5 text-foreground"
                 />
                 {errors.openingBalance && <div className="text-xs text-red-400">{errors.openingBalance}</div>}
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-foreground">Opening Date</Label>
+                <Label className="text-foreground">{t('accounts.dialog.openingDate')}</Label>
                 <DateField
-                  placeholder="Select opening date"
+                  placeholder={t('accounts.dialog.selectOpeningDate')}
                   value={openingDate}
                   onChange={d => setOpeningDate(d)}
                   className="h-11"
@@ -453,10 +458,8 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
             {kind === 'Cash' ? (
               <div className="pt-4 border-t border-border space-y-2">
                 <div>
-                  <Label className="text-foreground">Payment Methods</Label>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    Dedicated physical cash account. Physical cash is the only payment channel for this account.
-                  </div>
+                  <Label className="text-foreground">{t('accounts.dialog.paymentMethods')}</Label>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t('accounts.dialog.cashDesc')}</div>
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1.5 font-medium">
@@ -464,17 +467,15 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                       const CashIcon = getIcon('Banknote');
                       return <CashIcon className="w-3.5 h-3.5" />;
                     })()}
-                    <span>Cash (Dedicated)</span>
+                    <span>{t('accounts.dialog.cashDedicated')}</span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="pt-4 border-t border-border space-y-3">
                 <div>
-                  <Label className="text-foreground">Payment Methods</Label>
-                  <div className="text-xs text-muted-foreground mt-0.5">
-                    Select payment channels accepted or enabled for this bank account.
-                  </div>
+                  <Label className="text-foreground">{t('accounts.dialog.paymentMethods')}</Label>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t('accounts.dialog.bankMethodsDesc')}</div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {settings.paymentMethods
@@ -491,7 +492,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                           className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan text-xs px-3 py-1.5 flex items-center gap-1.5 h-auto transition-all cursor-pointer"
                         >
                           <Icon className="w-3.5 h-3.5" />
-                          <span>{m.name}</span>
+                          <span>{getTranslatedMethodName(m.id, m.name)}</span>
                         </Toggle>
                       );
                     })}
@@ -510,10 +511,8 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
               <div className="pt-4 border-t border-border space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-medium text-foreground">Attach Credit Card</div>
-                    <div className="text-xs text-muted-foreground">
-                      Enable credit card bills and limit forecasting for this account.
-                    </div>
+                    <div className="text-sm font-medium text-foreground">{t('accounts.dialog.attachCreditCard')}</div>
+                    <div className="text-xs text-muted-foreground">{t('accounts.dialog.attachCardDesc')}</div>
                   </div>
                   <Switch checked={hasCard} onCheckedChange={handleToggleCard} />
                 </div>
@@ -549,13 +548,13 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
               onClick={() => onOpenChange(false)}
               className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
             >
-              {isEditing ? 'Save changes' : 'Add account'}
+              {isEditing ? t('accounts.saveChanges') : t('accounts.addAccount')}
             </Button>
           </DialogFooter>
         </form>

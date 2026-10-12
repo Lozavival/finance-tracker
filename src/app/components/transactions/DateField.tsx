@@ -5,6 +5,7 @@ import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '../ui/utils';
 import { formatFull } from '../../data/dates';
+import { useI18n } from '../../i18n';
 
 type DateFieldProps = {
   placeholder: string;
@@ -17,6 +18,7 @@ type DateFieldProps = {
 
 export function DateField({ placeholder, value, onChange, disabledDays, className, hasError }: DateFieldProps) {
   const [open, setOpen] = useState(false);
+  const { locale } = useI18n();
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -30,7 +32,7 @@ export function DateField({ placeholder, value, onChange, disabledDays, classNam
             className,
           )}
         >
-          {value ? formatFull(value) : placeholder}
+          {value ? formatFull(value, locale) : placeholder}
           <CalendarIcon className="h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>

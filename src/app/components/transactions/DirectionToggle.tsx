@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { Label } from '../ui/label';
+import { useI18n } from '../../i18n';
 
 export type DialogMode = 'income' | 'expense' | 'transfer';
 
@@ -10,41 +11,43 @@ type DirectionToggleProps = {
 };
 
 export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
+  const { t } = useI18n();
+
   return (
     <div className="space-y-2">
-      <Label className="text-muted-foreground">Transaction direction</Label>
+      <Label className="text-muted-foreground">{t('transactions.directionLabel')}</Label>
       <ToggleGroup
         type="single"
         value={value}
         onValueChange={nextValue => {
           if (nextValue) onChange(nextValue as DialogMode);
         }}
-        aria-label="Transaction direction"
+        aria-label={t('transactions.directionLabel')}
         className="w-full rounded-xl border border-border bg-muted/40 p-1"
       >
         <ToggleGroupItem
           value="income"
-          aria-label="Income"
+          aria-label={t('transactions.directionIncome')}
           className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-emerald-400 data-[state=on]:shadow-sm"
         >
           <ArrowDownLeft className="mr-2 h-4 w-4" />
-          Income
+          {t('transactions.directionIncome')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="expense"
-          aria-label="Expense"
+          aria-label={t('transactions.directionExpense')}
           className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-red-400 data-[state=on]:shadow-sm"
         >
           <ArrowUpRight className="mr-2 h-4 w-4" />
-          Expense
+          {t('transactions.directionExpense')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="transfer"
-          aria-label="Transfer"
+          aria-label={t('transactions.directionTransfer')}
           className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-indigo-400 data-[state=on]:shadow-sm"
         >
           <ArrowLeftRight className="mr-2 h-4 w-4" />
-          Transfer
+          {t('transactions.directionTransfer')}
         </ToggleGroupItem>
       </ToggleGroup>
     </div>

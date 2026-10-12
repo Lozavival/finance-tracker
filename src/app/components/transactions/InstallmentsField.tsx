@@ -2,7 +2,7 @@ import React from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { MAX_INSTALLMENTS, splitInstallmentValues } from '../../data/installments';
-import { formatCurrency } from '../../data/transactions';
+import { useI18n } from '../../i18n';
 
 type InstallmentsFieldProps = {
   value: number | '';
@@ -12,6 +12,7 @@ type InstallmentsFieldProps = {
 };
 
 export function InstallmentsField({ value, onChange, totalValue, error }: InstallmentsFieldProps) {
+  const { t, formatCurrency } = useI18n();
   const numericValue = typeof value === 'number' ? value : 1;
   const parts = splitInstallmentValues(totalValue || 0, numericValue);
   const first = parts[0] || 0;
@@ -27,7 +28,7 @@ export function InstallmentsField({ value, onChange, totalValue, error }: Instal
   return (
     <div className="space-y-2">
       <Label htmlFor="transaction-installments" className="text-foreground">
-        Installments
+        {t('dialogs.transaction.installmentsLabel')}
       </Label>
       <Input
         id="transaction-installments"

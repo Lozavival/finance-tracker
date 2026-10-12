@@ -19,12 +19,15 @@ import {
 import { TransactionDialogs } from './transactions/TransactionDialogs';
 import { useTransactionActions } from '../hooks/useTransactionActions';
 
+import { useI18n } from '../i18n';
+
 type TransactionsPageProps = {
   transactions: Transaction[];
   onTransactionsChange: (transactions: Transaction[]) => void;
 };
 
 export function TransactionsPage({ transactions, onTransactionsChange }: TransactionsPageProps) {
+  const { t } = useI18n();
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
@@ -85,16 +88,16 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div role="heading" aria-level={1} className="text-foreground text-3xl mb-2">
-            Transaction History
+            {t('transactions.title')}
           </div>
-          <div className="text-muted-foreground">Review, filter, and manage your financial activity.</div>
+          <div className="text-muted-foreground">{t('transactions.subtitle')}</div>
         </div>
         <Button
           onClick={openAddDialog}
           className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add transaction
+          {t('transactions.addTransaction')}
         </Button>
       </div>
 
@@ -114,12 +117,14 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
                 className="text-theme-cyan hover:bg-cyan-500/10 hover:text-theme-cyan"
               >
                 <RotateCcw className="mr-1 h-4 w-4" />
-                Clear filters
+                {t('common.clearFilters')}
               </Button>
             )}
 
             <div className="text-muted-foreground text-sm mt-1">
-              {visibleTransactions.length} {visibleTransactions.length === 1 ? 'transaction' : 'transactions'}
+              {visibleTransactions.length === 1
+                ? t('common.singleTransaction')
+                : t('common.transactionsCount', { count: visibleTransactions.length })}
             </div>
           </div>
         </div>
@@ -128,8 +133,8 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
 
         {visibleTransactions.length === 0 && (
           <div className="min-h-64 border-t border-border/50 flex flex-col items-center justify-center p-8 text-center">
-            <div className="text-foreground mb-1">No transactions found</div>
-            <div className="text-muted-foreground text-sm mb-5">Try a different period or transaction type.</div>
+            <div className="text-foreground mb-1">{t('transactions.noTransactionsFound')}</div>
+            <div className="text-muted-foreground text-sm mb-5">{t('transactions.noTransactionsFilterDesc')}</div>
             {filtersActive && (
               <Button
                 variant="outline"
@@ -137,7 +142,7 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
                 className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
               >
                 <RotateCcw className="h-4 w-4" />
-                Clear filters
+                {t('common.clearFilters')}
               </Button>
             )}
           </div>

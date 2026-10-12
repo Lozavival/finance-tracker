@@ -8,6 +8,7 @@ import { formatInstallmentLabel } from '../../data/installments';
 import { formatRowDate, getToday } from '../../data/dates';
 import { useSettings } from '../../state/SettingsContext';
 import { CategoryChip } from '../shared/CategoryChip';
+import { useI18n } from '../../i18n';
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];
@@ -22,7 +23,8 @@ export function TransactionsMonthTable({
   showAccount = true,
 }: TransactionsMonthTableProps & { showAccount?: boolean }) {
   const { findType, findAccount, findMethod } = useSettings();
-  const groups = groupTransactionsByMonth(transactions);
+  const { t, currency, locale } = useI18n();
+  const groups = groupTransactionsByMonth(transactions, locale);
 
   if (transactions.length === 0) {
     return null;
@@ -35,14 +37,14 @@ export function TransactionsMonthTable({
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
-            <TableHead className="text-muted-foreground">Date</TableHead>
-            <TableHead className="text-muted-foreground">Description</TableHead>
-            <TableHead className="text-muted-foreground">Type</TableHead>
-            {showAccount && <TableHead className="text-muted-foreground">Account</TableHead>}
-            <TableHead className="text-muted-foreground">Payment</TableHead>
-            <TableHead className="text-muted-foreground text-right">Value</TableHead>
+            <TableHead className="text-muted-foreground">{t('transactions.tableDate')}</TableHead>
+            <TableHead className="text-muted-foreground">{t('transactions.tableDescription')}</TableHead>
+            <TableHead className="text-muted-foreground">{t('transactions.tableCategory')}</TableHead>
+            {showAccount && <TableHead className="text-muted-foreground">{t('transactions.tableAccount')}</TableHead>}
+            <TableHead className="text-muted-foreground">{t('transactions.tablePayment')}</TableHead>
+            <TableHead className="text-muted-foreground text-right">{t('transactions.tableAmount')}</TableHead>
             <TableHead>
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t('common.actions')}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -69,10 +71,10 @@ export function TransactionsMonthTable({
                     className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${
                       isFuture ? 'opacity-60' : ''
                     }`}
-                    title={isFuture ? 'Scheduled' : undefined}
+                    title={isFuture ? t('transactions.scheduled') : undefined}
                   >
                     <TableCell className="text-foreground whitespace-nowrap">
-                      {formatRowDate(transaction.date)}
+                      {formatRowDate(transaction.date, locale)}
                     </TableCell>
                     <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
                       <div className="inline-flex items-center gap-2">
@@ -100,7 +102,7 @@ export function TransactionsMonthTable({
                         transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
                       }`}
                     >
-                      {formatSignedValue(transaction)}
+                      {formatSignedValue(transaction, currency, locale)}
                     </TableCell>
                     <TableCell className="w-12 text-right">
                       <DropdownMenu>
@@ -120,7 +122,7 @@ export function TransactionsMonthTable({
                             className="focus:bg-cyan-500/20 focus:text-theme-cyan cursor-pointer"
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            Edit
+                            {t('common.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
@@ -128,7 +130,7 @@ export function TransactionsMonthTable({
                             className="cursor-pointer"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Exclude
+                            {t('common.exclude')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
