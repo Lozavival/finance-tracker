@@ -13,10 +13,14 @@ import { type Transaction } from './data/transactions';
 import { AccountsPage } from './components/accounts/AccountsPage';
 import { AccountDetailPage } from './components/accounts/AccountDetailPage';
 import { SettingsPage } from './components/settings/SettingsPage';
+import { GoalsPage } from './components/goals/GoalsPage';
+import { Toaster } from './components/ui/sonner';
 import { SettingsProvider, useSettings } from './state/SettingsContext';
+import { I18nProvider, useI18n } from './i18n';
 
 function AppContent() {
   const { settings } = useSettings();
+  const { t } = useI18n();
   const [activePage, setActivePage] = useState('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -56,15 +60,17 @@ function AppContent() {
             ) : (
               <AccountsPage finance={finance} transactions={transactions} onAccountSelect={setSelectedAccountId} />
             )
+          ) : activePage === 'goals' ? (
+            <GoalsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : activePage === 'settings' ? (
             <SettingsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : (
             <div className="space-y-8">
               <div>
                 <div role="heading" aria-level={1} className="text-foreground text-3xl mb-2">
-                  Dashboard
+                  {t('dashboard.title')}
                 </div>
-                <div className="text-muted-foreground">Welcome back! Here's your financial overview.</div>
+                <div className="text-muted-foreground">{t('dashboard.subtitle')}</div>
               </div>
               <SummaryCards />
               <AnalyticsChart />
@@ -79,8 +85,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <SettingsProvider>
-      <AppContent />
-    </SettingsProvider>
+    <I18nProvider>
+      <SettingsProvider>
+        <AppContent />
+        <Toaster position="bottom-right" />
+      </SettingsProvider>
+    </I18nProvider>
   );
 }

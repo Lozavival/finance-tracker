@@ -14,6 +14,8 @@ import { CategoryChip } from './shared/CategoryChip';
 import { getIcon } from '../data/icons';
 import { TRANSFER_TYPE_ID } from '../data/settings';
 
+import { useI18n } from '../i18n';
+
 export type EditingTarget =
   | { kind: 'single'; transaction: Transaction }
   | { kind: 'transfer'; outgoing: Transaction; incoming: Transaction }
@@ -38,7 +40,8 @@ export function TransactionDialog({
   onOpenChange,
   onSave,
 }: TransactionDialogProps) {
-  const { settings, typesByDirection, findAccount, isCreditCard } = useSettings();
+  const { settings, typesByDirection, findAccount, isCreditCard, getAllowedPaymentMethodIds } = useSettings();
+  const { t } = useI18n();
 
   const [mode, setMode] = useState<DialogMode>('expense');
   const [description, setDescription] = useState('');
@@ -56,17 +59,13 @@ export function TransactionDialog({
   const [errors, setErrors] = useState<FormErrors>({});
 
   const selectedAccount = useMemo(() => findAccount(accountId), [findAccount, accountId]);
-  const hasCard = Boolean(selectedAccount?.card);
 
-  // Filter payment methods: hide credit card if the account does not have a card
+  // Filter payment methods: only allow methods configured for this account
   const availablePaymentMethods = useMemo(() => {
-    return settings.paymentMethods.filter(m => {
-      if (m.behavior === 'credit-card') {
-        return hasCard;
-      }
-      return true;
-    });
-  }, [settings.paymentMethods, hasCard]);
+    if (!selectedAccount) return settings.paymentMethods;
+    const allowedIds = getAllowedPaymentMethodIds(selectedAccount);
+    return settings.paymentMethods.filter(m => allowedIds.includes(m.id));
+  }, [selectedAccount, settings.paymentMethods, getAllowedPaymentMethodIds]);
 
   const canUseInstallments = mode === 'expense' && isCreditCard(paymentMethodId);
   const effectiveInstallments = canUseInstallments ? Number(installments) || 1 : 1;
@@ -88,9 +87,8 @@ export function TransactionDialog({
       setAccountId(initialAcc);
       // Determine initial payment method
       const acc = findAccount(initialAcc);
-      const allowedMethods = settings.paymentMethods.filter(m =>
-        m.behavior === 'credit-card' ? Boolean(acc?.card) : true,
-      );
+      const allowedIds = getAllowedPaymentMethodIds(acc);
+      const allowedMethods = settings.paymentMethods.filter(m => allowedIds.includes(m.id));
       setPaymentMethodId(allowedMethods[0]?.id || '');
       setInstallments(1);
       setFromAccountId(firstAcc);
@@ -135,15 +133,15 @@ export function TransactionDialog({
       setFromAccountId(firstAcc);
       setToAccountId(secondAcc);
     }
-  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount]);
+  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount, getAllowedPaymentMethodIds]);
 
-  // Adjust paymentMethodId if selected account changes and doesn't have a card
+  // Adjust paymentMethodId if selected account changes and current method is not allowed
   useEffect(() => {
-    if (paymentMethodId && isCreditCard(paymentMethodId) && !hasCard) {
+    if (paymentMethodId && !availablePaymentMethods.some(m => m.id === paymentMethodId)) {
       const fallback = availablePaymentMethods[0]?.id || '';
       setPaymentMethodId(fallback);
     }
-  }, [hasCard, paymentMethodId, availablePaymentMethods, isCreditCard]);
+  }, [paymentMethodId, availablePaymentMethods]);
 
   function handleModeChange(nextMode: DialogMode) {
     setMode(nextMode);
@@ -167,19 +165,19 @@ export function TransactionDialog({
     const normalizedValue = Number(value);
 
     if (mode !== 'transfer' && !normalizedDescription) {
-      nextErrors.description = 'Enter a description.';
+      nextErrors.description = t('transactions.errors.enterDescription');
     }
     if (!value || !Number.isFinite(normalizedValue) || normalizedValue <= 0) {
-      nextErrors.value = 'Enter a value greater than zero.';
+      nextErrors.value = t('transactions.errors.enterValue');
     }
     if (effectiveInstallments > 1 && normalizedValue < effectiveInstallments * 0.01) {
-      nextErrors.value = 'Total value is too small to split.';
+      nextErrors.value = t('transactions.errors.valueTooSmall');
     }
     if (!date) {
-      nextErrors.date = 'Choose a transaction date.';
+      nextErrors.date = t('transactions.errors.chooseDate');
     }
     if (mode === 'transfer' && fromAccountId === toAccountId) {
-      nextErrors.banks = 'Origin and destination must be different.';
+      nextErrors.banks = t('transactions.errors.differentAccounts');
     }
 
     setErrors(nextErrors);
@@ -258,13 +256,13 @@ export function TransactionDialog({
       <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader className="border-b border-border p-6 pr-14">
-            <DialogTitle>{editing ? 'Edit transaction' : 'Add transaction'}</DialogTitle>
+            <DialogTitle>{editing ? t('transactions.editTransaction') : t('transactions.addTransaction')}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               {isTransfer
-                ? 'Move money between your accounts.'
+                ? t('transactions.moveMoneyDesc')
                 : editing
-                  ? 'Update the details for this transaction.'
-                  : 'Record income or an expense.'}
+                  ? t('transactions.updateTxDesc')
+                  : t('transactions.recordTxDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -275,13 +273,13 @@ export function TransactionDialog({
               {!isTransfer && (
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="transaction-description" className="text-foreground">
-                    Description
+                    {t('common.description')}
                   </Label>
                   <Input
                     id="transaction-description"
                     value={description}
                     onChange={event => setDescription(event.target.value)}
-                    placeholder="e.g. Grocery store"
+                    placeholder={t('transactions.descPlaceholder')}
                     aria-invalid={Boolean(errors.description)}
                     className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
                   />
@@ -290,9 +288,11 @@ export function TransactionDialog({
               )}
 
               <div className="space-y-2">
-                <Label className="text-foreground">{effectiveInstallments > 1 ? 'First installment' : 'Date'}</Label>
+                <Label className="text-foreground">
+                  {effectiveInstallments > 1 ? t('transactions.firstInstallment') : t('common.date')}
+                </Label>
                 <DateField
-                  placeholder="Choose date"
+                  placeholder={t('transactions.chooseDate')}
                   value={date}
                   onChange={d => setDate(d)}
                   hasError={Boolean(errors.date)}
@@ -303,7 +303,7 @@ export function TransactionDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="transaction-value" className="text-foreground">
-                  {effectiveInstallments > 1 ? 'Total value' : 'Value'}
+                  {effectiveInstallments > 1 ? t('common.totalValue') : t('common.value')}
                 </Label>
                 <Input
                   id="transaction-value"
@@ -312,7 +312,7 @@ export function TransactionDialog({
                   step="0.01"
                   value={value}
                   onChange={event => setValue(event.target.value)}
-                  placeholder="0.00"
+                  placeholder={t('transactions.amountPlaceholder')}
                   aria-invalid={Boolean(errors.value)}
                   className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
                 />
@@ -321,12 +321,22 @@ export function TransactionDialog({
 
               {!isTransfer ? (
                 <>
-                  <OptionSelect label="Type" value={typeId} options={typeOptions} onChange={setTypeId} />
-                  <OptionSelect label="Account" value={accountId} options={accountOptions} onChange={setAccountId} />
+                  <OptionSelect
+                    label={t('common.category')}
+                    value={typeId}
+                    options={typeOptions}
+                    onChange={setTypeId}
+                  />
+                  <OptionSelect
+                    label={t('common.account')}
+                    value={accountId}
+                    options={accountOptions}
+                    onChange={setAccountId}
+                  />
                   {mode === 'expense' && (
                     <>
                       <OptionSelect
-                        label="Form of payment"
+                        label={t('transactions.formOfPayment')}
                         value={paymentMethodId}
                         options={paymentOptions}
                         onChange={setPaymentMethodId}
@@ -344,14 +354,14 @@ export function TransactionDialog({
               ) : (
                 <>
                   <OptionSelect
-                    label="From account"
+                    label={t('transactions.fromAccount')}
                     value={fromAccountId}
                     options={accountOptions}
                     onChange={setFromAccountId}
                     error={errors.banks}
                   />
                   <OptionSelect
-                    label="To account"
+                    label={t('transactions.toAccount')}
                     value={toAccountId}
                     options={accountOptions}
                     onChange={setToAccountId}
@@ -362,7 +372,7 @@ export function TransactionDialog({
             </div>
             {isEditingSeries && !canUseInstallments && (
               <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-3 text-sm text-orange-800 dark:text-orange-400">
-                Installments are only available for credit card. This will be saved as a single expense.
+                {t('transactions.installmentsHint')}
               </div>
             )}
           </div>
@@ -374,14 +384,14 @@ export function TransactionDialog({
               onClick={() => onOpenChange(false)}
               className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
             >
               {editing ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-              {editing ? 'Save changes' : 'Add transaction'}
+              {editing ? t('transactions.saveChanges') : t('transactions.addTransaction')}
             </Button>
           </DialogFooter>
         </form>

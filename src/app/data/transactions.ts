@@ -99,18 +99,20 @@ export type CategoryTotal = {
   dotClassName?: string;
 };
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
-
-export function formatCurrency(amount: number) {
-  return currencyFormatter.format(amount);
+export function formatCurrency(amount: number, currency = 'USD', locale = 'en-US') {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+    }).format(amount);
+  } catch {
+    return `$${amount.toFixed(2)}`;
+  }
 }
 
-export function formatSignedValue(transaction: Transaction) {
+export function formatSignedValue(transaction: Transaction, currency = 'USD', locale = 'en-US') {
   const sign = transaction.direction === 'income' ? '+' : '−';
-  return `${sign}${formatCurrency(transaction.value)}`;
+  return `${sign}${formatCurrency(transaction.value, currency, locale)}`;
 }
 
 export function getLatestMonthRange(transactions: Transaction[]) {
@@ -195,13 +197,13 @@ export function sortTransactionsDescending(transactions: Transaction[]) {
   return [...transactions].sort((a, b) => b.date.getTime() - a.date.getTime() || b.id.localeCompare(a.id));
 }
 
-export function groupTransactionsByMonth(transactions: Transaction[]) {
+export function groupTransactionsByMonth(transactions: Transaction[], locale = 'en-US') {
   const groups = new Map<string, { key: string; label: string; transactions: Transaction[] }>();
 
   for (const transaction of transactions) {
     const key = `${transaction.date.getFullYear()}-${String(transaction.date.getMonth() + 1).padStart(2, '0')}`;
     if (!groups.has(key)) {
-      const label = formatMonthYear(transaction.date);
+      const label = formatMonthYear(transaction.date, locale);
       groups.set(key, { key, label, transactions: [] });
     }
     groups.get(key)!.transactions.push(transaction);

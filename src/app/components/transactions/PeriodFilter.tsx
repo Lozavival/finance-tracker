@@ -4,6 +4,7 @@ import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
 import { Button } from '../ui/button';
 import { PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from '../../data/transactions';
+import { useI18n } from '../../i18n';
 
 type PeriodFilterProps = {
   value: PeriodFilterType;
@@ -11,6 +12,7 @@ type PeriodFilterProps = {
 };
 
 export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<PeriodFilterType>(value);
 
@@ -22,13 +24,13 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   }, [open, value]);
 
   const active = value.kind !== 'up-to-today';
-  let label = 'Up to today';
+  let label = t('transactions.periodUpToToday');
   if (value.kind === 'preset') {
-    label = `Last ${value.days} days`;
+    label = t('transactions.periodDays', { days: String(value.days) });
   } else if (value.kind === 'custom') {
     label = formatPeriodLabel(value.from, value.to);
   } else if (value.kind === 'all') {
-    label = 'Including future';
+    label = t('transactions.periodIncludeFuture');
   }
 
   const applyDisabled =
@@ -38,7 +40,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
     <FilterPanel
       open={open}
       onOpenChange={setOpen}
-      title="Period"
+      title={t('transactions.period')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
       onClear={() => onChange({ kind: 'up-to-today' })}
@@ -55,7 +57,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
               : 'text-foreground'
           }`}
         >
-          Up to today
+          {t('transactions.periodUpToToday')}
         </Button>
         <Button
           variant="outline"
@@ -67,7 +69,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
               : 'text-foreground'
           }`}
         >
-          Include future
+          {t('transactions.periodIncludeFuture')}
         </Button>
       </div>
 
@@ -84,16 +86,16 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
                 : 'text-foreground'
             }`}
           >
-            {days} Days
+            {t('transactions.periodDays', { days: String(days) })}
           </Button>
         ))}
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-foreground">Custom period</div>
+        <div className="text-sm font-medium text-foreground">{t('transactions.periodCustom')}</div>
         <div className="space-y-2">
           <DateField
-            placeholder="Start date"
+            placeholder={t('transactions.startDate')}
             value={draft.kind === 'custom' ? draft.from : undefined}
             onChange={date =>
               setDraft(prev => ({
@@ -108,7 +110,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
             }}
           />
           <DateField
-            placeholder="End date"
+            placeholder={t('transactions.endDate')}
             value={draft.kind === 'custom' ? draft.to : undefined}
             onChange={date =>
               setDraft(prev => ({

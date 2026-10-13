@@ -3,7 +3,7 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
 import { Button } from '../ui/button';
-import { formatFull } from '../../data/dates';
+import { useI18n } from '../../i18n';
 
 export type UpcomingPeriodType =
   { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: Date };
@@ -16,6 +16,7 @@ type UpcomingPeriodFilterProps = {
 };
 
 export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterProps) {
+  const { t, formatDate } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<UpcomingPeriodType>(value);
 
@@ -26,16 +27,16 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
   }, [open, value]);
 
   const active = value.kind !== 'all';
-  let label = 'View all';
+  let label = t('transactions.upcomingAll');
   if (value.kind === 'preset') {
-    label = `Next ${value.days} days`;
+    label = t('transactions.upcomingNextDays', { days: String(value.days) });
   } else if (value.kind === 'end-of-month') {
-    label = 'End of month';
+    label = t('transactions.upcomingEndOfMonth');
   } else if (value.kind === 'custom') {
     if (value.until) {
-      label = `Until ${formatFull(value.until)}`;
+      label = t('transactions.upcomingUntil', { date: formatDate(value.until) });
     } else {
-      label = 'Custom date';
+      label = t('transactions.upcomingCustomDate');
     }
   }
 
@@ -45,7 +46,7 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
     <FilterPanel
       open={open}
       onOpenChange={setOpen}
-      title="Upcoming Period"
+      title={t('transactions.upcoming')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
       onClear={() => onChange({ kind: 'all' })}
@@ -64,7 +65,7 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
                 : 'text-foreground'
             }`}
           >
-            {days} Days
+            {t('transactions.periodDays', { days: String(days) })}
           </Button>
         ))}
       </div>
@@ -80,7 +81,7 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
               : 'text-foreground'
           }`}
         >
-          End of month
+          {t('transactions.upcomingEndOfMonth')}
         </Button>
         <Button
           variant="outline"
@@ -92,15 +93,15 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
               : 'text-foreground'
           }`}
         >
-          View all
+          {t('transactions.upcomingAll')}
         </Button>
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-foreground">Custom date limit</div>
+        <div className="text-sm font-medium text-foreground">{t('transactions.upcomingCustomDate')}</div>
         <div className="space-y-2">
           <DateField
-            placeholder="Until date"
+            placeholder={t('transactions.upcomingUntilDate')}
             value={draft.kind === 'custom' ? draft.until : undefined}
             onChange={date =>
               setDraft({

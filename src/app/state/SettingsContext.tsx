@@ -10,6 +10,7 @@ import {
   findType as lookupType,
   findMethod as lookupMethod,
   isCreditCard as checkIsCreditCard,
+  getAllowedPaymentMethodIds as lookupAllowedPaymentMethods,
 } from '../data/settings';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
 
@@ -26,6 +27,7 @@ export type SettingsContextValue = {
   findType: (id: string) => TransactionTypeConfig | undefined;
   findMethod: (id?: string) => PaymentMethodConfig | undefined;
   isCreditCard: (methodId?: string) => boolean;
+  getAllowedPaymentMethodIds: (account?: AccountConfig) => string[];
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -64,6 +66,7 @@ export function SettingsProvider({
       findType: (id: string) => lookupType(settings, id),
       findMethod: (id?: string) => lookupMethod(settings, id),
       isCreditCard: (methodId?: string) => checkIsCreditCard(settings, methodId),
+      getAllowedPaymentMethodIds: (account?: AccountConfig) => lookupAllowedPaymentMethods(account, settings),
     };
   }, [settings]);
 

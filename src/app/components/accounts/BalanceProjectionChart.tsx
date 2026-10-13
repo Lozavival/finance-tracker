@@ -1,13 +1,14 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
 import { type DailyBalance } from '../../data/ledger';
-import { formatCurrency } from '../../data/transactions';
 import { formatShort } from '../../data/dates';
+import { useI18n } from '../../i18n';
 
 export function BalanceProjectionChart({ series, today }: { series: DailyBalance[]; today: Date }) {
+  const { t, formatCurrency, locale } = useI18n();
   if (series.length === 0) return null;
 
-  const chartData = series.map(s => ({ ...s, dateStr: formatShort(s.date) }));
-  const todayStr = formatShort(today);
+  const chartData = series.map(s => ({ ...s, dateStr: formatShort(s.date, locale) }));
+  const todayStr = formatShort(today, locale);
 
   return (
     <div className="h-[300px] w-full">
@@ -37,7 +38,7 @@ export function BalanceProjectionChart({ series, today }: { series: DailyBalance
             axisLine={false}
           />
           <YAxis
-            tickFormatter={v => `$${v / 100}`}
+            tickFormatter={v => formatCurrency(v / 100)}
             stroke="var(--border)"
             tick={{ fill: 'var(--muted-foreground)' }}
             fontSize={12}
@@ -57,7 +58,7 @@ export function BalanceProjectionChart({ series, today }: { series: DailyBalance
             x={todayStr}
             stroke="var(--muted-foreground)"
             strokeDasharray="3 3"
-            label={{ position: 'top', value: 'Today', fill: 'var(--muted-foreground)', fontSize: 12 }}
+            label={{ position: 'top', value: t('common.today'), fill: 'var(--muted-foreground)', fontSize: 12 }}
           />
 
           <Area

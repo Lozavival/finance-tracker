@@ -4,6 +4,7 @@ import {
   type PaymentMethodConfig,
   type AccountConfig,
 } from '../data/settings';
+import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '../data/goals';
 
 export type SettingsAction =
   | { type: 'type/add'; payload: TransactionTypeConfig }
@@ -20,7 +21,15 @@ export type SettingsAction =
     }
   | { type: 'method/reorder'; payload: { methods: PaymentMethodConfig[] } }
   | { type: 'account/add'; payload: AccountConfig }
-  | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } };
+  | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } }
+  | { type: 'goals/updateReferenceIncome'; payload: { income: number } }
+  | { type: 'goals/updateMode'; payload: { mode: 'percentage' | 'currency' } }
+  | { type: 'goals/updateAllocations'; payload: { categories: GoalCategory[] } }
+  | { type: 'goals/addCategory'; payload: { category: GoalCategory } }
+  | { type: 'goals/updateCategory'; payload: { id: string; changes: Partial<Omit<GoalCategory, 'id'>> } }
+  | { type: 'goals/deleteCategory'; payload: { id: string } }
+  | { type: 'goals/resetAllocations' }
+  | { type: 'goals/updateTypeMappings'; payload: { mappings: Record<string, string> } };
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
   switch (action.type) {
@@ -61,9 +70,15 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
       if (remainingInDirection.length === 0) {
         return state; // At least one type per direction is required
       }
+      const nextMappings = { ...state.goals.typeMappings };
+      delete nextMappings[action.payload.id];
       return {
         ...state,
         transactionTypes: state.transactionTypes.filter(t => t.id !== action.payload.id),
+        goals: {
+          ...state.goals,
+          typeMappings: nextMappings,
+        },
       };
     }
 
@@ -116,6 +131,96 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
           if (a.id !== action.payload.id) return a;
           return { ...a, ...action.payload.changes };
         }),
+      };
+    }
+
+    case 'goals/updateReferenceIncome': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          referenceMonthlyIncome: action.payload.income,
+        },
+      };
+    }
+
+    case 'goals/updateMode': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          mode: action.payload.mode,
+        },
+      };
+    }
+
+    case 'goals/updateAllocations': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: action.payload.categories,
+        },
+      };
+    }
+
+    case 'goals/addCategory': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: [...state.goals.categories, action.payload.category],
+        },
+      };
+    }
+
+    case 'goals/updateCategory': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: state.goals.categories.map(c =>
+            c.id === action.payload.id ? { ...c, ...action.payload.changes } : c,
+          ),
+        },
+      };
+    }
+
+    case 'goals/deleteCategory': {
+      const nextMappings = { ...state.goals.typeMappings };
+      for (const [typeId, catId] of Object.entries(nextMappings)) {
+        if (catId === action.payload.id) {
+          delete nextMappings[typeId];
+        }
+      }
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: state.goals.categories.filter(c => c.id !== action.payload.id),
+          typeMappings: nextMappings,
+        },
+      };
+    }
+
+    case 'goals/resetAllocations': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: DEFAULT_GOAL_CATEGORIES,
+          typeMappings: DEFAULT_TYPE_MAPPINGS,
+        },
+      };
+    }
+
+    case 'goals/updateTypeMappings': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          typeMappings: action.payload.mappings,
+        },
       };
     }
 

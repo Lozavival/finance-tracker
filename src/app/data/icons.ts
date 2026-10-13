@@ -28,6 +28,10 @@ import {
   Coins,
   PiggyBank,
   DollarSign,
+  Target,
+  Sparkles,
+  BookOpen,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -61,6 +65,10 @@ export const ICONS = {
   Coins,
   PiggyBank,
   DollarSign,
+  Target,
+  Sparkles,
+  BookOpen,
+  TrendingUp,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconKey = keyof typeof ICONS;

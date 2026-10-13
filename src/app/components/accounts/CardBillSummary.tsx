@@ -1,10 +1,9 @@
 import { formatFull } from '../../data/dates';
 import { type CardStatement, getCardUsage } from '../../data/cardStatements';
-import { formatCurrency } from '../../data/transactions';
 import { CreditCard } from 'lucide-react';
 import { useSettings } from '../../state/SettingsContext';
-
 import { type AccountConfig } from '../../data/settings';
+import { useI18n } from '../../i18n';
 
 type CardBillSummaryProps = {
   accountId: string;
@@ -14,6 +13,7 @@ type CardBillSummaryProps = {
 
 export function CardBillSummary({ accountId, account: propAccount, statements }: CardBillSummaryProps) {
   const { settings, findAccount } = useSettings();
+  const { t, formatCurrency, locale } = useI18n();
   const account = propAccount ?? findAccount(accountId);
   if (!account?.card) return null; // No card
 
@@ -34,13 +34,15 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
         <div className="flex items-center gap-4">
           <div className="text-right">
             <div className="text-foreground font-medium">{formatCurrency(0)}</div>
-            <div className="text-xs text-muted-foreground">No open bill</div>
+            <div className="text-xs text-muted-foreground">{t('accounts.noOpenBill')}</div>
           </div>
           <div className="w-16">
             <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
               <div className="h-full bg-theme-cyan transition-all" style={{ width: `${pct}%` }} />
             </div>
-            <div className="text-[10px] text-muted-foreground mt-1 text-right">{pct}% limit</div>
+            <div className="text-[10px] text-muted-foreground mt-1 text-right">
+              {t('accounts.limitPct', { pct: String(pct) })}
+            </div>
           </div>
         </div>
       </div>
@@ -58,16 +60,20 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
           <div className="text-foreground font-medium flex items-center gap-2">
             {formatCurrency(stmt.total / 100)}
             {stmt.status === 'open' && (
-              <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">est.</span>
+              <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">{t('accounts.est')}</span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">due {formatFull(stmt.dueDate)}</div>
+          <div className="text-xs text-muted-foreground">
+            {t('accounts.dueOn', { date: formatFull(stmt.dueDate, locale) })}
+          </div>
         </div>
         <div className="w-16">
           <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
             <div className="h-full bg-theme-cyan transition-all" style={{ width: `${pct}%` }} />
           </div>
-          <div className="text-[10px] text-muted-foreground mt-1 text-right">{pct}% limit</div>
+          <div className="text-[10px] text-muted-foreground mt-1 text-right">
+            {t('accounts.limitPct', { pct: String(pct) })}
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useI18n } from '../../i18n';
 
 type SortableItemProps<T> = {
   item: T;
@@ -26,6 +27,8 @@ export function SortableRow<T>({
   children,
   isDragging = false,
 }: SortableItemProps<T>) {
+  const { t } = useI18n();
+
   return (
     <div
       draggable
@@ -39,7 +42,7 @@ export function SortableRow<T>({
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
           className="cursor-grab active:cursor-grabbing text-muted-foreground group-hover:text-foreground p-1 hover:bg-foreground/10 rounded transition-colors"
-          title="Drag to reorder"
+          title={t('common.dragToReorder')}
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -54,7 +57,7 @@ export function SortableRow<T>({
           disabled={index === 0}
           onClick={onMoveUp}
           className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-20"
-          title="Move up"
+          title={t('common.moveUp')}
         >
           <ArrowUp className="w-3.5 h-3.5" />
         </Button>
@@ -65,7 +68,7 @@ export function SortableRow<T>({
           disabled={index === total - 1}
           onClick={onMoveDown}
           className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-20"
-          title="Move down"
+          title={t('common.moveDown')}
         >
           <ArrowDown className="w-3.5 h-3.5" />
         </Button>

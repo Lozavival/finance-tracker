@@ -209,3 +209,258 @@ createMonthly(6, -88, {
   value: 45.32,
   accountId: 'gs',
 });
+
+// ---------------------------------------------------------
+// Cash / Wallet
+// ATM withdrawal from BoA to physical cash
+addTransfer(daysFromToday(-18), 100, 'boa', 'cash-wallet', 'Bank of America', 'Cash / Wallet');
+
+// Cash expense paid with physical cash
+addTx({
+  date: daysFromToday(-8),
+  description: "Farmer's Market",
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 35.0,
+  accountId: 'cash-wallet',
+  paymentMethodId: 'cash',
+});
+
+// ---------------------------------------------------------
+// October 2026 Benchmark Demo Data for Goals & Budget
+// Faithfully matches the figures and allocations from the visual reference
+const oct2026 = (day: number) => new Date(2026, 9, day);
+
+// October Income ($237,314.72 total)
+addTx({
+  date: oct2026(2),
+  description: 'SaaS Platform Revenue',
+  typeId: 'income',
+  direction: 'income',
+  value: 185000.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(5),
+  description: 'Enterprise Retainer',
+  typeId: 'income',
+  direction: 'income',
+  value: 45000.0,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(10),
+  description: 'Treasury & Investment Yield',
+  typeId: 'income',
+  direction: 'income',
+  value: 7314.72,
+  accountId: 'gs',
+});
+
+// Fixed Costs ($6,460.38 across 12 transactions)
+addTx({
+  date: oct2026(1),
+  description: 'Executive Suite Lease',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 3500.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(2),
+  description: 'Commercial Electric Utility',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 340.5,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(3),
+  description: 'Gigabit Fiber Uplink',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 120.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(4),
+  description: 'Comprehensive Health Coverage',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 650.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(5),
+  description: 'Core Cloud Servers',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 480.2,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(6),
+  description: 'Fleet Mobile Communications',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 95.0,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(7),
+  description: 'Metro Rail Transit Pass',
+  typeId: 'transportation',
+  direction: 'expense',
+  value: 180.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(8),
+  description: 'Vehicle Fuel Logistics',
+  typeId: 'transportation',
+  direction: 'expense',
+  value: 85.4,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(9),
+  description: 'Municipal Water & Utilities',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 68.5,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(10),
+  description: 'Property Liability Insurance',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 115.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(11),
+  description: 'Scheduled Fleet Maintenance',
+  typeId: 'transportation',
+  direction: 'expense',
+  value: 425.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(12),
+  description: 'Facilities Care & Operations',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 400.78,
+  accountId: 'boa',
+});
+
+// Comfort ($3,334.57 across 6 transactions)
+addTx({
+  date: oct2026(2),
+  description: 'Gourmet Pantry Provisions',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 850.25,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(4),
+  description: 'Bistro Partner Luncheon',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 640.8,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(6),
+  description: 'Organic Farmstead Delivery',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 245.5,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(8),
+  description: 'Specialty Roastery Supplies',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 182.4,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(10),
+  description: 'Fine Dining Hospitality',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 725.62,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(11),
+  description: 'Artisan Bakery Catering',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 690.0,
+  accountId: 'boa',
+});
+
+// Goals ($7,580.16 across 3 transactions)
+addTx({
+  date: oct2026(3),
+  description: 'Capital Reserve Allocation',
+  typeId: 'shopping',
+  direction: 'expense',
+  value: 4500.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(6),
+  description: 'High-Yield Liquidity Reserve',
+  typeId: 'shopping',
+  direction: 'expense',
+  value: 2000.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(9),
+  description: 'Infrastructure Expansion Pool',
+  typeId: 'shopping',
+  direction: 'expense',
+  value: 1080.16,
+  accountId: 'citi',
+});
+
+// Pleasures ($2,841.69 across 4 transactions)
+addTx({
+  date: oct2026(4),
+  description: 'Executive Retreat Lodge',
+  typeId: 'entertainment',
+  direction: 'expense',
+  value: 1450.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(6),
+  description: 'Symphony Hall Premier Box',
+  typeId: 'entertainment',
+  direction: 'expense',
+  value: 680.0,
+  accountId: 'boa',
+});
+addTx({
+  date: oct2026(8),
+  description: 'Digital Entertainment & Media',
+  typeId: 'entertainment',
+  direction: 'expense',
+  value: 111.69,
+  accountId: 'citi',
+});
+addTx({
+  date: oct2026(10),
+  description: 'Golf & Country Club Outing',
+  typeId: 'entertainment',
+  direction: 'expense',
+  value: 600.0,
+  accountId: 'boa',
+});

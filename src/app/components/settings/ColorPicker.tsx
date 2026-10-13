@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Check } from 'lucide-react';
 import { type ColorToken, COLOR_OPTIONS, COLOR_CONFIG } from '../../data/settings';
+import { useI18n } from '../../i18n';
 
 type ColorPickerProps = {
   value: ColorToken;
@@ -11,13 +12,18 @@ type ColorPickerProps = {
   label?: string;
 };
 
-export function ColorPicker({ value, onChange, label = 'Color' }: ColorPickerProps) {
+export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
+  const { t } = useI18n();
+  const displayLabel = label ?? t('common.color');
   const [open, setOpen] = useState(false);
   const selectedConfig = COLOR_CONFIG[value] ?? COLOR_CONFIG.cyan;
+  const getColorLabel = (id: ColorToken, fallback: string) => {
+    return t(`defaults.colors.${id}` as any) || fallback;
+  };
 
   return (
     <div className="space-y-2">
-      {label && <Label className="text-foreground">{label}</Label>}
+      {displayLabel && <Label className="text-foreground">{displayLabel}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -29,14 +35,15 @@ export function ColorPicker({ value, onChange, label = 'Color' }: ColorPickerPro
               className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
               style={{ backgroundColor: selectedConfig.dotColor }}
             />
-            <span>{selectedConfig.label}</span>
+            <span>{getColorLabel(selectedConfig.id, selectedConfig.label)}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-3 bg-popover border-border shadow-xl">
-          <div className="text-xs font-medium text-muted-foreground mb-2">Select a color</div>
+          <div className="text-xs font-medium text-muted-foreground mb-2">{t('common.selectColor')}</div>
           <div className="grid grid-cols-4 gap-2">
             {COLOR_OPTIONS.map(c => {
               const isSelected = c.id === value;
+              const colorLabel = getColorLabel(c.id, c.label);
               return (
                 <button
                   key={c.id}
@@ -50,7 +57,7 @@ export function ColorPicker({ value, onChange, label = 'Color' }: ColorPickerPro
                       ? 'border-cyan-400 bg-cyan-500/10 shadow-md shadow-cyan-500/20'
                       : 'border-border/50 hover:border-border hover:bg-foreground/5'
                   }`}
-                  title={c.label}
+                  title={colorLabel}
                 >
                   <span
                     className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm"
@@ -58,7 +65,7 @@ export function ColorPicker({ value, onChange, label = 'Color' }: ColorPickerPro
                   >
                     {isSelected && <Check className="w-3.5 h-3.5 text-gray-950 font-bold" />}
                   </span>
-                  <span className="text-[10px] text-muted-foreground mt-1 truncate max-w-full">{c.label}</span>
+                  <span className="text-[10px] text-muted-foreground mt-1 truncate max-w-full">{colorLabel}</span>
                 </button>
               );
             })}

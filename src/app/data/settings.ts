@@ -156,7 +156,7 @@ export type CreditCardConfig = {
   limit: number; // cents
 };
 
-export type AccountKind = 'Checking' | 'Savings';
+export type AccountKind = 'Checking' | 'Savings' | 'Cash';
 
 export type AccountConfig = {
   id: string;
@@ -167,12 +167,16 @@ export type AccountConfig = {
   initials: string;
   color: ColorToken;
   card?: CreditCardConfig;
+  allowedPaymentMethods?: string[];
 };
+
+import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';
 
 export type Settings = {
   transactionTypes: TransactionTypeConfig[];
   paymentMethods: PaymentMethodConfig[];
   accounts: AccountConfig[];
+  goals: GoalsConfig;
 };
 
 export const TRANSFER_TYPE_ID = 'transfer';
@@ -279,6 +283,7 @@ export const DEFAULT_SETTINGS: Settings = {
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'BA',
       color: 'blue',
+      allowedPaymentMethods: ['credit-card', 'debit-card', 'pix', 'bank-transfer'],
       card: {
         name: 'BoA Visa',
         closingDay: 25,
@@ -294,6 +299,7 @@ export const DEFAULT_SETTINGS: Settings = {
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'CI',
       color: 'cyan',
+      allowedPaymentMethods: ['credit-card', 'debit-card', 'pix', 'bank-transfer'],
       card: {
         name: 'Citi Mastercard',
         closingDay: 1,
@@ -309,8 +315,20 @@ export const DEFAULT_SETTINGS: Settings = {
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'GS',
       color: 'slate',
+      allowedPaymentMethods: ['bank-transfer'],
+    },
+    {
+      id: 'cash-wallet',
+      name: 'Cash / Wallet',
+      kind: 'Cash',
+      openingBalance: 15000, // $150.00
+      openingDate: parseLocalDate('2025-01-01'),
+      initials: 'CW',
+      color: 'emerald',
+      allowedPaymentMethods: ['cash'],
     },
   ],
+  goals: DEFAULT_GOALS_CONFIG,
 };
 
 export function findType(settings: Settings, id: string): TransactionTypeConfig | undefined {
@@ -330,6 +348,28 @@ export function isCreditCard(settings: Settings, methodId?: string): boolean {
   if (!methodId) return false;
   const method = findMethod(settings, methodId);
   return method?.behavior === 'credit-card';
+}
+
+export function getAllowedPaymentMethodIds(account: AccountConfig | undefined, settings: Settings): string[] {
+  if (!account) return settings.paymentMethods.map(m => m.id);
+  // Dedicated physical cash account: strictly 'cash' only
+  if (account.kind === 'Cash') {
+    return ['cash'];
+  }
+  // Bank accounts (Checking, Savings): strictly non-cash methods only
+  if (account.allowedPaymentMethods && account.allowedPaymentMethods.length > 0) {
+    return account.allowedPaymentMethods.filter(id => id !== 'cash');
+  }
+  if (account.kind === 'Savings') {
+    return ['bank-transfer'];
+  }
+  return settings.paymentMethods
+    .filter(m => {
+      if (m.id === 'cash') return false;
+      if (m.behavior === 'credit-card') return Boolean(account.card);
+      return true;
+    })
+    .map(m => m.id);
 }
 
 export function getAccountColor(colorToken: ColorToken): string {

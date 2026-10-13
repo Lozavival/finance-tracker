@@ -1,4 +1,3 @@
-import { formatFull } from '../../data/dates';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +10,7 @@ import {
 } from '../ui/alert-dialog';
 import { TransactionDialog, type EditingTarget } from '../TransactionDialog';
 import { type Transaction, type TransactionDraft, type Account } from '../../data/transactions';
+import { useI18n } from '../../i18n';
 
 type TransactionDialogsProps = {
   dialogOpen: boolean;
@@ -37,6 +37,8 @@ export function TransactionDialogs({
   onSave,
   onDelete,
 }: TransactionDialogsProps) {
+  const { t, formatDate } = useI18n();
+
   return (
     <>
       <TransactionDialog
@@ -59,26 +61,32 @@ export function TransactionDialogs({
       >
         <AlertDialogContent className="bg-popover border-border text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle>Exclude transaction?</AlertDialogTitle>
+            <AlertDialogTitle>{t('transactions.excludeConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               {deleteTarget
                 ? deleteTarget.transferId
-                  ? 'Both sides of this transfer will be removed.'
+                  ? t('transactions.excludeTransferDesc')
                   : deleteTarget.installment
-                    ? `All ${deleteTarget.installment.total} installments of ${deleteTarget.description} will be removed.`
-                    : `${deleteTarget.description} from ${formatFull(deleteTarget.date)} will be removed.`
-                : 'This transaction will be removed for this session.'}
+                    ? t('transactions.excludeInstallmentsDesc', {
+                        count: String(deleteTarget.installment.total),
+                        description: deleteTarget.description,
+                      })
+                    : t('transactions.excludeSingleDesc', {
+                        description: deleteTarget.description,
+                        date: formatDate(deleteTarget.date),
+                      })
+                : t('transactions.excludeDefaultDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground">
-              Cancel
+              {t('common.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Exclude transaction
+              {t('transactions.excludeAction')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
