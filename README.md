@@ -88,7 +88,7 @@ The user interface was originally developed from the [Lindgo – Futuristic Fint
 - **Charts & Data Visualization**: [Recharts](https://recharts.org/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Theming**: [next-themes](https://github.com/pacocoursey/next-themes)
-- **Code Quality**: [ESLint 9](https://eslint.org/), [Prettier](https://prettier.io/), [oxfmt](https://oxc.rs/), [Commitlint](https://commitlint.js.org/), and [Husky](https://typicode.github.io/husky/)
+- **Code Quality**: [ESLint 9](https://eslint.org/), [Prettier](https://prettier.io/), [Commitlint](https://commitlint.js.org/), and [Husky](https://typicode.github.io/husky/)
 
 ---
 
@@ -208,7 +208,7 @@ npm run preview
 | `pnpm lint:tsc` | Runs `tsc --noEmit` to verify type safety across the project |
 | `pnpm lint:ts` | Executes ESLint across all source files with zero-warning tolerance |
 | `pnpm lint:fix` | Automatically fixes ESLint rule violations |
-| `pnpm format` | Formats source files using `oxfmt` |
+| `pnpm format` | Formats source files using Prettier |
 | `pnpm prettier` | Formats TypeScript and CSS files using Prettier |
 | `pnpm commitlint` | Validates git commit messages against Conventional Commits |
 
@@ -229,7 +229,7 @@ Finance Tracker features a dark-mode-first aesthetic with luminous cyan, violet,
 
 - **Strict TypeScript**: Full type coverage for transactions, accounts, statements, and state actions without implicit `any`.
 - **Git Commit Standards**: Enforced with [Conventional Commits](https://www.conventionalcommits.org/) via Husky and Commitlint (`feat:`, `fix:`, `refactor:`, `chore:`, etc.).
-- **Linting & Formatting**: Clean code standards maintained via ESLint 9 flat config, Prettier, and oxfmt.
+- **Linting & Formatting**: Clean code standards maintained via ESLint 9 flat config and Prettier.
 
 ---
 

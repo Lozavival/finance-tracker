@@ -11,7 +11,7 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Linting**: `npm run lint:ts` (ESLint 9 with flat config and zero-warning tolerance)
 - **Full Verification**: `npm run lint` (runs `lint:tsc && lint:ts`)
 - **Auto-Fix Lint**: `npm run lint:fix`
-- **Formatting**: `npm run format` (`oxfmt`) or `npm run prettier`
+- **Formatting**: `npm run format` (`prettier`)
 - **Build**: `npm run build` (`vite build`)
 - **Preview**: `npm run preview`
 
