@@ -11,13 +11,13 @@ import {
 } from '@/components/primitives/dialog';
 import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
-import { DirectionToggle, DialogMode } from './transactions/DirectionToggle';
-import { OptionSelect } from './transactions/OptionSelect';
-import { DateField } from './transactions/DateField';
-import { InstallmentsField } from './transactions/InstallmentsField';
+import { DirectionToggle, DialogMode } from './DirectionToggle';
+import { OptionSelect } from '@/components/shared/OptionSelect';
+import { DateField } from '@/components/shared/DateField';
+import { InstallmentsField } from './InstallmentsField';
 import { type Transaction, type TransactionDraft } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
-import { CategoryChip } from './shared/CategoryChip';
+import { CategoryChip } from '@/components/shared/CategoryChip';
 import { getIcon } from '@/data/icons';
 import { TRANSFER_TYPE_ID } from '@/data/settings';
 

@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/primitives/alert-dialog';
-import { TransactionDialog, type EditingTarget } from '@/components/TransactionDialog';
+import { TransactionDialog, type EditingTarget } from '@/features/transactions/TransactionDialog';
 import { type Transaction, type TransactionDraft, type Account } from '@/data/transactions';
 import { useI18n } from '@/i18n';
 

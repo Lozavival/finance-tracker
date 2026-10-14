@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
-import { IconPicker } from './IconPicker';
+import { IconPicker } from '@/components/shared/IconPicker';
 import { getIcon, type IconKey } from '@/data/icons';
 import { type PaymentMethodConfig } from '@/data/settings';
 import { useSettings } from '@/state/SettingsContext';

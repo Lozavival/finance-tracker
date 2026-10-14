@@ -3,24 +3,21 @@ import { getToday } from '@/data/dates';
 import { buildStatements } from '@/data/cardStatements';
 import { buildCashMovements, buildLedgers } from '@/data/ledger';
 import { useMemo, useState } from 'react';
-import { TopNavigation } from '@/components/TopNavigation';
-import { Sidebar } from '@/components/Sidebar';
-import { SummaryCards } from '@/components/SummaryCards';
-import { AnalyticsChart } from '@/components/AnalyticsChart';
-import { TransactionsTable } from '@/components/TransactionsTable';
-import { TransactionsPage } from '@/components/TransactionsPage';
+import { TopNavigation } from '@/layout/TopNavigation';
+import { Sidebar } from '@/layout/Sidebar';
+import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { TransactionsPage } from '@/features/transactions/TransactionsPage';
 import { type Transaction } from '@/data/transactions';
-import { AccountsPage } from '@/components/accounts/AccountsPage';
-import { AccountDetailPage } from '@/components/accounts/AccountDetailPage';
-import { SettingsPage } from '@/components/settings/SettingsPage';
-import { GoalsPage } from '@/components/goals/GoalsPage';
+import { AccountsPage } from '@/features/accounts/AccountsPage';
+import { AccountDetailPage } from '@/features/accounts/AccountDetailPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
+import { GoalsPage } from '@/features/goals/GoalsPage';
 import { Toaster } from '@/components/primitives/sonner';
 import { SettingsProvider, useSettings } from '@/state/SettingsContext';
-import { I18nProvider, useI18n } from '@/i18n';
+import { I18nProvider } from '@/i18n';
 
 function AppContent() {
   const { settings } = useSettings();
-  const { t } = useI18n();
   const [activePage, setActivePage] = useState('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -65,17 +62,7 @@ function AppContent() {
           ) : activePage === 'settings' ? (
             <SettingsPage transactions={transactions} onTransactionsChange={setTransactions} />
           ) : (
-            <div className="space-y-8">
-              <div>
-                <div role="heading" aria-level={1} className="text-foreground text-3xl mb-2">
-                  {t('dashboard.title')}
-                </div>
-                <div className="text-muted-foreground">{t('dashboard.subtitle')}</div>
-              </div>
-              <SummaryCards />
-              <AnalyticsChart />
-              <TransactionsTable transactions={transactions} />
-            </div>
+            <DashboardPage transactions={transactions} />
           )}
         </div>
       </div>

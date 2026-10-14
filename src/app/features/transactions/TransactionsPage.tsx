@@ -3,11 +3,11 @@ import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card } from '@/components/primitives/card';
-import { TransactionsMonthTable } from './transactions/TransactionsMonthTable';
-import { PeriodFilter } from './transactions/PeriodFilter';
-import { TypeFilter } from './transactions/TypeFilter';
-import { DirectionFilter } from './transactions/DirectionFilter';
-import { PaymentFilter } from './transactions/PaymentFilter';
+import { TransactionsMonthTable } from './TransactionsMonthTable';
+import { PeriodFilter } from './PeriodFilter';
+import { TypeFilter } from './TypeFilter';
+import { DirectionFilter } from './DirectionFilter';
+import { PaymentFilter } from './PaymentFilter';
 import {
   resolvePeriodRange,
   sortTransactionsDescending,
@@ -16,8 +16,8 @@ import {
   type TransactionDirection,
   groupToAccrualBasis,
 } from '@/data/transactions';
-import { TransactionDialogs } from './transactions/TransactionDialogs';
-import { useTransactionActions } from '@/hooks/useTransactionActions';
+import { TransactionDialogs } from './TransactionDialogs';
+import { useTransactionActions } from './useTransactionActions';
 
 import { useI18n } from '@/i18n';
 

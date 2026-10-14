@@ -14,12 +14,12 @@ import {
   type Transaction,
 } from '@/data/transactions';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { TransactionsMonthTable } from '@/components/transactions/TransactionsMonthTable';
-import { useTransactionActions } from '@/hooks/useTransactionActions';
-import { TransactionDialogs } from '@/components/transactions/TransactionDialogs';
+import { TransactionsMonthTable } from '@/features/transactions/TransactionsMonthTable';
+import { useTransactionActions } from '@/features/transactions/useTransactionActions';
+import { TransactionDialogs } from '@/features/transactions/TransactionDialogs';
 import { useMemo, useState } from 'react';
-import { PeriodFilter } from '@/components/transactions/PeriodFilter';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/components/transactions/UpcomingPeriodFilter';
+import { PeriodFilter } from '@/features/transactions/PeriodFilter';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/features/transactions/UpcomingPeriodFilter';
 import { parseLocalDate } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
 import { getAccountColor, type AccountConfig } from '@/data/settings';

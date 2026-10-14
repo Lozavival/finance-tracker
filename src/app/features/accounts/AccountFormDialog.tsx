@@ -13,8 +13,8 @@ import { Label } from '@/components/primitives/label';
 import { Switch } from '@/components/primitives/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
 import { Toggle } from '@/components/primitives/toggle';
-import { DateField } from '@/components/transactions/DateField';
-import { ColorPicker } from '@/components/settings/ColorPicker';
+import { DateField } from '@/components/shared/DateField';
+import { ColorPicker } from '@/components/shared/ColorPicker';
 import { CreditCardFields, type CreditCardFormValues } from './CreditCardFields';
 import {
   type AccountConfig,

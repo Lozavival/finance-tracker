@@ -12,7 +12,7 @@ import {
 import { type TransactionTypeConfig } from '@/data/settings';
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
-import { OptionSelect } from '@/components/transactions/OptionSelect';
+import { OptionSelect } from '@/components/shared/OptionSelect';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { AlertCircle } from 'lucide-react';
 import { useI18n } from '@/i18n';

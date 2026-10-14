@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
-import { DateField } from './DateField';
+import { DateField } from '@/components/shared/DateField';
 import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 

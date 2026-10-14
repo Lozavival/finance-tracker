@@ -5,7 +5,7 @@ import { CardBillSummary } from './CardBillSummary';
 import { Card } from '@/components/primitives/card';
 import { useState, useMemo } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/components/transactions/UpcomingPeriodFilter';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/features/transactions/UpcomingPeriodFilter';
 import { type Transaction } from '@/data/transactions';
 import { parseLocalDate, formatShort } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';

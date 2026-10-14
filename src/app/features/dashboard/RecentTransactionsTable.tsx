@@ -4,14 +4,14 @@ import { formatSignedValue, type Transaction } from '@/data/transactions';
 import { formatInstallmentLabel } from '@/data/installments';
 import { getToday } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
-import { CategoryChip } from './shared/CategoryChip';
+import { CategoryChip } from '@/components/shared/CategoryChip';
 import { useI18n } from '@/i18n';
 
 type TransactionsTableProps = {
   transactions: Transaction[];
 };
 
-export function TransactionsTable({ transactions }: TransactionsTableProps) {
+export function RecentTransactionsTable({ transactions }: TransactionsTableProps) {
   const { findType, findAccount } = useSettings();
   const { t, formatFull, currency, locale } = useI18n();
   const today = getToday();
