@@ -42,23 +42,26 @@ The application is structured into domain-driven modules inside `src/app/`:
 src/
 ├── main.tsx                      # Application entry point
 ├── styles/
-│   ├── globals.css               # Base Tailwind CSS v4 styles & layers
-│   ├── theme.css                 # OKLCH color palettes & glassmorphic tokens
-│   ├── default_theme.css         # Default theme fallback tokens
-│   └── fonts.css                 # Typography definitions
+│   ├── index.css                 # Root styles entry (Tailwind, tw-animate, imports)
+│   ├── tokens.css                # Semantic theme tokens (:root & .dark)
+│   ├── palette.css               # Neon accents, badges, dots, and glow shadows
+│   ├── tailwind-theme.css        # @custom-variant & @theme inline variable mappings
+│   └── base.css                  # @layer base reset and default typography
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
-    ├── components/
+    ├── layout/                   # App shell components (TopNavigation, Sidebar)
+    ├── features/                 # Domain feature modules
+    │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsChart, RecentTransactionsTable
     │   ├── accounts/             # Account lists, balance projections & statement views
-    │   ├── transactions/         # Transaction filters, tables, and selectors
-    │   ├── settings/             # Workspace settings, category & payment channel management
-    │   ├── shared/               # Reusable domain components (e.g., CategoryChip)
-    │   ├── ui/                   # Primitive UI components (Radix UI / shadcn/ui)
-    │   ├── TopNavigation.tsx     # Header bar, search, theme switcher
-    │   ├── Sidebar.tsx           # Navigation drawer
-    │   ├── SummaryCards.tsx      # Dashboard KPI metric cards
-    │   ├── AnalyticsChart.tsx    # Recharts area & doughnut charts
-    │   └── TransactionDialog.tsx # Modal form for single, transfer, & installment entries
+    │   ├── transactions/         # Transaction tables, filters, CRUD actions
+    │   │   └── dialogs/          # TransactionFormDialog, DeleteTransactionDialog, composer
+    │   ├── goals/                # BudgetOverview, category targets, and goals panels
+    │   └── settings/             # Workspace preferences, payment methods, transaction types
+    ├── components/
+    │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
+    │   └── shared/               # Reusable domain components (CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker)
+    ├── lib/
+    │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
     │   ├── accounts.ts           # Account data models and definitions
     │   ├── cardStatements.ts     # Billing cycle calculation & statement closing engine
@@ -69,8 +72,7 @@ src/
     │   ├── seed.ts               # Demo data seeds
     │   ├── settings.ts           # Category and payment method default definitions
     │   └── transactions.ts       # Transaction entities, types, and helper methods
-    ├── hooks/
-    │   └── useTransactionActions.ts # Transaction CRUD and modal state actions
+    ├── i18n/                     # Localization context, strings, and formatters
     └── state/
         ├── SettingsContext.tsx   # Workspace settings React context
         └── settingsReducer.ts    # Reducer actions for category & preference updates
@@ -89,10 +91,11 @@ src/
 - **Glassmorphism**: Use semi-transparent backdrops (`bg-foreground/5` or `bg-card/50`), blur filters (`backdrop-blur-xl`), and delicate borders (`border-border/40`).
 - **Layouts**: Responsive flexbox and CSS grid layouts. Avoid arbitrary absolute positioning unless implementing overlays, floating badges, or tooltip anchors.
 - **Icons**: Always import Lucide icons via `src/app/data/icons.ts` or directly from `lucide-react` using consistent sizing (`size-4`, `size-5`).
-- **Theming**: Integrated with `next-themes` using CSS variables defined in `src/styles/theme.css`.
+- **Theming**: Integrated with `next-themes` using CSS variables defined in `src/styles/tokens.css` and `src/styles/palette.css`.
 
-### 3. Component Standards
-- Prefer composed primitives from `src/app/components/ui/` (Radix UI / shadcn/ui) over custom unstyled HTML elements.
+### 3. Component Standards & Architecture
+- **Dependency Rule**: `features/*` may import from `components/`, `layout/`, `lib/`, `data/`, `state/`, and `i18n/`. `components/*` must never import from `features/*`. Cross-feature reusable widgets belong in `components/shared/`.
+- Prefer composed primitives from `src/app/components/primitives/` (Radix UI / shadcn/ui) over custom unstyled HTML elements.
 - Keep components focused and modular. Extract subcomponents and helper functions into separate files when a file exceeds manageable size.
 
 ### 4. TypeScript & Code Quality

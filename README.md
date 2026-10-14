@@ -218,10 +218,10 @@ npm run preview
 
 Finance Tracker features a dark-mode-first aesthetic with luminous cyan, violet, emerald, and amber accents.
 
-- **Color Tokens**: Configured via CSS variables in [src/styles/theme.css](file:///home/lozavival/Downloads/Lindgo%20%E2%80%93%20Futuristic%20Fintech%20SaaS%20Dashboard%20Design/src/styles/theme.css) using OKLCH color palettes.
+- **Color Tokens**: Configured via CSS variables in `src/styles/tokens.css` and `src/styles/palette.css` using OKLCH color palettes.
 - **Glassmorphism**: Built with semi-transparent backgrounds (`bg-foreground/5`), backdrop blur (`backdrop-blur-xl`), and delicate border highlights.
 - **Dark & Light Mode**: Managed through `next-themes` with the toggle button positioned in the top navigation bar.
-- **Typography & Icons**: Custom font configurations via [src/styles/fonts.css](file:///home/lozavival/Downloads/Lindgo%20%E2%80%93%20Futuristic%20Fintech%20SaaS%20Dashboard%20Design/src/styles/fonts.css) and Lucide icon mappings in [src/app/data/icons.ts](file:///home/lozavival/Downloads/Lindgo%20%E2%80%93%20Futuristic%20Fintech%20SaaS%20Dashboard%20Design/src/app/data/icons.ts).
+- **Typography & Icons**: Base typography defined in `src/styles/base.css` and Lucide icon mappings in `src/app/data/icons.ts`.
 
 ---
 
