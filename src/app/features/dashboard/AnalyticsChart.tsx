@@ -133,16 +133,16 @@ export function AnalyticsChart() {
   const [timePeriod, setTimePeriod] = useState<'7D' | '1M' | '1Y'>('1M');
 
   const categoryData: CategoryTotal[] = [
-    { typeId: 'shopping', name: t('defaults.types.shopping'), value: 4500, color: 'var(--color-cyan-dot)' },
-    { typeId: 'food-dining', name: t('defaults.types.foodDining'), value: 3200, color: 'var(--color-blue-dot)' },
+    { typeId: 'shopping', name: t('defaults.types.shopping'), value: 4500, color: 'var(--accent-cyan-dot)' },
+    { typeId: 'food-dining', name: t('defaults.types.foodDining'), value: 3200, color: 'var(--accent-blue-dot)' },
     {
       typeId: 'transportation',
       name: t('defaults.types.transportation'),
       value: 2100,
-      color: 'var(--color-violet-dot)',
+      color: 'var(--accent-violet-dot)',
     },
-    { typeId: 'entertainment', name: t('defaults.types.entertainment'), value: 1800, color: 'var(--color-pink-dot)' },
-    { typeId: 'bills', name: t('defaults.types.bills'), value: 2800, color: 'var(--color-amber-dot)' },
+    { typeId: 'entertainment', name: t('defaults.types.entertainment'), value: 1800, color: 'var(--accent-pink-dot)' },
+    { typeId: 'bills', name: t('defaults.types.bills'), value: 2800, color: 'var(--accent-amber-dot)' },
   ];
 
   const CustomTooltip = ({ active, payload }: any) => {
