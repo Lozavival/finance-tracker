@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
-import { useSettings } from '../../state/SettingsContext';
-import { type PaymentMethodConfig } from '../../data/settings';
-import { Toggle } from '../ui/toggle';
-import { getIcon } from '../../data/icons';
-import { useI18n } from '../../i18n';
+import { useSettings } from '@/state/SettingsContext';
+import { type PaymentMethodConfig } from '@/data/settings';
+import { Toggle } from '@/components/ui/toggle';
+import { getIcon } from '@/data/icons';
+import { useI18n } from '@/i18n';
 
 type PaymentFilterProps = {
   value: string[];

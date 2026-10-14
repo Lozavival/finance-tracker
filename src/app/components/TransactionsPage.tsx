@@ -1,4 +1,4 @@
-import { getToday } from '../data/dates';
+import { getToday } from '@/data/dates';
 import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
@@ -15,11 +15,11 @@ import {
   type Transaction,
   type TransactionDirection,
   groupToAccrualBasis,
-} from '../data/transactions';
+} from '@/data/transactions';
 import { TransactionDialogs } from './transactions/TransactionDialogs';
-import { useTransactionActions } from '../hooks/useTransactionActions';
+import { useTransactionActions } from '@/hooks/useTransactionActions';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '@/i18n';
 
 type TransactionsPageProps = {
   transactions: Transaction[];

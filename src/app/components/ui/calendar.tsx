@@ -4,7 +4,7 @@ import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 import { cn } from './utils';
 import { buttonVariants } from './button';

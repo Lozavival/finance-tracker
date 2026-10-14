@@ -1,7 +1,7 @@
 import { Search, Bell, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { useI18n } from '../i18n';
+import { useI18n } from '@/i18n';
 
 export function TopNavigation() {
   const { theme, setTheme } = useTheme();

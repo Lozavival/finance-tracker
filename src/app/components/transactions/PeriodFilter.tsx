@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
-import { Button } from '../ui/button';
-import { PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from '../../data/transactions';
-import { useI18n } from '../../i18n';
+import { Button } from '@/components/ui/button';
+import { PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from '@/data/transactions';
+import { useI18n } from '@/i18n';
 
 type PeriodFilterProps = {
   value: PeriodFilterType;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useSettings } from '../../state/SettingsContext';
-import { type Transaction } from '../../data/transactions';
-import { type GoalCategory } from '../../data/goals';
+import { useSettings } from '@/state/SettingsContext';
+import { type Transaction } from '@/data/transactions';
+import { type GoalCategory } from '@/data/goals';
 import { BudgetOverview } from './BudgetOverview';
 import { GoalsConfigPanel } from './GoalsConfigPanel';
 

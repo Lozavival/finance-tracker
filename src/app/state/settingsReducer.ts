@@ -3,8 +3,8 @@ import {
   type TransactionTypeConfig,
   type PaymentMethodConfig,
   type AccountConfig,
-} from '../data/settings';
-import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '../data/goals';
+} from '@/data/settings';
+import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '@/data/goals';
 
 export type SettingsAction =
   | { type: 'type/add'; payload: TransactionTypeConfig }

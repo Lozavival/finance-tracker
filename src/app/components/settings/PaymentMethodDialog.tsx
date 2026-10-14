@@ -1,13 +1,20 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { IconPicker } from './IconPicker';
-import { getIcon, type IconKey } from '../../data/icons';
-import { type PaymentMethodConfig } from '../../data/settings';
-import { useSettings } from '../../state/SettingsContext';
-import { useI18n } from '../../i18n';
+import { getIcon, type IconKey } from '@/data/icons';
+import { type PaymentMethodConfig } from '@/data/settings';
+import { useSettings } from '@/state/SettingsContext';
+import { useI18n } from '@/i18n';
 
 type PaymentMethodDialogProps = {
   open: boolean;

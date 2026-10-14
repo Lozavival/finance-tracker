@@ -8,13 +8,13 @@ import { DirectionToggle, DialogMode } from './transactions/DirectionToggle';
 import { OptionSelect } from './transactions/OptionSelect';
 import { DateField } from './transactions/DateField';
 import { InstallmentsField } from './transactions/InstallmentsField';
-import { type Transaction, type TransactionDraft } from '../data/transactions';
-import { useSettings } from '../state/SettingsContext';
+import { type Transaction, type TransactionDraft } from '@/data/transactions';
+import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from './shared/CategoryChip';
-import { getIcon } from '../data/icons';
-import { TRANSFER_TYPE_ID } from '../data/settings';
+import { getIcon } from '@/data/icons';
+import { TRANSFER_TYPE_ID } from '@/data/settings';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '@/i18n';
 
 export type EditingTarget =
   | { kind: 'single'; transaction: Transaction }

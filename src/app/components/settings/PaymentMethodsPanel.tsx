@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Plus, Pencil } from 'lucide-react';
-import { useSettings } from '../../state/SettingsContext';
-import { type PaymentMethodConfig } from '../../data/settings';
-import { type Transaction } from '../../data/transactions';
-import { getIcon } from '../../data/icons';
+import { useSettings } from '@/state/SettingsContext';
+import { type PaymentMethodConfig } from '@/data/settings';
+import { type Transaction } from '@/data/transactions';
+import { getIcon } from '@/data/icons';
 import { SortableRow, useReorder } from './SortableList';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type PaymentMethodsPanelProps = {
   transactions: Transaction[];

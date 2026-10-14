@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useSettings } from '../../state/SettingsContext';
-import { type TransactionTypeConfig, type Direction, COLOR_CONFIG } from '../../data/settings';
-import { type Transaction } from '../../data/transactions';
-import { CategoryChip } from '../shared/CategoryChip';
+import { useSettings } from '@/state/SettingsContext';
+import { type TransactionTypeConfig, type Direction, COLOR_CONFIG } from '@/data/settings';
+import { type Transaction } from '@/data/transactions';
+import { CategoryChip } from '@/components/shared/CategoryChip';
 import { SortableRow, useReorder } from './SortableList';
 import { TransactionTypeDialog } from './TransactionTypeDialog';
 import { DeleteTypeDialog } from './DeleteTypeDialog';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type TransactionTypesPanelProps = {
   transactions: Transaction[];

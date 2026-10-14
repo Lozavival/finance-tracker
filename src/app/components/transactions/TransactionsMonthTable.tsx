@@ -1,14 +1,19 @@
 import React from 'react';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { formatSignedValue, groupTransactionsByMonth, Transaction } from '../../data/transactions';
-import { formatInstallmentLabel } from '../../data/installments';
-import { formatRowDate, getToday } from '../../data/dates';
-import { useSettings } from '../../state/SettingsContext';
-import { CategoryChip } from '../shared/CategoryChip';
-import { useI18n } from '../../i18n';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatSignedValue, groupTransactionsByMonth, Transaction } from '@/data/transactions';
+import { formatInstallmentLabel } from '@/data/installments';
+import { formatRowDate, getToday } from '@/data/dates';
+import { useSettings } from '@/state/SettingsContext';
+import { CategoryChip } from '@/components/shared/CategoryChip';
+import { useI18n } from '@/i18n';
 
 type TransactionsMonthTableProps = {
   transactions: Transaction[];

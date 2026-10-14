@@ -13,8 +13,8 @@ import {
   Cell,
 } from 'recharts';
 import { useState } from 'react';
-import { type CategoryTotal } from '../data/transactions';
-import { useI18n } from '../i18n';
+import { type CategoryTotal } from '@/data/transactions';
+import { useI18n } from '@/i18n';
 
 const revenueData = {
   '7D': [

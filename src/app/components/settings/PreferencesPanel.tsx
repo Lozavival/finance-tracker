@@ -1,7 +1,7 @@
-import { Card } from '../ui/card';
-import { useI18n } from '../../i18n';
+import { Card } from '@/components/ui/card';
+import { useI18n } from '@/i18n';
 import { Globe, DollarSign, Sparkles } from 'lucide-react';
-import { type SupportedLocale, type SupportedCurrency } from '../../i18n/types';
+import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';
 
 export function PreferencesPanel() {
   const {

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { MAX_INSTALLMENTS, splitInstallmentValues } from '../../data/installments';
-import { useI18n } from '../../i18n';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { MAX_INSTALLMENTS, splitInstallmentValues } from '@/data/installments';
+import { useI18n } from '@/i18n';
 
 type InstallmentsFieldProps = {
   value: number | '';

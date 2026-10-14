@@ -1,31 +1,31 @@
-import { getToday } from '../../data/dates';
-import { type CardStatement } from '../../data/cardStatements';
-import { type AccountLedger, getAccountForecast } from '../../data/ledger';
-import { buildDailySeries } from '../../data/ledger';
+import { getToday } from '@/data/dates';
+import { type CardStatement } from '@/data/cardStatements';
+import { type AccountLedger, getAccountForecast } from '@/data/ledger';
+import { buildDailySeries } from '@/data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardStatementsPanel } from './CardStatementsPanel';
 import { BalanceProjectionChart } from './BalanceProjectionChart';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   resolvePeriodRange,
   type PeriodFilter as PeriodFilterType,
   sortTransactionsDescending,
   type Transaction,
-} from '../../data/transactions';
+} from '@/data/transactions';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { TransactionsMonthTable } from '../transactions/TransactionsMonthTable';
-import { useTransactionActions } from '../../hooks/useTransactionActions';
-import { TransactionDialogs } from '../transactions/TransactionDialogs';
+import { TransactionsMonthTable } from '@/components/transactions/TransactionsMonthTable';
+import { useTransactionActions } from '@/hooks/useTransactionActions';
+import { TransactionDialogs } from '@/components/transactions/TransactionDialogs';
 import { useMemo, useState } from 'react';
-import { PeriodFilter } from '../transactions/PeriodFilter';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
-import { parseLocalDate } from '../../data/dates';
-import { useSettings } from '../../state/SettingsContext';
-import { getAccountColor, type AccountConfig } from '../../data/settings';
-import { getIcon } from '../../data/icons';
+import { PeriodFilter } from '@/components/transactions/PeriodFilter';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/components/transactions/UpcomingPeriodFilter';
+import { parseLocalDate } from '@/data/dates';
+import { useSettings } from '@/state/SettingsContext';
+import { getAccountColor, type AccountConfig } from '@/data/settings';
+import { getIcon } from '@/data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type AccountDetailPageProps = {
   accountId: string;

@@ -7,10 +7,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { TransactionDialog, type EditingTarget } from '../TransactionDialog';
-import { type Transaction, type TransactionDraft, type Account } from '../../data/transactions';
-import { useI18n } from '../../i18n';
+} from '@/components/ui/alert-dialog';
+import { TransactionDialog, type EditingTarget } from '@/components/TransactionDialog';
+import { type Transaction, type TransactionDraft, type Account } from '@/data/transactions';
+import { useI18n } from '@/i18n';
 
 type TransactionDialogsProps = {
   dialogOpen: boolean;

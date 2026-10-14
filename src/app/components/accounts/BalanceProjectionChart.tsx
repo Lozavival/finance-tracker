@@ -1,7 +1,7 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
-import { type DailyBalance } from '../../data/ledger';
-import { formatShort } from '../../data/dates';
-import { useI18n } from '../../i18n';
+import { type DailyBalance } from '@/data/ledger';
+import { formatShort } from '@/data/dates';
+import { useI18n } from '@/i18n';
 
 export function BalanceProjectionChart({ series, today }: { series: DailyBalance[]; today: Date }) {
   const { t, formatCurrency, locale } = useI18n();

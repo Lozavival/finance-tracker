@@ -5,10 +5,10 @@ import {
   findTransferLegs,
   createTransactionId,
   buildTransferLegs,
-} from '../data/transactions';
-import { type EditingTarget } from '../components/TransactionDialog';
-import { findInstallmentSeries, buildInstallments } from '../data/installments';
-import { useSettings } from '../state/SettingsContext';
+} from '@/data/transactions';
+import { type EditingTarget } from '@/components/TransactionDialog';
+import { findInstallmentSeries, buildInstallments } from '@/data/installments';
+import { useSettings } from '@/state/SettingsContext';
 
 export function useTransactionActions(transactions: Transaction[], onTransactionsChange: (txs: Transaction[]) => void) {
   const { isCreditCard, findAccount } = useSettings();

@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Checkbox } from '../ui/checkbox';
-import { ColorPicker } from '../settings/ColorPicker';
-import { IconPicker } from '../settings/IconPicker';
-import { CategoryChip } from '../shared/CategoryChip';
-import { type GoalCategory } from '../../data/goals';
-import { type ColorToken, type TransactionTypeConfig } from '../../data/settings';
-import { type IconKey } from '../../data/icons';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ColorPicker } from '@/components/settings/ColorPicker';
+import { IconPicker } from '@/components/settings/IconPicker';
+import { CategoryChip } from '@/components/shared/CategoryChip';
+import { type GoalCategory } from '@/data/goals';
+import { type ColorToken, type TransactionTypeConfig } from '@/data/settings';
+import { type IconKey } from '@/data/icons';
 import { Plus, Check, ArrowRightLeft } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type GoalCategoryDialogProps = {
   open: boolean;

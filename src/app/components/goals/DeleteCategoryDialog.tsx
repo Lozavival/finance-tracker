@@ -7,9 +7,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { type GoalCategory } from '../../data/goals';
-import { useI18n } from '../../i18n';
+} from '@/components/ui/alert-dialog';
+import { type GoalCategory } from '@/data/goals';
+import { useI18n } from '@/i18n';
 
 type DeleteCategoryDialogProps = {
   open: boolean;

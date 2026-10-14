@@ -1,13 +1,20 @@
 import { useState, useEffect, type FormEvent, useMemo, useCallback } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { Toggle } from '../ui/toggle';
-import { DateField } from '../transactions/DateField';
-import { ColorPicker } from '../settings/ColorPicker';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Toggle } from '@/components/ui/toggle';
+import { DateField } from '@/components/transactions/DateField';
+import { ColorPicker } from '@/components/settings/ColorPicker';
 import { CreditCardFields, type CreditCardFormValues } from './CreditCardFields';
 import {
   type AccountConfig,
@@ -15,13 +22,13 @@ import {
   type ColorToken,
   getAccountColor,
   getAllowedPaymentMethodIds,
-} from '../../data/settings';
-import { type Transaction } from '../../data/transactions';
-import { useSettings } from '../../state/SettingsContext';
-import { getToday } from '../../data/dates';
-import { getIcon } from '../../data/icons';
+} from '@/data/settings';
+import { type Transaction } from '@/data/transactions';
+import { useSettings } from '@/state/SettingsContext';
+import { getToday } from '@/data/dates';
+import { getIcon } from '@/data/icons';
 import { AlertCircle } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type AccountFormDialogProps = {
   open: boolean;

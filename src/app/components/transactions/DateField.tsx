@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { CalendarIcon } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { cn } from '../ui/utils';
-import { formatFull } from '../../data/dates';
-import { useI18n } from '../../i18n';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/components/ui/utils';
+import { formatFull } from '@/data/dates';
+import { useI18n } from '@/i18n';
 
 type DateFieldProps = {
   placeholder: string;

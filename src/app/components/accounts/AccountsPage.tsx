@@ -1,17 +1,17 @@
-import { type CardStatement } from '../../data/cardStatements';
-import { type AccountLedger, getAccountForecast } from '../../data/ledger';
+import { type CardStatement } from '@/data/cardStatements';
+import { type AccountLedger, getAccountForecast } from '@/data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardBillSummary } from './CardBillSummary';
-import { Card } from '../ui/card';
+import { Card } from '@/components/ui/card';
 import { useState, useMemo } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '../transactions/UpcomingPeriodFilter';
-import { type Transaction } from '../../data/transactions';
-import { parseLocalDate, formatShort } from '../../data/dates';
-import { useSettings } from '../../state/SettingsContext';
-import { getAccountColor, type AccountConfig } from '../../data/settings';
+import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/components/transactions/UpcomingPeriodFilter';
+import { type Transaction } from '@/data/transactions';
+import { parseLocalDate, formatShort } from '@/data/dates';
+import { useSettings } from '@/state/SettingsContext';
+import { getAccountColor, type AccountConfig } from '@/data/settings';
 import { AccountFormDialog } from './AccountFormDialog';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type AccountsPageProps = {
   finance: {

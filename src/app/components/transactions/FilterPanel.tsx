@@ -1,6 +1,6 @@
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import { useI18n } from '../../i18n';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { useI18n } from '@/i18n';
 
 type FilterPanelProps = {
   trigger: React.ReactNode;

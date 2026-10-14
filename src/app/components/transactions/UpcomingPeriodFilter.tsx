@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
-import { Button } from '../ui/button';
-import { useI18n } from '../../i18n';
+import { Button } from '@/components/ui/button';
+import { useI18n } from '@/i18n';
 
 export type UpcomingPeriodType =
   { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: Date };

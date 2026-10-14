@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   DollarSign,
   Receipt,
@@ -14,21 +14,21 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { type Transaction } from '../../data/transactions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { type Transaction } from '@/data/transactions';
 import {
   type GoalsConfig,
   type GoalCategory,
   type MonthlyBudgetSummary,
   calculateMonthlyBudget,
   formatPercent,
-} from '../../data/goals';
-import { COLOR_CONFIG } from '../../data/settings';
-import { addMonthsClamped, formatMonthYear } from '../../data/dates';
+} from '@/data/goals';
+import { COLOR_CONFIG } from '@/data/settings';
+import { addMonthsClamped, formatMonthYear } from '@/data/dates';
 import { CategoryTransactionsDialog } from './CategoryTransactionsDialog';
-import { CategoryChip } from '../shared/CategoryChip';
-import { useSettings } from '../../state/SettingsContext';
-import { useI18n } from '../../i18n';
+import { CategoryChip } from '@/components/shared/CategoryChip';
+import { useSettings } from '@/state/SettingsContext';
+import { useI18n } from '@/i18n';
 
 type BudgetOverviewProps = {
   transactions: Transaction[];

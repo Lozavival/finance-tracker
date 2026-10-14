@@ -1,5 +1,5 @@
-import { type TransactionTypeConfig, COLOR_CONFIG } from '../../data/settings';
-import { getIcon } from '../../data/icons';
+import { type TransactionTypeConfig, COLOR_CONFIG } from '@/data/settings';
+import { getIcon } from '@/data/icons';
 
 type CategoryChipProps = {
   typeConfig?: TransactionTypeConfig;

@@ -1,11 +1,11 @@
 import { Card } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { formatSignedValue, type Transaction } from '../data/transactions';
-import { formatInstallmentLabel } from '../data/installments';
-import { getToday } from '../data/dates';
-import { useSettings } from '../state/SettingsContext';
+import { formatSignedValue, type Transaction } from '@/data/transactions';
+import { formatInstallmentLabel } from '@/data/installments';
+import { getToday } from '@/data/dates';
+import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from './shared/CategoryChip';
-import { useI18n } from '../i18n';
+import { useI18n } from '@/i18n';
 
 type TransactionsTableProps = {
   transactions: Transaction[];

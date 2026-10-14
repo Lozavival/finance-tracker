@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
-import { TransactionDirection } from '../../data/transactions';
-import { Toggle } from '../ui/toggle';
-import { useI18n } from '../../i18n';
+import { TransactionDirection } from '@/data/transactions';
+import { Toggle } from '@/components/ui/toggle';
+import { useI18n } from '@/i18n';
 
 type DirectionFilterProps = {
   value: 'all' | TransactionDirection;

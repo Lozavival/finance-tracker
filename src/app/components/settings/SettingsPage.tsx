@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TransactionTypesPanel } from './TransactionTypesPanel';
 import { PaymentMethodsPanel } from './PaymentMethodsPanel';
 import { PreferencesPanel } from './PreferencesPanel';
-import { type Transaction } from '../../data/transactions';
+import { type Transaction } from '@/data/transactions';
 import { Tags, CreditCard, SlidersHorizontal } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type SettingsPageProps = {
   transactions: Transaction[];

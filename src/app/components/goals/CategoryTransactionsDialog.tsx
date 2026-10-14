@@ -1,12 +1,12 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { type Transaction } from '../../data/transactions';
-import { type GoalCategory } from '../../data/goals';
-import { formatRowDate } from '../../data/dates';
-import { COLOR_CONFIG } from '../../data/settings';
-import { getIcon } from '../../data/icons';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { type Transaction } from '@/data/transactions';
+import { type GoalCategory } from '@/data/goals';
+import { formatRowDate } from '@/data/dates';
+import { COLOR_CONFIG } from '@/data/settings';
+import { getIcon } from '@/data/icons';
 import { ArrowUpRight } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type CategoryTransactionsDialogProps = {
   open: boolean;

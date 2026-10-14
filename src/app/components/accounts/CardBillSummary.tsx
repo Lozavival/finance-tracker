@@ -1,9 +1,9 @@
-import { formatFull } from '../../data/dates';
-import { type CardStatement, getCardUsage } from '../../data/cardStatements';
+import { formatFull } from '@/data/dates';
+import { type CardStatement, getCardUsage } from '@/data/cardStatements';
 import { CreditCard } from 'lucide-react';
-import { useSettings } from '../../state/SettingsContext';
-import { type AccountConfig } from '../../data/settings';
-import { useI18n } from '../../i18n';
+import { useSettings } from '@/state/SettingsContext';
+import { type AccountConfig } from '@/data/settings';
+import { useI18n } from '@/i18n';
 
 type CardBillSummaryProps = {
   accountId: string;

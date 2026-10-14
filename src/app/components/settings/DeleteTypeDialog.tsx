@@ -8,14 +8,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { type TransactionTypeConfig } from '../../data/settings';
-import { type Transaction } from '../../data/transactions';
-import { useSettings } from '../../state/SettingsContext';
-import { OptionSelect } from '../transactions/OptionSelect';
-import { CategoryChip } from '../shared/CategoryChip';
+} from '@/components/ui/alert-dialog';
+import { type TransactionTypeConfig } from '@/data/settings';
+import { type Transaction } from '@/data/transactions';
+import { useSettings } from '@/state/SettingsContext';
+import { OptionSelect } from '@/components/transactions/OptionSelect';
+import { CategoryChip } from '@/components/shared/CategoryChip';
 import { AlertCircle } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type DeleteTypeDialogProps = {
   typeConfig: TransactionTypeConfig | null;

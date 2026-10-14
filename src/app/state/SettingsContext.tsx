@@ -11,7 +11,7 @@ import {
   findMethod as lookupMethod,
   isCreditCard as checkIsCreditCard,
   getAllowedPaymentMethodIds as lookupAllowedPaymentMethods,
-} from '../data/settings';
+} from '@/data/settings';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
 
 export type SettingsContextValue = {

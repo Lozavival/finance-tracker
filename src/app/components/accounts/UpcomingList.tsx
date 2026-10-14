@@ -1,6 +1,6 @@
-import { type CashMovement } from '../../data/ledger';
-import { formatShort } from '../../data/dates';
-import { useI18n } from '../../i18n';
+import { type CashMovement } from '@/data/ledger';
+import { formatShort } from '@/data/dates';
+import { useI18n } from '@/i18n';
 
 export function UpcomingList({
   upcoming,

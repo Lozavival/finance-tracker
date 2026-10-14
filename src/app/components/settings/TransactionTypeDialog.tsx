@@ -1,19 +1,26 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPicker } from './ColorPicker';
 import { IconPicker } from './IconPicker';
-import { CategoryChip } from '../shared/CategoryChip';
-import { type TransactionTypeConfig, type Direction, type ColorToken, COLOR_CONFIG } from '../../data/settings';
-import { type IconKey, getIcon } from '../../data/icons';
-import { type Transaction } from '../../data/transactions';
-import { useSettings } from '../../state/SettingsContext';
+import { CategoryChip } from '@/components/shared/CategoryChip';
+import { type TransactionTypeConfig, type Direction, type ColorToken, COLOR_CONFIG } from '@/data/settings';
+import { type IconKey, getIcon } from '@/data/icons';
+import { type Transaction } from '@/data/transactions';
+import { useSettings } from '@/state/SettingsContext';
 import { AlertCircle, Target } from 'lucide-react';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type TransactionTypeDialogProps = {
   open: boolean;

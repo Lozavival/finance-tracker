@@ -1,18 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, Info, RotateCcw, Plus, Pencil, Trash2, Percent, DollarSign, AlertTriangle } from 'lucide-react';
-import { type GoalsConfig, type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '../../data/goals';
-import { COLOR_CONFIG } from '../../data/settings';
+import { type GoalsConfig, type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '@/data/goals';
+import { COLOR_CONFIG } from '@/data/settings';
 import { GoalCategoryDialog } from './GoalCategoryDialog';
 import { DeleteCategoryDialog } from './DeleteCategoryDialog';
-import { CategoryChip } from '../shared/CategoryChip';
-import { useSettings } from '../../state/SettingsContext';
+import { CategoryChip } from '@/components/shared/CategoryChip';
+import { useSettings } from '@/state/SettingsContext';
 import { toast } from 'sonner';
-import { useI18n } from '../../i18n';
+import { useI18n } from '@/i18n';
 
 type GoalsConfigPanelProps = {
   goalsConfig: GoalsConfig;

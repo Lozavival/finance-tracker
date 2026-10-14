@@ -12,6 +12,9 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
+      "@/styles/*": [
+        "./src/styles/*"
+      ],
       "@/*": [
         "./src/app/*"
       ]
