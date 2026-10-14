@@ -63,7 +63,6 @@ src/
     ├── lib/
     │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
-    │   ├── accounts.ts           # Account data models and definitions
     │   ├── cardStatements.ts     # Billing cycle calculation & statement closing engine
     │   ├── dates.ts              # Date clamping and calendar formatting utilities
     │   ├── icons.ts              # Lucide icon mapping registry
