@@ -12,10 +12,10 @@ import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
 import { Switch } from '@/components/primitives/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
-import { Toggle } from '@/components/primitives/toggle';
 import { DateField } from '@/components/shared/DateField';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { CreditCardFields, type CreditCardFormValues } from './CreditCardFields';
+import { AccountPaymentMethodsSelector } from './AccountPaymentMethodsSelector';
 import {
   type AccountConfig,
   type AccountKind,
@@ -26,7 +26,6 @@ import {
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { getToday } from '@/data/dates';
-import { getIcon } from '@/data/icons';
 import { AlertCircle } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
@@ -41,7 +40,7 @@ type AccountFormDialogProps = {
 export function AccountFormDialog({ open, onOpenChange, account, transactions, onSave }: AccountFormDialogProps) {
   const isEditing = Boolean(account);
   const { settings, isCreditCard } = useSettings();
-  const { t, getTranslatedMethodName } = useI18n();
+  const { t } = useI18n();
 
   const [name, setName] = useState('');
   const [kind, setKind] = useState<AccountKind>('Checking');
@@ -462,57 +461,14 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
               </div>
             </div>
 
-            {kind === 'Cash' ? (
-              <div className="pt-4 border-t border-border space-y-2">
-                <div>
-                  <Label className="text-foreground">{t('accounts.dialog.paymentMethods')}</Label>
-                  <div className="text-xs text-muted-foreground mt-0.5">{t('accounts.dialog.cashDesc')}</div>
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1.5 font-medium">
-                    {(() => {
-                      const CashIcon = getIcon('Banknote');
-                      return <CashIcon className="w-3.5 h-3.5" />;
-                    })()}
-                    <span>{t('accounts.dialog.cashDedicated')}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="pt-4 border-t border-border space-y-3">
-                <div>
-                  <Label className="text-foreground">{t('accounts.dialog.paymentMethods')}</Label>
-                  <div className="text-xs text-muted-foreground mt-0.5">{t('accounts.dialog.bankMethodsDesc')}</div>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {settings.paymentMethods
-                    .filter(m => m.id !== 'cash')
-                    .map(m => {
-                      const Icon = getIcon(m.icon);
-                      const isSelected = selectedMethods.includes(m.id);
-                      return (
-                        <Toggle
-                          key={m.id}
-                          pressed={isSelected}
-                          onPressedChange={() => handleToggleMethod(m.id)}
-                          variant="outline"
-                          className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan text-xs px-3 py-1.5 flex items-center gap-1.5 h-auto transition-all cursor-pointer"
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          <span>{getTranslatedMethodName(m.id, m.name)}</span>
-                        </Toggle>
-                      );
-                    })}
-                </div>
-                {errors.paymentMethods && <div className="text-xs text-red-400">{errors.paymentMethods}</div>}
-                {errors.methodWarning && (
-                  <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{errors.methodWarning}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            <AccountPaymentMethodsSelector
+              kind={kind}
+              paymentMethods={settings.paymentMethods}
+              selectedMethods={selectedMethods}
+              onToggleMethod={handleToggleMethod}
+              methodError={errors.paymentMethods}
+              methodWarning={errors.methodWarning}
+            />
 
             {kind !== 'Cash' && (
               <div className="pt-4 border-t border-border space-y-4">
