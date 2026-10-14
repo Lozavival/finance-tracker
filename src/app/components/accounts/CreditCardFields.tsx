@@ -1,5 +1,5 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
 import { AlertCircle } from 'lucide-react';
 import { useI18n } from '@/i18n';
 

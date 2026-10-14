@@ -1,13 +1,13 @@
 import React from 'react';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+} from '@/components/primitives/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { formatSignedValue, groupTransactionsByMonth, Transaction } from '@/data/transactions';
 import { formatInstallmentLabel } from '@/data/installments';
 import { formatRowDate, getToday } from '@/data/dates';

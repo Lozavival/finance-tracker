@@ -1,11 +1,11 @@
 import { formatMonthYear, formatFull, getToday } from '@/data/dates';
 import { formatShort } from '@/data/dates';
 import { type CardStatement, getCardUsage } from '@/data/cardStatements';
-import { Card } from '@/components/ui/card';
+import { Card } from '@/components/primitives/card';
 import { CreditCard, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Button } from '@/components/primitives/button';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
 

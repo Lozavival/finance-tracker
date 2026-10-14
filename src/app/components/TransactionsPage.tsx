@@ -1,8 +1,8 @@
 import { getToday } from '@/data/dates';
 import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
+import { Button } from '@/components/primitives/button';
+import { Card } from '@/components/primitives/card';
 import { TransactionsMonthTable } from './transactions/TransactionsMonthTable';
 import { PeriodFilter } from './transactions/PeriodFilter';
 import { TypeFilter } from './transactions/TypeFilter';

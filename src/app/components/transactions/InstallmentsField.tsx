@@ -1,6 +1,6 @@
 import React from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/components/primitives/label';
+import { Input } from '@/components/primitives/input';
 import { MAX_INSTALLMENTS, splitInstallmentValues } from '@/data/installments';
 import { useI18n } from '@/i18n';
 

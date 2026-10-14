@@ -1,9 +1,16 @@
 import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import { Check, Plus } from 'lucide-react';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Button } from '@/components/primitives/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/primitives/dialog';
+import { Input } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
 import { DirectionToggle, DialogMode } from './transactions/DirectionToggle';
 import { OptionSelect } from './transactions/OptionSelect';
 import { DateField } from './transactions/DateField';

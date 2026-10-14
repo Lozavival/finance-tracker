@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { CalendarIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/primitives/button';
+import { Calendar } from '@/components/primitives/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { cn } from '@/lib/utils';
 import { formatFull } from '@/data/dates';
 import { useI18n } from '@/i18n';
 

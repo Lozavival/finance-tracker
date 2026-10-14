@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card';
+import { Card } from '@/components/primitives/card';
 import { useI18n } from '@/i18n';
 import { Globe, DollarSign, Sparkles } from 'lucide-react';
 import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';

@@ -1,5 +1,5 @@
 import { TrendingUp, DollarSign, Activity, AlertTriangle } from 'lucide-react';
-import { Card } from './ui/card';
+import { Card } from '@/components/primitives/card';
 import { useI18n, type TranslationKey } from '@/i18n';
 
 interface SummaryItemDef {

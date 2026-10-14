@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/primitives/dialog';
+import { Button } from '@/components/primitives/button';
 import { type Transaction } from '@/data/transactions';
 import { type GoalCategory } from '@/data/goals';
 import { formatRowDate } from '@/data/dates';

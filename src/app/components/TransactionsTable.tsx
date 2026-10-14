@@ -1,5 +1,5 @@
-import { Card } from './ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Card } from '@/components/primitives/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { formatSignedValue, type Transaction } from '@/data/transactions';
 import { formatInstallmentLabel } from '@/data/installments';
 import { getToday } from '@/data/dates';

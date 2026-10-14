@@ -1,5 +1,5 @@
 import { LayoutDashboard, ArrowLeftRight, Wallet, Target, Settings } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '@/components/primitives/button';
 import { useI18n, type TranslationKey } from '@/i18n';
 
 interface MenuItem {

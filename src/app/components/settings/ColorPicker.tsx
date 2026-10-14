@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Button } from '@/components/primitives/button';
+import { Label } from '@/components/primitives/label';
 import { Check } from 'lucide-react';
 import { type ColorToken, COLOR_OPTIONS, COLOR_CONFIG } from '@/data/settings';
 import { useI18n } from '@/i18n';

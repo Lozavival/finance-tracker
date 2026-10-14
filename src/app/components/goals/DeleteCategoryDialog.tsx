@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/primitives/alert-dialog';
 import { type GoalCategory } from '@/data/goals';
 import { useI18n } from '@/i18n';
 

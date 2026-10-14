@@ -5,8 +5,8 @@ import { buildDailySeries } from '@/data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardStatementsPanel } from './CardStatementsPanel';
 import { BalanceProjectionChart } from './BalanceProjectionChart';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import {
   resolvePeriodRange,
   type PeriodFilter as PeriodFilterType,

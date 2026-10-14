@@ -6,11 +6,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+} from '@/components/primitives/dialog';
+import { Button } from '@/components/primitives/button';
+import { Input } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
+import { Checkbox } from '@/components/primitives/checkbox';
 import { ColorPicker } from '@/components/settings/ColorPicker';
 import { IconPicker } from '@/components/settings/IconPicker';
 import { CategoryChip } from '@/components/shared/CategoryChip';

@@ -1,6 +1,6 @@
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
+import { Label } from '@/components/primitives/label';
 import { useI18n } from '@/i18n';
 
 export type DialogMode = 'income' | 'expense' | 'transfer';

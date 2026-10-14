@@ -14,7 +14,7 @@ import { AccountsPage } from '@/components/accounts/AccountsPage';
 import { AccountDetailPage } from '@/components/accounts/AccountDetailPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 import { GoalsPage } from '@/components/goals/GoalsPage';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/components/primitives/sonner';
 import { SettingsProvider, useSettings } from '@/state/SettingsContext';
 import { I18nProvider, useI18n } from '@/i18n';
 

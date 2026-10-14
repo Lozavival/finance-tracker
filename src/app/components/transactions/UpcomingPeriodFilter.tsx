@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from './DateField';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 
 export type UpcomingPeriodType =

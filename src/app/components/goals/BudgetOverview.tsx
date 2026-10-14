@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import {
   DollarSign,
   Receipt,
@@ -14,7 +14,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { type Transaction } from '@/data/transactions';
 import {
   type GoalsConfig,

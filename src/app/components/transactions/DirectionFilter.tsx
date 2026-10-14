@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { TransactionDirection } from '@/data/transactions';
-import { Toggle } from '@/components/ui/toggle';
+import { Toggle } from '@/components/primitives/toggle';
 import { useI18n } from '@/i18n';
 
 type DirectionFilterProps = {

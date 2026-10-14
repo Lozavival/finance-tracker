@@ -6,13 +6,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Toggle } from '@/components/ui/toggle';
+} from '@/components/primitives/dialog';
+import { Button } from '@/components/primitives/button';
+import { Input } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
+import { Switch } from '@/components/primitives/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
+import { Toggle } from '@/components/primitives/toggle';
 import { DateField } from '@/components/transactions/DateField';
 import { ColorPicker } from '@/components/settings/ColorPicker';
 import { CreditCardFields, type CreditCardFormValues } from './CreditCardFields';

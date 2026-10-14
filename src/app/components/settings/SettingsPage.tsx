@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { TransactionTypesPanel } from './TransactionTypesPanel';
 import { PaymentMethodsPanel } from './PaymentMethodsPanel';
 import { PreferencesPanel } from './PreferencesPanel';

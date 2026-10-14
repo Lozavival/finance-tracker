@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import { Plus, Pencil } from 'lucide-react';
 import { useSettings } from '@/state/SettingsContext';
 import { type PaymentMethodConfig } from '@/data/settings';

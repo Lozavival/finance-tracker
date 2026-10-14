@@ -1,5 +1,5 @@
-import { Card } from './ui/card';
-import { Button } from './ui/button';
+import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import {
   AreaChart,
   Area,

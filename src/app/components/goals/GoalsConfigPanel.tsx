@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
+import { Input } from '@/components/primitives/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, Info, RotateCcw, Plus, Pencil, Trash2, Percent, DollarSign, AlertTriangle } from 'lucide-react';
 import { type GoalsConfig, type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '@/data/goals';

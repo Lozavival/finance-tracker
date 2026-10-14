@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/primitives/button';
+import { cn } from '@/lib/utils';
 
 type FilterChipProps = React.ComponentPropsWithoutRef<typeof Button> & {
   active?: boolean;

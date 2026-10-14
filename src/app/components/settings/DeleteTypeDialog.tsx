@@ -8,7 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/primitives/alert-dialog';
 import { type TransactionTypeConfig } from '@/data/settings';
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';

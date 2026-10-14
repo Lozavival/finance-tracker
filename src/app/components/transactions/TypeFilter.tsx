@@ -3,7 +3,7 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { useSettings } from '@/state/SettingsContext';
 import { type TransactionTypeConfig } from '@/data/settings';
-import { Toggle } from '@/components/ui/toggle';
+import { Toggle } from '@/components/primitives/toggle';
 import { getIcon } from '@/data/icons';
 import { COLOR_CONFIG } from '@/data/settings';
 import { useI18n } from '@/i18n';

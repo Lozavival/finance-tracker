@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 
 type SortableItemProps<T> = {
