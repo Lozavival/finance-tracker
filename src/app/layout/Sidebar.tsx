@@ -1,24 +1,10 @@
-import { LayoutDashboard, ArrowLeftRight, Wallet, Target, Settings } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
-import { useI18n, type TranslationKey } from '@/i18n';
-
-interface MenuItem {
-  icon: typeof LayoutDashboard;
-  key: TranslationKey;
-  id: string;
-}
-
-const menuItems: MenuItem[] = [
-  { icon: LayoutDashboard, key: 'nav.dashboard', id: 'dashboard' },
-  { icon: ArrowLeftRight, key: 'nav.transactions', id: 'transactions' },
-  { icon: Wallet, key: 'nav.accounts', id: 'accounts' },
-  { icon: Target, key: 'nav.goals', id: 'goals' },
-  { icon: Settings, key: 'nav.settings', id: 'settings' },
-];
+import { useI18n } from '@/i18n';
+import { type PageId, NAVIGATION_ITEMS } from './navigation';
 
 type SidebarProps = {
-  activeItem: string;
-  onItemSelect: (id: string) => void;
+  activeItem: PageId;
+  onItemSelect: (id: PageId) => void;
 };
 
 export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
@@ -28,7 +14,7 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
     <div className="fixed left-0 top-16 bottom-0 w-64 bg-background/80 backdrop-blur-xl border-r border-border flex flex-col">
       {/* Menu Items */}
       <nav className="flex-1 px-4 py-6 space-y-2">
-        {menuItems.map((item, index) => {
+        {NAVIGATION_ITEMS.map((item, index) => {
           const Icon = item.icon;
           const isActive = activeItem === item.id;
 

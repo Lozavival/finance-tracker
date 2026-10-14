@@ -15,10 +15,11 @@ import { GoalsPage } from '@/features/goals/GoalsPage';
 import { Toaster } from '@/components/primitives/sonner';
 import { SettingsProvider, useSettings } from '@/state/SettingsContext';
 import { I18nProvider } from '@/i18n';
+import { type PageId } from '@/layout/navigation';
 
 function AppContent() {
   const { settings } = useSettings();
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ function AppContent() {
     return { statements, ledgers, today };
   }, [transactions, settings, today]);
 
-  const handleSidebarSelect = (id: string) => {
+  const handleSidebarSelect = (id: PageId) => {
     setActivePage(id);
     setSelectedAccountId(null);
   };
