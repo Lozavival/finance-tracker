@@ -1,0 +1,150 @@
+import { useState, useMemo } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/primitives/alert-dialog';
+import { type PaymentMethodConfig } from '@/data/settings';
+import { type Transaction } from '@/data/transactions';
+import { useSettings } from '@/state/SettingsContext';
+import { OptionSelect } from '@/components/shared/OptionSelect';
+import { getIcon } from '@/data/icons';
+import { AlertCircle } from 'lucide-react';
+import { useI18n } from '@/i18n';
+
+type DeleteMethodDialogProps = {
+  method: PaymentMethodConfig | null;
+  onClose: () => void;
+  transactions: Transaction[];
+  onTransactionsChange: (txs: Transaction[]) => void;
+};
+
+export function DeleteMethodDialog({ method, onClose, transactions, onTransactionsChange }: DeleteMethodDialogProps) {
+  const { settings, dispatch } = useSettings();
+  const { t, getTranslatedMethodName } = useI18n();
+  const [replacementMethodId, setReplacementMethodId] = useState<string>('');
+
+  const open = Boolean(method);
+
+  // Filter transactions that use this payment method
+  const matchingTransactions = useMemo(() => {
+    if (!method) return [];
+    return transactions.filter(t => t.paymentMethodId === method.id);
+  }, [method, transactions]);
+
+  // Is this a system method that cannot be deleted?
+  const isSystemMethod = Boolean(method && (method.id === 'cash' || method.behavior === 'credit-card'));
+
+  // Available replacement methods: excluding current method
+  const availableReplacements = useMemo(() => {
+    if (!method) return [];
+    return settings.paymentMethods.filter(m => m.id !== method.id);
+  }, [method, settings.paymentMethods]);
+
+  const replacementOptions = useMemo(() => {
+    return availableReplacements.map(m => {
+      const Icon = getIcon(m.icon);
+      return {
+        value: m.id,
+        label: getTranslatedMethodName(m.id, m.name),
+        customContent: (
+          <div className="flex items-center gap-2">
+            <Icon className="w-3.5 h-3.5 text-theme-cyan" />
+            <span>{getTranslatedMethodName(m.id, m.name)}</span>
+          </div>
+        ),
+      };
+    });
+  }, [availableReplacements, getTranslatedMethodName]);
+
+  if (!method) return null;
+
+  const hasTransactions = matchingTransactions.length > 0;
+  const canDelete = !isSystemMethod && (!hasTransactions || Boolean(replacementMethodId));
+
+  function handleDelete() {
+    if (!canDelete || !method) return;
+
+    if (hasTransactions && replacementMethodId) {
+      // Reassign transactions
+      const nextTxs = transactions.map(t => {
+        if (t.paymentMethodId === method.id) {
+          return { ...t, paymentMethodId: replacementMethodId };
+        }
+        return t;
+      });
+      onTransactionsChange(nextTxs);
+    }
+
+    dispatch({ type: 'method/remove', payload: { id: method.id } });
+    onClose();
+  }
+
+  const methodName = getTranslatedMethodName(method.id, method.name);
+
+  return (
+    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
+      <AlertDialogContent className="bg-popover border-border text-foreground sm:max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('settings.methods.deleteTitle', { name: methodName })}</AlertDialogTitle>
+          <AlertDialogDescription className="text-muted-foreground space-y-3">
+            {isSystemMethod ? (
+              <span className="block text-red-400">{t('settings.methods.deleteSystemWarning')}</span>
+            ) : hasTransactions ? (
+              <>
+                <span className="block">
+                  {t('settings.methods.deleteInUseWarning', {
+                    count: matchingTransactions.length,
+                    name: methodName,
+                  })}
+                </span>
+                <span className="block text-foreground font-medium">{t('settings.methods.reassignPrompt')}</span>
+              </>
+            ) : (
+              <span className="block">{t('settings.methods.deleteUnusedDesc')}</span>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        {hasTransactions && !isSystemMethod && (
+          <div className="py-2">
+            <OptionSelect
+              label={t('settings.methods.reassignLabel')}
+              value={replacementMethodId}
+              options={replacementOptions}
+              onChange={setReplacementMethodId}
+            />
+          </div>
+        )}
+
+        {hasTransactions && !replacementMethodId && !isSystemMethod && (
+          <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>{t('settings.methods.reassignSelectPrompt')}</span>
+          </div>
+        )}
+
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={onClose}
+            className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
+          >
+            {t('common.cancel')}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!canDelete}
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          >
+            {hasTransactions ? t('settings.methods.reassignAndDelete') : t('settings.methods.deleteMethod')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

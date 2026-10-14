@@ -515,6 +515,16 @@ export const pt: Translations = {
       creditCardNotice:
         'Este é o método de pagamento de cartão de crédito do sistema, vinculado a faturas, ciclos e parcelamento.',
       addMethod: 'Adicionar método',
+      deleteMethod: 'Excluir método',
+      deleteTitle: 'Excluir "{name}"?',
+      deleteSystemWarning: 'Este é um método de pagamento do sistema e não pode ser excluído.',
+      deleteInUseWarning: '{count} transação(ões) usam atualmente {name}.',
+      reassignPrompt: 'Selecione outro método de pagamento para reatribuí-las antes de excluir:',
+      deleteUnusedDesc:
+        'Este método de pagamento não é utilizado por nenhuma transação e será removido permanentemente.',
+      reassignLabel: 'Reatribuir transações para',
+      reassignSelectPrompt: 'Selecione um método substituto para prosseguir com a exclusão.',
+      reassignAndDelete: 'Reatribuir e excluir',
       errors: {
         enterName: 'Por favor, informe um nome para o método de pagamento.',
         duplicateName: 'Já existe um método de pagamento com o nome "{name}".',

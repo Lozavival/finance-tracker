@@ -60,7 +60,7 @@ export function SettingsPage({ transactions, onTransactionsChange }: SettingsPag
           </TabsContent>
 
           <TabsContent value="methods" className="m-0 focus-visible:outline-none">
-            <PaymentMethodsPanel transactions={transactions} />
+            <PaymentMethodsPanel transactions={transactions} onTransactionsChange={onTransactionsChange} />
           </TabsContent>
         </div>
       </Tabs>

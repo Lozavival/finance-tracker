@@ -19,6 +19,7 @@ export type SettingsAction =
       type: 'method/update';
       payload: { id: string; changes: Partial<Omit<PaymentMethodConfig, 'id' | 'behavior'>> };
     }
+  | { type: 'method/remove'; payload: { id: string } }
   | { type: 'method/reorder'; payload: { methods: PaymentMethodConfig[] } }
   | { type: 'account/add'; payload: AccountConfig }
   | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } }
@@ -105,6 +106,27 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
             ...m,
             ...action.payload.changes,
             behavior: m.behavior, // Behavior cannot be changed
+          };
+        }),
+      };
+    }
+
+    case 'method/remove': {
+      const target = state.paymentMethods.find(m => m.id === action.payload.id);
+      if (!target || target.id === 'cash' || target.behavior === 'credit-card') {
+        return state; // Cannot remove system payment methods (cash, credit-card)
+      }
+      if (state.paymentMethods.length <= 1) {
+        return state;
+      }
+      return {
+        ...state,
+        paymentMethods: state.paymentMethods.filter(m => m.id !== action.payload.id),
+        accounts: state.accounts.map(acc => {
+          if (!acc.allowedPaymentMethods) return acc;
+          return {
+            ...acc,
+            allowedPaymentMethods: acc.allowedPaymentMethods.filter(id => id !== action.payload.id),
           };
         }),
       };

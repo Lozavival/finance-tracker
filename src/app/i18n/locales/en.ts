@@ -505,6 +505,15 @@ export const en = {
       creditCardNotice:
         'This is the system credit card payment method linked to card statements, cycles, and installments.',
       addMethod: 'Add method',
+      deleteMethod: 'Delete method',
+      deleteTitle: 'Delete "{name}"?',
+      deleteSystemWarning: 'This is a system payment method and cannot be deleted.',
+      deleteInUseWarning: '{count} transaction(s) currently use {name}.',
+      reassignPrompt: 'Please select another payment method to reassign them to before deleting:',
+      deleteUnusedDesc: 'This payment method is not used by any transaction and will be removed permanently.',
+      reassignLabel: 'Reassign transactions to',
+      reassignSelectPrompt: 'Select a replacement payment method to proceed with deletion.',
+      reassignAndDelete: 'Reassign and delete',
       errors: {
         enterName: 'Please enter a name for the payment method.',
         duplicateName: 'A payment method named "{name}" already exists.',
