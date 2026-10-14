@@ -16,7 +16,7 @@ import {
   type TransactionDirection,
   groupToAccrualBasis,
 } from '@/data/transactions';
-import { TransactionDialogs } from './TransactionDialogs';
+import { TransactionDialogs } from './dialogs/TransactionDialogs';
 import { useTransactionActions } from './useTransactionActions';
 
 import { useI18n } from '@/i18n';

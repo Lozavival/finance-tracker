@@ -2,11 +2,11 @@ import { useState } from 'react';
 import {
   type Transaction,
   type TransactionDraft,
+  type EditingTarget,
   findTransferLegs,
   createTransactionId,
   buildTransferLegs,
 } from '@/data/transactions';
-import { type EditingTarget } from '@/features/transactions/TransactionDialog';
 import { findInstallmentSeries, buildInstallments } from '@/data/installments';
 import { useSettings } from '@/state/SettingsContext';
 

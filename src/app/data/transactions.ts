@@ -45,6 +45,11 @@ export type TransactionDraft =
       count: number;
     };
 
+export type EditingTarget =
+  | { kind: 'single'; transaction: Transaction }
+  | { kind: 'transfer'; outgoing: Transaction; incoming: Transaction }
+  | { kind: 'installments'; series: Transaction[] };
+
 export function buildTransferLegs(
   draft: Extract<TransactionDraft, { kind: 'transfer' }>,
   transferId: string,

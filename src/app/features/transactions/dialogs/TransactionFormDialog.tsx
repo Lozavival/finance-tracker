@@ -15,7 +15,7 @@ import { DirectionToggle, DialogMode } from './DirectionToggle';
 import { OptionSelect } from '@/components/shared/OptionSelect';
 import { DateField } from '@/components/shared/DateField';
 import { InstallmentsField } from './InstallmentsField';
-import { type Transaction, type TransactionDraft } from '@/data/transactions';
+import { type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { getIcon } from '@/data/icons';
@@ -23,12 +23,9 @@ import { TRANSFER_TYPE_ID } from '@/data/settings';
 
 import { useI18n } from '@/i18n';
 
-export type EditingTarget =
-  | { kind: 'single'; transaction: Transaction }
-  | { kind: 'transfer'; outgoing: Transaction; incoming: Transaction }
-  | { kind: 'installments'; series: Transaction[] };
+export type { EditingTarget };
 
-type TransactionDialogProps = {
+type TransactionFormDialogProps = {
   open: boolean;
   editing: EditingTarget | null;
   defaultDate: Date;
@@ -39,14 +36,14 @@ type TransactionDialogProps = {
 
 type FormErrors = Partial<Record<'description' | 'value' | 'date' | 'banks', string>>;
 
-export function TransactionDialog({
+export function TransactionFormDialog({
   open,
   editing,
   defaultDate,
   defaultAccount,
   onOpenChange,
   onSave,
-}: TransactionDialogProps) {
+}: TransactionFormDialogProps) {
   const { settings, typesByDirection, findAccount, isCreditCard, getAllowedPaymentMethodIds } = useSettings();
   const { t } = useI18n();
 

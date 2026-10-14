@@ -16,7 +16,7 @@ import {
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { TransactionsMonthTable } from '@/features/transactions/TransactionsMonthTable';
 import { useTransactionActions } from '@/features/transactions/useTransactionActions';
-import { TransactionDialogs } from '@/features/transactions/TransactionDialogs';
+import { TransactionDialogs } from '@/features/transactions/dialogs/TransactionDialogs';
 import { useMemo, useState } from 'react';
 import { PeriodFilter } from '@/features/transactions/PeriodFilter';
 import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/features/transactions/UpcomingPeriodFilter';
