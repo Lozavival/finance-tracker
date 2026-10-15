@@ -391,19 +391,19 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                 >
                   <ToggleGroupItem
                     value="Checking"
-                    className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.checking')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Savings"
-                    className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.savings')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Cash"
-                    className="flex-1 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.cash')}
                   </ToggleGroupItem>

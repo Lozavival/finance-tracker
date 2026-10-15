@@ -33,7 +33,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
   return (
     <div className="space-y-2">
       {displayLabel && <Label className="text-foreground">{displayLabel}</Label>}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover modal={true} open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             type="button"
@@ -44,7 +44,11 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
             <span>{getIconLabel(value)}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-3 bg-popover border-border shadow-xl">
+        <PopoverContent
+          className="w-72 p-3 bg-popover border-border shadow-xl z-50"
+          onWheel={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
+        >
           <div className="relative mb-2">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-muted-foreground" />
             <Input
@@ -55,7 +59,10 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
             />
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5 max-h-48 overflow-y-auto pr-1">
+          <div
+            className="grid grid-cols-5 gap-1.5 max-h-48 overflow-y-auto overscroll-contain pr-1"
+            onWheel={e => e.stopPropagation()}
+          >
             {filteredIcons.map(key => {
               const Icon = getIcon(key);
               const isSelected = key === value;
