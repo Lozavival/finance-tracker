@@ -97,9 +97,12 @@ export type CategoryBudgetSummary = {
 export type MonthlyBudgetSummary = {
   monthDate: Date;
   actualIncome: number;
+  budgetBase: number;
+  totalBudgeted: number;
   totalExpenses: number;
   remainingBalance: number;
-  usedPercentage: number; // totalExpenses / actualIncome * 100
+  remainingBudget: number;
+  usedPercentage: number; // totalExpenses / budgetBase * 100
   categories: CategoryBudgetSummary[];
 };
 
@@ -125,8 +128,8 @@ export function calculateMonthlyBudget(
   }
 
   // Base for computing category targets:
-  // If actual income is positive, use actual income; otherwise fallback to reference monthly income
-  const budgetBase = actualIncome > 0 ? actualIncome : goalsConfig.referenceMonthlyIncome;
+  // Use expected reference monthly income if configured; fallback to actual income if 0
+  const budgetBase = goalsConfig.referenceMonthlyIncome > 0 ? goalsConfig.referenceMonthlyIncome : actualIncome;
 
   // Map transactions to categories
   const categoryTransactionsMap = new Map<string, Transaction[]>();
@@ -177,14 +180,19 @@ export function calculateMonthlyBudget(
     };
   });
 
+  const totalBudgeted = categorySummaries.reduce((sum, c) => sum + c.budgeted, 0);
+  const remainingBudget = budgetBase - totalExpenses;
   const remainingBalance = actualIncome - totalExpenses;
-  const usedPercentage = actualIncome > 0 ? (totalExpenses / actualIncome) * 100 : 0;
+  const usedPercentage = budgetBase > 0 ? (totalExpenses / budgetBase) * 100 : 0;
 
   return {
     monthDate: new Date(targetYear, targetMonth, 1),
     actualIncome,
+    budgetBase,
+    totalBudgeted,
     totalExpenses,
     remainingBalance,
+    remainingBudget,
     usedPercentage,
     categories: categorySummaries,
   };

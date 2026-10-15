@@ -127,6 +127,9 @@ export function GoalsConfigPanel({
       );
       return;
     }
+    if (numericReferenceIncome !== goalsConfig.referenceMonthlyIncome) {
+      onUpdateReferenceIncome(numericReferenceIncome);
+    }
     onUpdateAllocations(localCategories);
     toast.success(t('goals.toasts.goalsSaved'));
   }

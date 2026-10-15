@@ -71,7 +71,14 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             <span className="text-sm font-medium text-foreground">{t('goals.yourIncome')}</span>
           </div>
           <div className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(budget.actualIncome)}</div>
-          <div className="text-xs text-muted-foreground mt-2">{t('goals.incomeReceiptsDesc')}</div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+            <span>{t('goals.incomeReceiptsDesc')}</span>
+            {goalsConfig.referenceMonthlyIncome > 0 && (
+              <span className="text-theme-cyan/90 font-medium">
+                {t('goals.plannedBaseline', { amount: formatCurrency(goalsConfig.referenceMonthlyIncome) })}
+              </span>
+            )}
+          </div>
         </Card>
 
         {/* Monthly Expenses */}
@@ -106,7 +113,12 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
           >
             {formatCurrency(budget.remainingBalance)}
           </div>
-          <div className="text-xs text-muted-foreground mt-2">{t('goals.availableToSpend')}</div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+            <span>{t('goals.netCashFlow')}</span>
+            <span>
+              {t('goals.remaining')}: {formatCurrency(budget.remainingBudget)}
+            </span>
+          </div>
         </Card>
       </div>
 
