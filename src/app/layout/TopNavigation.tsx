@@ -4,10 +4,10 @@ import { useTheme } from 'next-themes';
 import { useI18n } from '@/i18n';
 
 export function TopNavigation() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
-  const [hasNotification, _] = useState(true);
+  const hasNotification = true;
 
   useEffect(() => {
     setMounted(true);
@@ -49,10 +49,10 @@ export function TopNavigation() {
           <button
             type="button"
             title={t('nav.toggleTheme')}
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="p-2 rounded-lg bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] transition-all duration-300"
           >
-            {mounted && theme === 'light' ? (
+            {mounted && resolvedTheme === 'light' ? (
               <Moon className="w-5 h-5 text-muted-foreground" />
             ) : (
               <Sun className="w-5 h-5 text-muted-foreground" />

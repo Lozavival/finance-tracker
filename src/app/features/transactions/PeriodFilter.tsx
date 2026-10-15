@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from '@/components/shared/DateField';
@@ -16,12 +16,12 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<PeriodFilterType>(value);
 
-  // Reset draft when opening
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
       setDraft(value);
     }
-  }, [open, value]);
+  };
 
   const active = value.kind !== 'up-to-today';
   let label = t('transactions.periodUpToToday');
@@ -39,7 +39,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   return (
     <FilterPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title={t('transactions.period')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}

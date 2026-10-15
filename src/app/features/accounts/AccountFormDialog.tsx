@@ -141,35 +141,37 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
   }
 
   function handleKindChange(newKind: AccountKind) {
-    setKind(newKind);
     if (newKind === 'Cash') {
+      if (hasCard && cardTransactionsCount > 0) {
+        setErrors(prev => ({
+          ...prev,
+          card: t('accounts.errors.cannotSwitchToCash', { count: cardTransactionsCount }),
+        }));
+        return;
+      }
+      setKind(newKind);
       setSelectedMethods(['cash']);
       if (hasCard) {
-        if (cardTransactionsCount > 0) {
-          setErrors(prev => ({
-            ...prev,
-            card: t('accounts.errors.cannotSwitchToCash', { count: cardTransactionsCount }),
-          }));
-          return;
-        }
         setHasCard(false);
       }
     } else if (newKind === 'Savings') {
+      if (hasCard && cardTransactionsCount > 0) {
+        setErrors(prev => ({
+          ...prev,
+          card: t('accounts.errors.cannotSwitchToSavings', { count: cardTransactionsCount }),
+        }));
+        return;
+      }
+      setKind(newKind);
       setSelectedMethods(prev => {
         const filtered = prev.filter(m => m !== 'cash' && m !== 'credit-card');
         return filtered.length > 0 ? filtered : ['bank-transfer'];
       });
       if (hasCard) {
-        if (cardTransactionsCount > 0) {
-          setErrors(prev => ({
-            ...prev,
-            card: t('accounts.errors.cannotSwitchToSavings', { count: cardTransactionsCount }),
-          }));
-          return;
-        }
         setHasCard(false);
       }
     } else {
+      setKind(newKind);
       setSelectedMethods(prev => {
         const filtered = prev.filter(m => m !== 'cash');
         return filtered.length > 0 ? filtered : getDefaultMethodsForKind('Checking', hasCard);

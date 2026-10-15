@@ -116,6 +116,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
               onDragStart={reorderState.handleDragStart(idx)}
               onDragOver={reorderState.handleDragOver}
               onDrop={reorderState.handleDrop(idx)}
+              onDragEnd={reorderState.handleDragEnd}
               isDragging={reorderState.draggedIndex === idx}
             >
               <div className="flex items-center justify-between gap-3 min-w-0">

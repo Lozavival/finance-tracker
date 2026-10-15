@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
@@ -21,7 +21,7 @@ type GoalsConfigPanelProps = {
   onAddCategory: (category: GoalCategory) => void;
   onUpdateCategory: (id: string, changes: Partial<Omit<GoalCategory, 'id'>>) => void;
   onDeleteCategory: (id: string) => void;
-  onResetDefaults: () => void;
+  onResetDefaults?: () => void;
   onUpdateTypeMappings: (mappings: Record<string, string>) => void;
   onBackToBudget: () => void;
 };
@@ -34,7 +34,7 @@ export function GoalsConfigPanel({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
-  onResetDefaults,
+  onResetDefaults: _onResetDefaults,
   onUpdateTypeMappings,
   onBackToBudget,
 }: GoalsConfigPanelProps) {
@@ -47,11 +47,6 @@ export function GoalsConfigPanel({
 
   // Local state for allocations so user can drag sliders and then click "Save Goals"
   const [localCategories, setLocalCategories] = useState<GoalCategory[]>(goalsConfig.categories);
-
-  // Sync if external categories change
-  useEffect(() => {
-    setLocalCategories(goalsConfig.categories);
-  }, [goalsConfig.categories]);
 
   // Memoize stable expense types list
   const availableExpenseTypes = useMemo(() => {
@@ -137,7 +132,6 @@ export function GoalsConfigPanel({
 
   function handleResetAllocations() {
     setLocalCategories(DEFAULT_GOAL_CATEGORIES);
-    onResetDefaults();
     toast.info(t('goals.toasts.allocationsReset'));
   }
 

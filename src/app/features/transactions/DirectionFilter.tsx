@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { TransactionDirection } from '@/data/transactions';
@@ -15,11 +15,12 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<'all' | TransactionDirection>(value);
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
       setDraft(value);
     }
-  }, [open, value]);
+  };
 
   const active = value !== 'all';
   let label = t('transactions.direction');
@@ -29,7 +30,7 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
   return (
     <FilterPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title={t('transactions.direction')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}

@@ -57,16 +57,24 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
   if (!typeConfig) return null;
 
   const hasTransactions = matchingTransactions.length > 0;
-  const canDelete = !typeConfig.system && !isOnlyTypeInDirection && (!hasTransactions || Boolean(replacementTypeId));
+  const isReplacementValid = availableReplacements.some(r => r.id === replacementTypeId);
+  const effectiveReplacementId = isReplacementValid ? replacementTypeId : '';
+  const canDelete =
+    !typeConfig.system && !isOnlyTypeInDirection && (!hasTransactions || Boolean(effectiveReplacementId));
+
+  function handleClose() {
+    setReplacementTypeId('');
+    onClose();
+  }
 
   function handleDelete() {
     if (!canDelete || !typeConfig) return;
 
-    if (hasTransactions && replacementTypeId) {
+    if (hasTransactions && effectiveReplacementId) {
       // Reassign transactions
       const nextTxs = transactions.map(t => {
         if (t.typeId === typeConfig.id) {
-          return { ...t, typeId: replacementTypeId };
+          return { ...t, typeId: effectiveReplacementId };
         }
         return t;
       });
@@ -74,11 +82,11 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
     }
 
     dispatch({ type: 'type/remove', payload: { id: typeConfig.id } });
-    onClose();
+    handleClose();
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
+    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && handleClose()}>
       <AlertDialogContent className="bg-popover border-border text-foreground sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{t('settings.types.deleteTitle', { name: typeConfig.name })}</AlertDialogTitle>
@@ -127,7 +135,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
 
         <AlertDialogFooter>
           <AlertDialogCancel
-            onClick={onClose}
+            onClick={handleClose}
             className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
           >
             {t('common.cancel')}

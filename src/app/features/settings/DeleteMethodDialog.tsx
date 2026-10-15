@@ -65,16 +65,23 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
   if (!method) return null;
 
   const hasTransactions = matchingTransactions.length > 0;
-  const canDelete = !isSystemMethod && (!hasTransactions || Boolean(replacementMethodId));
+  const isReplacementValid = availableReplacements.some(r => r.id === replacementMethodId);
+  const effectiveReplacementId = isReplacementValid ? replacementMethodId : '';
+  const canDelete = !isSystemMethod && (!hasTransactions || Boolean(effectiveReplacementId));
+
+  function handleClose() {
+    setReplacementMethodId('');
+    onClose();
+  }
 
   function handleDelete() {
     if (!canDelete || !method) return;
 
-    if (hasTransactions && replacementMethodId) {
+    if (hasTransactions && effectiveReplacementId) {
       // Reassign transactions
       const nextTxs = transactions.map(t => {
         if (t.paymentMethodId === method.id) {
-          return { ...t, paymentMethodId: replacementMethodId };
+          return { ...t, paymentMethodId: effectiveReplacementId };
         }
         return t;
       });
@@ -82,13 +89,13 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
     }
 
     dispatch({ type: 'method/remove', payload: { id: method.id } });
-    onClose();
+    handleClose();
   }
 
   const methodName = getTranslatedMethodName(method.id, method.name);
 
   return (
-    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
+    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && handleClose()}>
       <AlertDialogContent className="bg-popover border-border text-foreground sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{t('settings.methods.deleteTitle', { name: methodName })}</AlertDialogTitle>
@@ -115,14 +122,14 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
           <div className="py-2">
             <OptionSelect
               label={t('settings.methods.reassignLabel')}
-              value={replacementMethodId}
+              value={effectiveReplacementId}
               options={replacementOptions}
               onChange={setReplacementMethodId}
             />
           </div>
         )}
 
-        {hasTransactions && !replacementMethodId && !isSystemMethod && (
+        {hasTransactions && !effectiveReplacementId && !isSystemMethod && (
           <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
             <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
             <span>{t('settings.methods.reassignSelectPrompt')}</span>
@@ -131,7 +138,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
 
         <AlertDialogFooter>
           <AlertDialogCancel
-            onClick={onClose}
+            onClick={handleClose}
             className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground"
           >
             {t('common.cancel')}

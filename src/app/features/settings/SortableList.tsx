@@ -4,7 +4,7 @@ import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 
 type SortableItemProps<T> = {
-  item: T;
+  item?: T;
   index: number;
   total: number;
   onMoveUp: () => void;
@@ -12,6 +12,7 @@ type SortableItemProps<T> = {
   onDragStart: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
   children: React.ReactNode;
   isDragging?: boolean;
 };
@@ -24,6 +25,7 @@ export function SortableRow<T>({
   onDragStart,
   onDragOver,
   onDrop,
+  onDragEnd,
   children,
   isDragging = false,
 }: SortableItemProps<T>) {
@@ -35,6 +37,7 @@ export function SortableRow<T>({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onDragEnd={onDragEnd}
       className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
         isDragging ? 'opacity-40 border-dashed border-cyan-400' : ''
       }`}
@@ -111,11 +114,16 @@ export function useReorder<T>(items: T[], onChange: (items: T[]) => void) {
     };
   }
 
+  function handleDragEnd() {
+    setDraggedIndex(null);
+  }
+
   return {
     draggedIndex,
     move,
     handleDragStart,
     handleDragOver,
     handleDrop,
+    handleDragEnd,
   };
 }

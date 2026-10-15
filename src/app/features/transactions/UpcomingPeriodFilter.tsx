@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from '@/components/shared/DateField';
@@ -13,31 +13,41 @@ const UPCOMING_PRESETS = [7, 15, 30] as const;
 type UpcomingPeriodFilterProps = {
   value: UpcomingPeriodType;
   onChange: (value: UpcomingPeriodType) => void;
+  defaultValue?: UpcomingPeriodType;
 };
 
-export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterProps) {
+const DEFAULT_UPCOMING_PERIOD: UpcomingPeriodType = { kind: 'end-of-month' };
+
+export function UpcomingPeriodFilter({
+  value,
+  onChange,
+  defaultValue = DEFAULT_UPCOMING_PERIOD,
+}: UpcomingPeriodFilterProps) {
   const { t, formatDate } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<UpcomingPeriodType>(value);
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
       setDraft(value);
     }
-  }, [open, value]);
+  };
 
-  const active = value.kind !== 'all';
+  const isDefault =
+    value.kind === defaultValue.kind &&
+    (value.kind !== 'preset' || value.days === (defaultValue as { kind: 'preset'; days: number }).days);
+  const active = !isDefault;
+
   let label = t('transactions.upcomingAll');
   if (value.kind === 'preset') {
     label = t('transactions.upcomingNextDays', { days: String(value.days) });
   } else if (value.kind === 'end-of-month') {
     label = t('transactions.upcomingEndOfMonth');
   } else if (value.kind === 'custom') {
-    if (value.until) {
-      label = t('transactions.upcomingUntil', { date: formatDate(value.until) });
-    } else {
-      label = t('transactions.upcomingCustomDate');
-    }
+    label = value.until
+      ? t('transactions.upcomingUntil', { date: formatDate(value.until) })
+      : t('transactions.upcomingCustomDate');
   }
 
   const applyDisabled = draft.kind === 'custom' && !draft.until;
@@ -45,11 +55,11 @@ export function UpcomingPeriodFilter({ value, onChange }: UpcomingPeriodFilterPr
   return (
     <FilterPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title={t('transactions.upcoming')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}
-      onClear={() => onChange({ kind: 'all' })}
+      onClear={() => onChange(defaultValue)}
       applyDisabled={applyDisabled}
     >
       <div className="flex gap-2 mb-6">

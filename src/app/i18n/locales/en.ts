@@ -54,6 +54,11 @@ export const en = {
     income: 'Income',
     expense: 'Expense',
     transfer: 'Transfer',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    previousYear: 'Previous year',
+    nextYear: 'Next year',
+    backToCurrentMonth: 'Back to current month',
   },
   nav: {
     dashboard: 'Dashboard',

@@ -56,6 +56,11 @@ export const pt: Translations = {
     income: 'Receita',
     expense: 'Despesa',
     transfer: 'Transferência',
+    previousMonth: 'Mês anterior',
+    nextMonth: 'Próximo mês',
+    previousYear: 'Ano anterior',
+    nextYear: 'Próximo ano',
+    backToCurrentMonth: 'Voltar para o mês atual',
   },
   nav: {
     dashboard: 'Painel',

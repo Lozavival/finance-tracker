@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { useSettings } from '@/state/SettingsContext';
@@ -18,11 +18,12 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>(value);
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
       setDraft(value);
     }
-  }, [open, value]);
+  };
 
   const active = value.length > 0;
   let label = t('transactions.payment');
@@ -62,7 +63,7 @@ export function PaymentFilter({ value, onChange }: PaymentFilterProps) {
   return (
     <FilterPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title={t('transactions.paymentMethod')}
       trigger={<FilterChip active={active} label={label} />}
       onApply={() => onChange(draft)}

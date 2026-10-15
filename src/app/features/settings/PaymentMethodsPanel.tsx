@@ -98,6 +98,7 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                 onDragStart={reorder.handleDragStart(idx)}
                 onDragOver={reorder.handleDragOver}
                 onDrop={reorder.handleDrop(idx)}
+                onDragEnd={reorder.handleDragEnd}
                 isDragging={reorder.draggedIndex === idx}
               >
                 <div className="flex items-center justify-between gap-3 min-w-0">
