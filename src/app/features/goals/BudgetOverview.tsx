@@ -14,6 +14,7 @@ import { formatMonthYear } from '@/data/dates';
 import { CategoryTransactionsDialog } from './CategoryTransactionsDialog';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { MonthPicker } from '@/components/shared/MonthPicker';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
 
@@ -188,15 +189,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden mb-4">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${progressWidth}%`,
-                        backgroundColor: colorConfig.dotColor,
-                      }}
-                    />
-                  </div>
+                  <ProgressBar value={progressWidth} color={colorConfig.dotColor} className="mb-4" />
 
                   {/* Dual Info Boxes: Spent vs Budgeted */}
                   <div className="grid grid-cols-2 rounded-xl bg-foreground/[0.03] dark:bg-foreground/[0.05] border border-border/60 p-3 divide-x divide-border/60 mb-4">

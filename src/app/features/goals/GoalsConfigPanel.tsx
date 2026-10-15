@@ -3,12 +3,13 @@ import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ArrowLeft, Info, Percent, DollarSign, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Info, Percent, DollarSign } from 'lucide-react';
 import { type GoalsConfig, type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '@/data/goals';
 import { GoalCategoryDialog } from './GoalCategoryDialog';
 import { DeleteCategoryDialog } from './DeleteCategoryDialog';
 import { GoalAllocationsDonut } from './GoalAllocationsDonut';
 import { GoalCategoryAllocationSliders } from './GoalCategoryAllocationSliders';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useSettings } from '@/state/SettingsContext';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
@@ -199,8 +200,9 @@ export function GoalsConfigPanel({
             <div className="flex-shrink-0">
               <Button
                 type="button"
+                variant="cyan"
                 onClick={handleSaveIncome}
-                className="bg-theme-cyan-btn hover:bg-theme-cyan-btn-hover text-white dark:text-gray-950 font-semibold shadow-lg shadow-cyan-500/20 px-6 h-11 rounded-xl transition-all"
+                className="font-semibold px-6 h-11 rounded-xl transition-all"
               >
                 {t('goals.saveIncome')}
               </Button>
@@ -298,29 +300,25 @@ export function GoalsConfigPanel({
 
             {/* Allocation Alert Banner if not exactly 100% */}
             {!isExactly100 && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>
-                  {t('goals.allocationWarning', {
-                    current: totalAllocated.toFixed(1),
-                    diff:
-                      totalAllocated < 100
-                        ? `${(100 - totalAllocated).toFixed(1)}% ${t('goals.unallocated')}`
-                        : `${(totalAllocated - 100).toFixed(1)}% ${t('goals.over')}`,
-                  })}
-                </span>
-              </div>
+              <InlineAlert variant="destructive">
+                {t('goals.allocationWarning', {
+                  current: totalAllocated.toFixed(1),
+                  diff:
+                    totalAllocated < 100
+                      ? `${(100 - totalAllocated).toFixed(1)}% ${t('goals.unallocated')}`
+                      : `${(totalAllocated - 100).toFixed(1)}% ${t('goals.over')}`,
+                })}
+              </InlineAlert>
             )}
 
             {/* Save Goals Button */}
             <Button
               type="button"
+              variant={isExactly100 ? 'cyan' : 'secondary'}
               disabled={!isExactly100}
               onClick={handleSaveAllGoals}
               className={`w-full font-bold h-12 rounded-xl transition-all text-sm ${
-                isExactly100
-                  ? 'bg-theme-cyan-btn hover:bg-theme-cyan-btn-hover text-white dark:text-gray-950 shadow-lg shadow-cyan-500/20 cursor-pointer'
-                  : 'bg-foreground/10 text-muted-foreground border border-border cursor-not-allowed opacity-50'
+                isExactly100 ? 'cursor-pointer' : 'border border-border cursor-not-allowed opacity-50'
               }`}
             >
               {t('goals.saveGoals')}

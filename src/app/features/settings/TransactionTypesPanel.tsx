@@ -210,6 +210,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
             </div>
             <Button
               size="sm"
+              variant="cyan"
               onClick={() =>
                 setDialogState({
                   open: true,
@@ -217,7 +218,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                   defaultDirection: 'income',
                 })
               }
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover text-xs shadow-md shadow-cyan-500/20"
+              className="text-xs"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {translate('settings.addIncomeType')}
@@ -236,6 +237,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
             </div>
             <Button
               size="sm"
+              variant="cyan"
               onClick={() =>
                 setDialogState({
                   open: true,
@@ -243,7 +245,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                   defaultDirection: 'expense',
                 })
               }
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover text-xs shadow-md shadow-cyan-500/20"
+              className="text-xs"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {translate('settings.addExpenseType')}

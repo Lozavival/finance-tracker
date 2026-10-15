@@ -4,7 +4,7 @@ import { formatShort } from '@/data/dates';
 import { useI18n } from '@/i18n';
 
 export function BalanceProjectionChart({ series, today }: { series: DailyBalance[]; today: Date }) {
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
   if (series.length === 0) return null;
 
   const chartData = series.map(s => ({ ...s, dateStr: formatShort(s.date, locale) }));
@@ -38,7 +38,7 @@ export function BalanceProjectionChart({ series, today }: { series: DailyBalance
             axisLine={false}
           />
           <YAxis
-            tickFormatter={v => formatCurrency(v / 100)}
+            tickFormatter={v => formatCents(v)}
             stroke="var(--border)"
             tick={{ fill: 'var(--muted-foreground)' }}
             fontSize={12}
@@ -46,7 +46,7 @@ export function BalanceProjectionChart({ series, today }: { series: DailyBalance
             axisLine={false}
           />
           <Tooltip
-            formatter={(val: number) => formatCurrency(val / 100)}
+            formatter={(val: number) => formatCents(val)}
             contentStyle={{
               backgroundColor: 'color-mix(in srgb, var(--background) 40%, transparent)',
               border: '1px solid var(--foreground)',

@@ -138,10 +138,7 @@ export function PaymentMethodDialog({ open, onOpenChange, method, onSave }: Paym
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
-            >
+            <Button type="submit" variant="cyan">
               {isEditing ? t('common.saveChanges') : t('settings.methods.addMethod')}
             </Button>
           </DialogFooter>

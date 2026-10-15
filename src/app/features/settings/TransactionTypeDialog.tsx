@@ -271,10 +271,7 @@ export function TransactionTypeDialog({
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20 cursor-pointer"
-            >
+            <Button type="submit" variant="cyan" className="cursor-pointer">
               {isEditing ? t('common.saveChanges') : t('settings.types.addType')}
             </Button>
           </DialogFooter>

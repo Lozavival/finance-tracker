@@ -35,7 +35,7 @@ export function AccountsPage({
   const finance = propFinance ?? financeContext;
   const transactions = propTransactions ?? financeContext.transactions;
   const { settings, dispatch } = useSettings();
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -96,7 +96,7 @@ export function AccountsPage({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-foreground text-xl font-medium">{formatCurrency(forecast.current / 100)}</div>
+            <div className="text-foreground text-xl font-medium">{formatCents(forecast.current)}</div>
           </div>
         </div>
 
@@ -110,21 +110,21 @@ export function AccountsPage({
         <div className="space-y-3 mt-6">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('accounts.upcomingIn')}</span>
-            <span className="text-theme-green">+{formatCurrency(forecast.upcomingIn / 100)}</span>
+            <span className="text-theme-green">+{formatCents(forecast.upcomingIn)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('accounts.upcomingOut')}</span>
-            <span className="text-theme-red">{formatCurrency(forecast.upcomingOut / 100)}</span>
+            <span className="text-theme-red">{formatCents(forecast.upcomingOut)}</span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-border/50">
             <span className="text-foreground font-medium">{t('accounts.projected')}</span>
-            <span className="text-foreground font-medium">{formatCurrency(forecast.projected / 100)}</span>
+            <span className="text-foreground font-medium">{formatCents(forecast.projected)}</span>
           </div>
 
           {forecast.lowest.balance < Math.min(forecast.current, forecast.projected) && (
             <div className="text-xs text-theme-orange mt-2 p-2 bg-orange-500/10 rounded-md">
               {t('accounts.dipsTo', {
-                amount: formatCurrency(forecast.lowest.balance / 100),
+                amount: formatCents(forecast.lowest.balance),
                 date: formatShort(forecast.lowest.date, locale),
               })}
             </div>
@@ -161,19 +161,19 @@ export function AccountsPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.totalBalance')}</div>
-          <div className="text-2xl text-foreground">{formatCurrency(totalBalance / 100)}</div>
+          <div className="text-2xl text-foreground">{formatCents(totalBalance)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
-          <div className="text-2xl text-theme-green">+{formatCurrency(totalIn / 100)}</div>
+          <div className="text-2xl text-theme-green">+{formatCents(totalIn)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
-          <div className="text-2xl text-theme-red">{formatCurrency(totalOut / 100)}</div>
+          <div className="text-2xl text-theme-red">{formatCents(totalOut)}</div>
         </Card>
         <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
-          <div className="text-2xl text-theme-cyan">{formatCurrency(totalProjected / 100)}</div>
+          <div className="text-2xl text-theme-cyan">{formatCents(totalProjected)}</div>
         </Card>
       </div>
 

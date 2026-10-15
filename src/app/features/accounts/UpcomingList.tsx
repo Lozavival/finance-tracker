@@ -11,7 +11,7 @@ export function UpcomingList({
   currentBalance: number;
   variant: 'compact' | 'full';
 }) {
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
 
   if (upcoming.length === 0)
     return <div className="text-muted-foreground text-sm">{t('accounts.noUpcomingItems')}</div>;
@@ -42,7 +42,7 @@ export function UpcomingList({
               </div>
               <span className={`shrink-0 whitespace-nowrap ${m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}`}>
                 {m.amount > 0 ? '+' : '−'}
-                {formatCurrency(Math.abs(m.amount) / 100)}
+                {formatCents(Math.abs(m.amount))}
               </span>
             </div>
           );
@@ -69,9 +69,9 @@ export function UpcomingList({
             <div className="text-right shrink-0">
               <div className={m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}>
                 {m.amount > 0 ? '+' : '−'}
-                {formatCurrency(Math.abs(m.amount) / 100)}
+                {formatCents(Math.abs(m.amount))}
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5">{formatCurrency(runningBalance / 100)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{formatCents(runningBalance)}</div>
             </div>
           </div>
         );

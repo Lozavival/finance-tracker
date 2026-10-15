@@ -244,10 +244,7 @@ export function GoalCategoryDialog({
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-theme-cyan-btn hover:bg-theme-cyan-btn-hover text-white dark:text-gray-950 font-semibold shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
-            >
+            <Button type="submit" variant="cyan" className="font-semibold transition-all cursor-pointer">
               {category ? <Check className="w-4 h-4 mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
               {category ? t('goals.saveChanges') : t('goals.addCategory')}
             </Button>

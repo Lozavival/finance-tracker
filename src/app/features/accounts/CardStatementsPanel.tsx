@@ -5,6 +5,8 @@ import { Card } from '@/components/primitives/card';
 import { CreditCard } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { MonthPicker } from '@/components/shared/MonthPicker';
+import { ProgressBar } from '@/components/shared/ProgressBar';
+import { Badge } from '@/components/primitives/badge';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
 
@@ -15,7 +17,7 @@ type CardStatementsPanelProps = {
 
 export function CardStatementsPanel({ accountId, statements }: CardStatementsPanelProps) {
   const { settings, findAccount } = useSettings();
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCurrency, formatCents, locale } = useI18n();
   const account = findAccount(accountId);
   const usage = getCardUsage(statements, accountId, settings);
   const accountStatements = useMemo(
@@ -76,15 +78,10 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
         <div className="flex justify-between text-sm mb-2">
           <span className="text-muted-foreground">{t('accounts.limitUsage')}</span>
           <span className="text-foreground">
-            {formatCurrency(usage.used / 100)} / {formatCurrency(usage.limit / 100)}
+            {formatCents(usage.used)} / {formatCents(usage.limit)}
           </span>
         </div>
-        <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-theme-cyan transition-all"
-            style={{ width: `${usage.limit > 0 ? Math.min(100, (usage.used / usage.limit) * 100) : 0}%` }}
-          />
-        </div>
+        <ProgressBar value={usage.limit > 0 ? (usage.used / usage.limit) * 100 : 0} />
       </div>
 
       {accountStatements.length > 0 && stmt ? (
@@ -100,22 +97,17 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg text-foreground font-medium">{formatCurrency(stmt.total / 100)}</div>
-              <div
-                className={`text-xs inline-block px-2 py-0.5 rounded mt-1 ${
-                  stmt.status === 'paid'
-                    ? 'bg-green-500/20 text-theme-green'
-                    : stmt.status === 'open'
-                      ? 'bg-cyan-500/20 text-theme-cyan'
-                      : 'bg-orange-500/20 text-theme-orange'
-                }`}
+              <div className="text-lg text-foreground font-medium">{formatCents(stmt.total)}</div>
+              <Badge
+                variant={stmt.status === 'paid' ? 'emerald' : stmt.status === 'open' ? 'cyan' : 'amber'}
+                className="mt-1"
               >
                 {stmt.status === 'paid'
                   ? t('accounts.statusPaid').toUpperCase()
                   : stmt.status === 'open'
                     ? t('accounts.statusOpen').toUpperCase()
                     : t('accounts.statusClosed').toUpperCase()}
-              </div>
+              </Badge>
             </div>
           </div>
 

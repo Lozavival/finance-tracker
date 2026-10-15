@@ -54,7 +54,7 @@ export function AccountDetailPage({
   const accountId = propAccountId || routeAccountId || '';
 
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
-  const { t, formatCurrency, getTranslatedMethodName } = useI18n();
+  const { t, formatCents, getTranslatedMethodName } = useI18n();
   const details = findAccount(accountId);
   const ledger = finance.ledgers[accountId];
 
@@ -236,19 +236,19 @@ export function AccountDetailPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.currentBalance')}</div>
-          <div className="text-2xl text-foreground">{formatCurrency(fullForecast.current / 100)}</div>
+          <div className="text-2xl text-foreground">{formatCents(fullForecast.current)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
-          <div className="text-2xl text-theme-green">+{formatCurrency(fullForecast.upcomingIn / 100)}</div>
+          <div className="text-2xl text-theme-green">+{formatCents(fullForecast.upcomingIn)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
-          <div className="text-2xl text-theme-red">{formatCurrency(fullForecast.upcomingOut / 100)}</div>
+          <div className="text-2xl text-theme-red">{formatCents(fullForecast.upcomingOut)}</div>
         </Card>
         <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
-          <div className="text-2xl text-theme-cyan">{formatCurrency(fullForecast.projected / 100)}</div>
+          <div className="text-2xl text-theme-cyan">{formatCents(fullForecast.projected)}</div>
         </Card>
       </div>
 

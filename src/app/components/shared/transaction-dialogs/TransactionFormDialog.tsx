@@ -18,6 +18,7 @@ import { InstallmentsField } from './InstallmentsField';
 import { type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { getIcon } from '@/data/icons';
 import { TRANSFER_TYPE_ID } from '@/data/settings';
 import { useI18n } from '@/i18n';
@@ -374,9 +375,7 @@ export function TransactionFormDialog({
               )}
             </div>
             {isEditingSeries && !canUseInstallments && (
-              <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-3 text-sm text-orange-800 dark:text-orange-400">
-                {t('transactions.installmentsHint')}
-              </div>
+              <InlineAlert variant="warning">{t('transactions.installmentsHint')}</InlineAlert>
             )}
           </div>
 
