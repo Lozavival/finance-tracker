@@ -4,15 +4,22 @@ import { TransactionTypesPanel } from './TransactionTypesPanel';
 import { PaymentMethodsPanel } from './PaymentMethodsPanel';
 import { PreferencesPanel } from './PreferencesPanel';
 import { type Transaction } from '@/data/transactions';
+import { useFinance } from '@/state/FinanceContext';
 import { Tags, CreditCard, SlidersHorizontal } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
 type SettingsPageProps = {
-  transactions: Transaction[];
-  onTransactionsChange: (txs: Transaction[]) => void;
+  transactions?: Transaction[];
+  onTransactionsChange?: (txs: Transaction[]) => void;
 };
 
-export function SettingsPage({ transactions, onTransactionsChange }: SettingsPageProps) {
+export function SettingsPage({
+  transactions: propTransactions,
+  onTransactionsChange: propOnTransactionsChange,
+}: SettingsPageProps) {
+  const finance = useFinance();
+  const transactions = propTransactions ?? finance.transactions;
+  const onTransactionsChange = propOnTransactionsChange ?? ((txs: Transaction[]) => finance.setTransactions(txs));
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'preferences' | 'types' | 'methods'>('preferences');
 

@@ -63,3 +63,20 @@ export function formatMonthYear(date: Date, locale = 'en-US'): string {
 export function formatFull(date: Date, locale = 'en-US'): string {
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }
+
+export type UpcomingPeriodType =
+  { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: Date };
+
+export function resolveUpcomingHorizon(period: UpcomingPeriodType, today: Date): Date {
+  if (period.kind === 'all') return parseLocalDate('2030-01-01');
+  if (period.kind === 'custom') return period.until || parseLocalDate('2030-01-01');
+  if (period.kind === 'end-of-month') {
+    const y = today.getFullYear();
+    const m = today.getMonth() + 1;
+    const lastDay = new Date(y, m, 0).getDate();
+    return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
+  }
+  const d = new Date(today);
+  d.setDate(d.getDate() + period.days);
+  return d;
+}

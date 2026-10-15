@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FilterChip } from './FilterChip';
-import { FilterPanel } from './FilterPanel';
+import { FilterChip } from '@/components/shared/filters/FilterChip';
+import { FilterPanel } from '@/components/shared/filters/FilterPanel';
 import { useSettings } from '@/state/SettingsContext';
 import { type TransactionTypeConfig } from '@/data/settings';
 import { Toggle } from '@/components/primitives/toggle';

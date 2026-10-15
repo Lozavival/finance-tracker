@@ -6,7 +6,7 @@ import { Button } from '@/components/primitives/button';
 import { PERIOD_PRESETS, PeriodFilter as PeriodFilterType, formatPeriodLabel } from '@/data/transactions';
 import { useI18n } from '@/i18n';
 
-type PeriodFilterProps = {
+export type PeriodFilterProps = {
   value: PeriodFilterType;
   onChange: (value: PeriodFilterType) => void;
 };
@@ -42,49 +42,52 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
       onOpenChange={handleOpenChange}
       title={t('transactions.period')}
       trigger={<FilterChip active={active} label={label} />}
+      applyDisabled={applyDisabled}
       onApply={() => onChange(draft)}
       onClear={() => onChange({ kind: 'up-to-today' })}
-      applyDisabled={applyDisabled}
     >
       <div className="flex gap-2 mb-4">
         <Button
+          type="button"
           variant="outline"
           size="sm"
-          onClick={() => setDraft({ kind: 'up-to-today' })}
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
             draft.kind === 'up-to-today'
               ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
               : 'text-foreground'
           }`}
+          onClick={() => setDraft({ kind: 'up-to-today' })}
         >
           {t('transactions.periodUpToToday')}
         </Button>
         <Button
+          type="button"
           variant="outline"
           size="sm"
-          onClick={() => setDraft({ kind: 'all' })}
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
             draft.kind === 'all'
               ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
               : 'text-foreground'
           }`}
+          onClick={() => setDraft({ kind: 'all' })}
         >
-          {t('transactions.periodIncludeFuture')}
+          {t('transactions.periodAll')}
         </Button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4">
         {PERIOD_PRESETS.map(days => (
           <Button
             key={days}
+            type="button"
             variant="outline"
             size="sm"
-            onClick={() => setDraft({ kind: 'preset', days })}
             className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
               draft.kind === 'preset' && draft.days === days
                 ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
                 : 'text-foreground'
             }`}
+            onClick={() => setDraft({ kind: 'preset', days })}
           >
             {t('transactions.periodDays', { days: String(days) })}
           </Button>

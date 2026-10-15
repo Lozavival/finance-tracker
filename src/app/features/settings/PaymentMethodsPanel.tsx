@@ -72,9 +72,10 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
             <div className="text-xs text-muted-foreground">{t('settings.methodsDesc')}</div>
           </div>
           <Button
+            variant="cyan"
             size="sm"
             onClick={() => setDialogState({ open: true, method: null })}
-            className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover text-xs shadow-md shadow-cyan-500/20"
+            className="text-xs"
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             {t('settings.addPaymentMethod')}

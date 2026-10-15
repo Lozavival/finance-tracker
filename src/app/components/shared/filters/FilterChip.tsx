@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/lib/utils';
 
-type FilterChipProps = React.ComponentPropsWithoutRef<typeof Button> & {
+export type FilterChipProps = React.ComponentPropsWithoutRef<typeof Button> & {
   active?: boolean;
   label: React.ReactNode;
 };

@@ -1,10 +1,9 @@
-import React from 'react';
 import { Label } from '@/components/primitives/label';
 import { Input } from '@/components/primitives/input';
 import { MAX_INSTALLMENTS, splitInstallmentValues } from '@/data/installments';
 import { useI18n } from '@/i18n';
 
-type InstallmentsFieldProps = {
+export type InstallmentsFieldProps = {
   value: number | '';
   onChange: (value: number | '') => void;
   totalValue: number;

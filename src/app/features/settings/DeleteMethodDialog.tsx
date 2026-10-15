@@ -14,7 +14,7 @@ import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { OptionSelect } from '@/components/shared/OptionSelect';
 import { getIcon } from '@/data/icons';
-import { AlertCircle } from 'lucide-react';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 
 type DeleteMethodDialogProps = {
@@ -130,10 +130,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
         )}
 
         {hasTransactions && !effectiveReplacementId && !isSystemMethod && (
-          <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400 bg-amber-500/10 p-2.5 rounded-md border border-amber-500/20">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-            <span>{t('settings.methods.reassignSelectPrompt')}</span>
-          </div>
+          <InlineAlert variant="warning">{t('settings.methods.reassignSelectPrompt')}</InlineAlert>
         )}
 
         <AlertDialogFooter>

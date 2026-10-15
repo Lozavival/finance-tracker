@@ -25,6 +25,7 @@ export interface I18nContextValue {
   dateLocale: Locale;
   t: (key: TranslationKey, params?: TranslationParams) => string;
   formatCurrency: (amount: number, overrideCurrency?: SupportedCurrency) => string;
+  formatCents: (cents: number, overrideCurrency?: SupportedCurrency) => string;
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string;
   formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
   formatShort: (date: Date) => string;
@@ -133,6 +134,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     [locale, currency],
   );
 
+  const formatCents = useCallback(
+    (cents: number, overrideCurrency?: SupportedCurrency): string => {
+      return formatCurrency(cents / 100, overrideCurrency);
+    },
+    [formatCurrency],
+  );
+
   const formatNumber = useCallback(
     (value: number, options?: Intl.NumberFormatOptions): string => {
       try {
@@ -233,6 +241,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       dateLocale: DATE_LOCALES[locale] ?? DATE_LOCALES[DEFAULT_LOCALE],
       t,
       formatCurrency,
+      formatCents,
       formatNumber,
       formatDate,
       formatShort,
@@ -249,6 +258,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       setCurrency,
       t,
       formatCurrency,
+      formatCents,
       formatNumber,
       formatDate,
       formatShort,

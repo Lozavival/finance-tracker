@@ -11,7 +11,7 @@ import {
 import { type Transaction } from '@/data/transactions';
 import { useI18n } from '@/i18n';
 
-type DeleteTransactionDialogProps = {
+export type DeleteTransactionDialogProps = {
   target: Transaction | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -49,7 +49,7 @@ export function DeleteTransactionDialog({ target, onOpenChange, onConfirm }: Del
             onClick={onConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {t('transactions.excludeAction')}
+            {t('common.exclude')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

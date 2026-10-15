@@ -20,12 +20,11 @@ import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { getIcon } from '@/data/icons';
 import { TRANSFER_TYPE_ID } from '@/data/settings';
-
 import { useI18n } from '@/i18n';
 
 export type { EditingTarget };
 
-type TransactionFormDialogProps = {
+export type TransactionFormDialogProps = {
   open: boolean;
   editing: EditingTarget | null;
   defaultDate: Date;
@@ -390,10 +389,7 @@ export function TransactionFormDialog({
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
-            >
+            <Button variant="cyan" type="submit">
               {editing ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
               {editing ? t('transactions.saveChanges') : t('transactions.addTransaction')}
             </Button>

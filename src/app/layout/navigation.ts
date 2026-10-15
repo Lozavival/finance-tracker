@@ -7,12 +7,13 @@ export interface NavigationItem {
   id: PageId;
   key: TranslationKey;
   icon: LucideIcon;
+  path: string;
 }
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
-  { icon: LayoutDashboard, key: 'nav.dashboard', id: 'dashboard' },
-  { icon: ArrowLeftRight, key: 'nav.transactions', id: 'transactions' },
-  { icon: Wallet, key: 'nav.accounts', id: 'accounts' },
-  { icon: Target, key: 'nav.goals', id: 'goals' },
-  { icon: Settings, key: 'nav.settings', id: 'settings' },
+  { icon: LayoutDashboard, key: 'nav.dashboard', id: 'dashboard', path: '/dashboard' },
+  { icon: ArrowLeftRight, key: 'nav.transactions', id: 'transactions', path: '/transactions' },
+  { icon: Wallet, key: 'nav.accounts', id: 'accounts', path: '/accounts' },
+  { icon: Target, key: 'nav.goals', id: 'goals', path: '/goals' },
+  { icon: Settings, key: 'nav.settings', id: 'settings', path: '/settings' },
 ];

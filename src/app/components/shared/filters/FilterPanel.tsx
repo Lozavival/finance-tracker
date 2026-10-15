@@ -2,7 +2,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 
-type FilterPanelProps = {
+export type FilterPanelProps = {
   trigger: React.ReactNode;
   title: string;
   children: React.ReactNode;
@@ -37,12 +37,13 @@ export function FilterPanel({
         </div>
         <div className="border-t border-border p-4 flex flex-col gap-2">
           <Button
+            variant="cyan"
             onClick={() => {
               onApply();
               onOpenChange(false);
             }}
             disabled={applyDisabled}
-            className="w-full bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
+            className="w-full"
           >
             {t('common.applyFilter')}
           </Button>

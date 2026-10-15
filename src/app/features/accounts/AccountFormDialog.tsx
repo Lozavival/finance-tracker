@@ -26,7 +26,7 @@ import {
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { getToday } from '@/data/dates';
-import { AlertCircle } from 'lucide-react';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 
 type AccountFormDialogProps = {
@@ -482,12 +482,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                   <Switch checked={hasCard} onCheckedChange={handleToggleCard} />
                 </div>
 
-                {errors.card && (
-                  <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{errors.card}</span>
-                  </div>
-                )}
+                {errors.card && <InlineAlert variant="destructive">{errors.card}</InlineAlert>}
 
                 {hasCard && (
                   <CreditCardFields
@@ -515,10 +510,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
-            >
+            <Button variant="cyan" type="submit">
               {isEditing ? t('accounts.saveChanges') : t('accounts.addAccount')}
             </Button>
           </DialogFooter>

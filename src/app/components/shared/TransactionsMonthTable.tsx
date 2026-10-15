@@ -15,10 +15,11 @@ import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { useI18n } from '@/i18n';
 
-type TransactionsMonthTableProps = {
+export type TransactionsMonthTableProps = {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
+  showAccount?: boolean;
 };
 
 export function TransactionsMonthTable({
@@ -26,7 +27,7 @@ export function TransactionsMonthTable({
   onEdit,
   onDelete,
   showAccount = true,
-}: TransactionsMonthTableProps & { showAccount?: boolean }) {
+}: TransactionsMonthTableProps) {
   const { findType, findAccount, findMethod } = useSettings();
   const { t, currency, locale } = useI18n();
   const groups = groupTransactionsByMonth(transactions, locale);

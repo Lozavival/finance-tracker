@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useSettings } from '@/state/SettingsContext';
+import { useFinance } from '@/state/FinanceContext';
 import { type Transaction } from '@/data/transactions';
 import { type GoalCategory } from '@/data/goals';
 import { BudgetOverview } from './BudgetOverview';
 import { GoalsConfigPanel } from './GoalsConfigPanel';
 
 type GoalsPageProps = {
-  transactions: Transaction[];
-  onTransactionsChange: (txs: Transaction[]) => void;
+  transactions?: Transaction[];
+  onTransactionsChange?: (txs: Transaction[]) => void;
 };
 
-export function GoalsPage({ transactions }: GoalsPageProps) {
+export function GoalsPage({ transactions: propTransactions }: GoalsPageProps) {
+  const finance = useFinance();
+  const transactions = propTransactions ?? finance.transactions;
   const { settings, dispatch } = useSettings();
   const [view, setView] = useState<'overview' | 'config'>('overview');
 

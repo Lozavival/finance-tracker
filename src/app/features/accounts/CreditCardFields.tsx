@@ -1,6 +1,6 @@
 import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
-import { AlertCircle } from 'lucide-react';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 
 export type CreditCardFormValues = {
@@ -32,12 +32,7 @@ export function CreditCardFields({ values, onChange, errors = {}, isEditing = fa
 
   return (
     <div className="space-y-4 rounded-xl border border-border/70 bg-foreground/[0.02] p-4">
-      {isEditing && (
-        <div className="flex items-start gap-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-800 dark:text-amber-300">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-          <span>{t('accounts.cardEditWarning')}</span>
-        </div>
-      )}
+      {isEditing && <InlineAlert variant="warning">{t('accounts.cardEditWarning')}</InlineAlert>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">

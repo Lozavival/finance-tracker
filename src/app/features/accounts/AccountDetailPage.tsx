@@ -1,4 +1,5 @@
-import { getToday } from '@/data/dates';
+import { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { type CardStatement } from '@/data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '@/data/ledger';
 import { buildDailySeries } from '@/data/ledger';
@@ -14,38 +15,44 @@ import {
   type Transaction,
 } from '@/data/transactions';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { TransactionsMonthTable } from '@/features/transactions/TransactionsMonthTable';
-import { useTransactionActions } from '@/features/transactions/useTransactionActions';
-import { TransactionDialogs } from '@/features/transactions/dialogs/TransactionDialogs';
-import { useMemo, useState } from 'react';
-import { PeriodFilter } from '@/features/transactions/PeriodFilter';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/features/transactions/UpcomingPeriodFilter';
-import { parseLocalDate } from '@/data/dates';
+import { TransactionsMonthTable } from '@/components/shared/TransactionsMonthTable';
+import { TransactionDialogs } from '@/components/shared/transaction-dialogs/TransactionDialogs';
+import { PeriodFilter } from '@/components/shared/filters/PeriodFilter';
+import { UpcomingPeriodFilter } from '@/components/shared/filters/UpcomingPeriodFilter';
+import { resolveUpcomingHorizon, getToday, type UpcomingPeriodType } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
+import { useFinance } from '@/state/FinanceContext';
+import { useTransactionActions } from '@/state/useTransactionActions';
 import { getAccountColor, type AccountConfig } from '@/data/settings';
 import { getIcon } from '@/data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
 import { useI18n } from '@/i18n';
 
 type AccountDetailPageProps = {
-  accountId: string;
-  finance: {
+  accountId?: string;
+  finance?: {
     statements: CardStatement[];
     ledgers: Record<string, AccountLedger>;
     today: Date;
   };
-  transactions: Transaction[];
-  onTransactionsChange: (txs: Transaction[]) => void;
-  onBack: () => void;
+  transactions?: Transaction[];
+  onTransactionsChange?: (txs: Transaction[]) => void;
+  onBack?: () => void;
 };
 
 export function AccountDetailPage({
-  accountId,
-  finance,
-  transactions,
-  onTransactionsChange,
+  accountId: propAccountId,
+  finance: propFinance,
+  transactions: propTransactions,
   onBack,
 }: AccountDetailPageProps) {
+  const { accountId: routeAccountId } = useParams<{ accountId: string }>();
+  const navigate = useNavigate();
+  const financeContext = useFinance();
+  const finance = propFinance ?? financeContext;
+  const transactions = propTransactions ?? financeContext.transactions;
+  const accountId = propAccountId || routeAccountId || '';
+
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
   const { t, formatCurrency, getTranslatedMethodName } = useI18n();
   const details = findAccount(accountId);
@@ -63,17 +70,7 @@ export function AccountDetailPage({
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
 
   const upcomingLimitDate = useMemo(() => {
-    if (upcomingPeriod.kind === 'all') return parseLocalDate('2030-01-01');
-    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || parseLocalDate('2030-01-01');
-    if (upcomingPeriod.kind === 'end-of-month') {
-      const y = finance.today.getFullYear();
-      const m = finance.today.getMonth() + 1;
-      const lastDay = new Date(y, m, 0).getDate();
-      return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
-    }
-    const d = new Date(finance.today);
-    d.setDate(d.getDate() + upcomingPeriod.days);
-    return d;
+    return resolveUpcomingHorizon(upcomingPeriod, finance.today);
   }, [finance.today, upcomingPeriod]);
 
   // Forecast used in header cards and upcoming list
@@ -104,7 +101,15 @@ export function AccountDetailPage({
     openEditDialog,
     saveTransaction,
     deleteTransaction,
-  } = useTransactionActions(transactions, onTransactionsChange);
+  } = useTransactionActions();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      void navigate('/accounts');
+    }
+  };
 
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
 
@@ -162,7 +167,7 @@ export function AccountDetailPage({
   return (
     <div className="space-y-8">
       <button
-        onClick={onBack}
+        onClick={handleBack}
         className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}

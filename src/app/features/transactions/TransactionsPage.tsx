@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card } from '@/components/primitives/card';
-import { TransactionsMonthTable } from './TransactionsMonthTable';
-import { PeriodFilter } from './PeriodFilter';
+import { TransactionsMonthTable } from '@/components/shared/TransactionsMonthTable';
+import { PeriodFilter } from '@/components/shared/filters/PeriodFilter';
 import { TypeFilter } from './TypeFilter';
 import { DirectionFilter } from './DirectionFilter';
 import { PaymentFilter } from './PaymentFilter';
@@ -16,18 +16,20 @@ import {
   type TransactionDirection,
   groupToAccrualBasis,
 } from '@/data/transactions';
-import { TransactionDialogs } from './dialogs/TransactionDialogs';
-import { useTransactionActions } from './useTransactionActions';
-
+import { TransactionDialogs } from '@/components/shared/transaction-dialogs/TransactionDialogs';
+import { useTransactionActions } from '@/state/useTransactionActions';
+import { useFinance } from '@/state/FinanceContext';
 import { useI18n } from '@/i18n';
 
 type TransactionsPageProps = {
-  transactions: Transaction[];
-  onTransactionsChange: (transactions: Transaction[]) => void;
+  transactions?: Transaction[];
+  onTransactionsChange?: (transactions: Transaction[]) => void;
 };
 
-export function TransactionsPage({ transactions, onTransactionsChange }: TransactionsPageProps) {
+export function TransactionsPage({ transactions: propTransactions }: TransactionsPageProps) {
   const { t } = useI18n();
+  const finance = useFinance();
+  const transactions = propTransactions ?? finance.transactions;
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
@@ -44,7 +46,7 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
     openEditDialog,
     saveTransaction,
     deleteTransaction,
-  } = useTransactionActions(transactions, onTransactionsChange);
+  } = useTransactionActions();
 
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period);
@@ -92,10 +94,7 @@ export function TransactionsPage({ transactions, onTransactionsChange }: Transac
           </div>
           <div className="text-muted-foreground">{t('transactions.subtitle')}</div>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className="bg-theme-cyan-btn text-white dark:text-gray-950 hover:bg-theme-cyan-btn-hover shadow-lg shadow-cyan-500/20"
-        >
+        <Button variant="cyan" onClick={openAddDialog}>
           <Plus className="mr-2 h-4 w-4" />
           {t('transactions.addTransaction')}
         </Button>

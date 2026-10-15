@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { type CardStatement } from '@/data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '@/data/ledger';
 import { UpcomingList } from './UpcomingList';
@@ -5,48 +6,55 @@ import { CardBillSummary } from './CardBillSummary';
 import { Card } from '@/components/primitives/card';
 import { useState, useMemo } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
-import { UpcomingPeriodFilter, type UpcomingPeriodType } from '@/features/transactions/UpcomingPeriodFilter';
+import { UpcomingPeriodFilter } from '@/components/shared/filters/UpcomingPeriodFilter';
 import { type Transaction } from '@/data/transactions';
-import { parseLocalDate, formatShort } from '@/data/dates';
+import { resolveUpcomingHorizon, formatShort, type UpcomingPeriodType } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
+import { useFinance } from '@/state/FinanceContext';
 import { getAccountColor, type AccountConfig } from '@/data/settings';
 import { AccountFormDialog } from './AccountFormDialog';
 import { useI18n } from '@/i18n';
 
 type AccountsPageProps = {
-  finance: {
+  finance?: {
     statements: CardStatement[];
     ledgers: Record<string, AccountLedger>;
     today: Date;
   };
-  transactions: Transaction[];
-  onAccountSelect: (accountId: string) => void;
+  transactions?: Transaction[];
+  onAccountSelect?: (accountId: string) => void;
 };
 
-export function AccountsPage({ finance, transactions, onAccountSelect }: AccountsPageProps) {
+export function AccountsPage({
+  finance: propFinance,
+  transactions: propTransactions,
+  onAccountSelect,
+}: AccountsPageProps) {
+  const financeContext = useFinance();
+  const navigate = useNavigate();
+  const finance = propFinance ?? financeContext;
+  const transactions = propTransactions ?? financeContext.transactions;
   const { settings, dispatch } = useSettings();
   const { t, formatCurrency, locale } = useI18n();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const horizonEnd = useMemo(() => {
-    if (upcomingPeriod.kind === 'all') return parseLocalDate('2030-01-01');
-    if (upcomingPeriod.kind === 'custom') return upcomingPeriod.until || parseLocalDate('2030-01-01');
-    if (upcomingPeriod.kind === 'end-of-month') {
-      const y = finance.today.getFullYear();
-      const m = finance.today.getMonth() + 1;
-      const lastDay = new Date(y, m, 0).getDate();
-      return new Date(y, m - 1, lastDay, 0, 0, 0, 0);
-    }
-    const d = new Date(finance.today);
-    d.setDate(d.getDate() + upcomingPeriod.days);
-    return d;
+    return resolveUpcomingHorizon(upcomingPeriod, finance.today);
   }, [finance.today, upcomingPeriod]);
 
   let totalBalance = 0;
   let totalIn = 0;
   let totalOut = 0;
   let totalProjected = 0;
+
+  const handleSelect = (accountId: string) => {
+    if (onAccountSelect) {
+      onAccountSelect(accountId);
+    } else {
+      void navigate(`/accounts/${accountId}`);
+    }
+  };
 
   const cards = settings.accounts.map(acc => {
     const details = acc;
@@ -62,7 +70,7 @@ export function AccountsPage({ finance, transactions, onAccountSelect }: Account
       <Card
         key={acc.id}
         className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all cursor-pointer group"
-        onClick={() => onAccountSelect(acc.id)}
+        onClick={() => handleSelect(acc.id)}
       >
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-3">

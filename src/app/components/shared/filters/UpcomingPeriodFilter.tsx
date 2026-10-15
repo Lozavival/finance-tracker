@@ -3,14 +3,12 @@ import { FilterChip } from './FilterChip';
 import { FilterPanel } from './FilterPanel';
 import { DateField } from '@/components/shared/DateField';
 import { Button } from '@/components/primitives/button';
+import { type UpcomingPeriodType } from '@/data/dates';
 import { useI18n } from '@/i18n';
-
-export type UpcomingPeriodType =
-  { kind: 'preset'; days: number } | { kind: 'end-of-month' } | { kind: 'all' } | { kind: 'custom'; until: Date };
 
 const UPCOMING_PRESETS = [7, 15, 30] as const;
 
-type UpcomingPeriodFilterProps = {
+export type UpcomingPeriodFilterProps = {
   value: UpcomingPeriodType;
   onChange: (value: UpcomingPeriodType) => void;
   defaultValue?: UpcomingPeriodType;
@@ -58,9 +56,9 @@ export function UpcomingPeriodFilter({
       onOpenChange={handleOpenChange}
       title={t('transactions.upcoming')}
       trigger={<FilterChip active={active} label={label} />}
+      applyDisabled={applyDisabled}
       onApply={() => onChange(draft)}
       onClear={() => onChange(defaultValue)}
-      applyDisabled={applyDisabled}
     >
       <div className="flex gap-2 mb-6">
         {UPCOMING_PRESETS.map(days => (
@@ -125,3 +123,5 @@ export function UpcomingPeriodFilter({
     </FilterPanel>
   );
 }
+
+export type { UpcomingPeriodType };

@@ -1,14 +1,17 @@
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 import { type PageId, NAVIGATION_ITEMS } from './navigation';
 
 type SidebarProps = {
-  activeItem: PageId;
-  onItemSelect: (id: PageId) => void;
+  activeItem?: PageId;
+  onItemSelect?: (id: PageId) => void;
 };
 
 export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
   const { t } = useI18n();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <div className="fixed left-0 top-16 bottom-0 w-64 bg-background/80 backdrop-blur-xl border-r border-border flex flex-col">
@@ -16,13 +19,22 @@ export function Sidebar({ activeItem, onItemSelect }: SidebarProps) {
       <nav className="flex-1 px-4 py-6 space-y-2">
         {NAVIGATION_ITEMS.map((item, index) => {
           const Icon = item.icon;
-          const isActive = activeItem === item.id;
+          const isActive = activeItem
+            ? activeItem === item.id
+            : location.pathname === item.path ||
+              (item.id === 'dashboard' && location.pathname === '/') ||
+              (item.id === 'accounts' && location.pathname.startsWith('/accounts'));
+
+          const handleClick = () => {
+            void navigate(item.path);
+            if (onItemSelect) onItemSelect(item.id);
+          };
 
           return (
             <div key={item.id}>
               <Button
                 variant="ghost"
-                onClick={() => onItemSelect(item.id)}
+                onClick={handleClick}
                 className={`h-auto w-full justify-start gap-3 px-4 py-3 rounded-lg
                          transition-all duration-300 group relative overflow-hidden
                          ${

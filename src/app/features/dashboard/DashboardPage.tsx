@@ -1,14 +1,17 @@
 import { useI18n } from '@/i18n';
 import { type Transaction } from '@/data/transactions';
+import { useFinance } from '@/state/FinanceContext';
 import { SummaryCards } from './SummaryCards';
 import { AnalyticsChart } from './AnalyticsChart';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 
 interface DashboardPageProps {
-  transactions: Transaction[];
+  transactions?: Transaction[];
 }
 
-export function DashboardPage({ transactions }: DashboardPageProps) {
+export function DashboardPage({ transactions: propTransactions }: DashboardPageProps) {
+  const finance = useFinance();
+  const transactions = propTransactions ?? finance.transactions;
   const { t } = useI18n();
 
   return (

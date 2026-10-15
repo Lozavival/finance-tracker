@@ -1,8 +1,8 @@
 import { TransactionFormDialog } from './TransactionFormDialog';
 import { DeleteTransactionDialog } from './DeleteTransactionDialog';
-import { type Transaction, type TransactionDraft, type Account, type EditingTarget } from '@/data/transactions';
+import { type Transaction, type TransactionDraft, type EditingTarget } from '@/data/transactions';
 
-type TransactionDialogsProps = {
+export type TransactionDialogsProps = {
   dialogOpen: boolean;
   setDialogOpen: (open: boolean) => void;
   editingTarget: EditingTarget | null;
@@ -10,7 +10,7 @@ type TransactionDialogsProps = {
   deleteTarget: Transaction | null;
   setDeleteTarget: (target: Transaction | null) => void;
   defaultDate: Date;
-  defaultAccount?: Account;
+  defaultAccount?: string;
   onSave: (draft: TransactionDraft) => void;
   onDelete: () => void;
 };
