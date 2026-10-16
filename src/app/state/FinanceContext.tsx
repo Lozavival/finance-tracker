@@ -26,7 +26,9 @@ export type FinanceContextValue = {
   saveTransactionDraft: (draft: TransactionDraft, editingTarget?: EditingTarget | null) => void;
   deleteTransactionTarget: (target: Transaction, scope?: 'only-this' | 'this-and-future' | 'all') => void;
   cancelRecurringRule: (ruleId: string, effectiveDate?: Date) => void;
+  cancelRecurringRulesForAccount: (accountId: string, effectiveDate?: Date) => void;
   deleteRecurringRule: (ruleId: string) => void;
+  deleteRecurringRulesForAccount: (accountId: string) => void;
   reassignType: (fromTypeId: string, toTypeId: string) => void;
   reassignPaymentMethod: (fromMethodId: string, toMethodId: string) => void;
 };
@@ -186,6 +188,31 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setTransactions(prev => prev.filter(t => t.recurring?.ruleId !== ruleId));
   }, []);
 
+  const cancelRecurringRulesForAccount = useCallback(
+    (accountId: string, effectiveDate: Date = today) => {
+      const activeRules = recurringRules.filter(r => r.accountId === accountId && r.status === 'active');
+      if (activeRules.length === 0) return;
+
+      const activeRuleIds = new Set(activeRules.map(r => r.id));
+
+      setRecurringRules(prev =>
+        prev.map(r => (activeRuleIds.has(r.id) ? { ...r, status: 'canceled', canceledAt: effectiveDate } : r)),
+      );
+
+      setTransactions(prev =>
+        prev.filter(
+          t => !(t.recurring && activeRuleIds.has(t.recurring.ruleId) && t.date.getTime() >= effectiveDate.getTime()),
+        ),
+      );
+    },
+    [recurringRules, today],
+  );
+
+  const deleteRecurringRulesForAccount = useCallback((accountId: string) => {
+    setRecurringRules(prev => prev.filter(r => r.accountId !== accountId));
+    setTransactions(prev => prev.filter(t => t.accountId !== accountId));
+  }, []);
+
   const reassignType = useCallback((fromTypeId: string, toTypeId: string) => {
     setTransactions(prev => prev.map(t => (t.typeId === fromTypeId ? { ...t, typeId: toTypeId } : t)));
   }, []);
@@ -208,7 +235,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       saveTransactionDraft,
       deleteTransactionTarget,
       cancelRecurringRule,
+      cancelRecurringRulesForAccount,
       deleteRecurringRule,
+      deleteRecurringRulesForAccount,
       reassignType,
       reassignPaymentMethod,
     }),
@@ -222,7 +251,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       saveTransactionDraft,
       deleteTransactionTarget,
       cancelRecurringRule,
+      cancelRecurringRulesForAccount,
       deleteRecurringRule,
+      deleteRecurringRulesForAccount,
       reassignType,
       reassignPaymentMethod,
     ],

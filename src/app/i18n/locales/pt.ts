@@ -292,6 +292,48 @@ export const pt: Translations = {
     addAccount: 'Adicionar conta',
     editAccount: 'Editar conta',
     deleteAccount: 'Excluir conta',
+    archiveAccount: 'Arquivar conta',
+    unarchiveAccount: 'Restaurar conta',
+    archivedBadge: 'Arquivada',
+    archivedSectionTitle: 'Contas arquivadas ({count})',
+    archivedSectionDesc:
+      'Contas antigas ou desativadas removidas das visualizações regulares. O histórico de transações e faturas é preservado.',
+    showArchived: 'Mostrar arquivadas ({count})',
+    hideArchived: 'Ocultar arquivadas',
+    archivedAlert:
+      'Esta conta está arquivada e removida das visualizações regulares. O histórico de transações e faturas é preservado.',
+    deleteOrArchive: 'Excluir ou arquivar conta...',
+    deleteDialog: {
+      title: 'Excluir conta',
+      cannotDeleteTitle: 'A conta não pode ser excluída',
+      hasTransactionsWarning:
+        '"{name}" não pode ser excluída permanentemente porque possui {count} transação(ões) associada(s). Você pode arquivá-la para removê-la da visualização e preservar seu histórico de transações.',
+      archivedCannotDeleteDesc:
+        '"{name}" não pode ser excluída permanentemente porque possui {count} transação(ões) associada(s). Ela já está arquivada, mantendo seu histórico financeiro preservado.',
+      noTransactionsDesc:
+        'Tem certeza de que deseja excluir permanentemente "{name}"? Como ela não possui transações associadas, será removida completamente. Esta ação não pode ser desfeita.',
+      lastAccountWarning:
+        'Não é possível excluir a única conta ativa restante. Você deve manter pelo menos uma conta ativa.',
+      confirmDelete: 'Excluir permanentemente',
+      archiveInstead: 'Arquivar conta em vez disso',
+    },
+    archiveDialog: {
+      title: 'Arquivar conta',
+      descWithTransactions:
+        'Tem certeza de que deseja arquivar "{name}"? Ela será removida das contas ativas e dos seletores de transação, mas suas {count} transações e faturas históricas serão preservadas.',
+      descNoTransactions:
+        'Tem certeza de que deseja arquivar "{name}"? Ela será removida das contas ativas e dos seletores de transação.',
+      hasRulesWarning:
+        'Esta conta possui {count} regra(s) recorrente(s) ativa(s). O arquivamento a desativará para novas transações.',
+      lastAccountWarning:
+        'Não é possível arquivar a única conta ativa restante. Você deve manter pelo menos uma conta ativa.',
+      confirmArchive: 'Arquivar conta',
+    },
+    restoreDialog: {
+      title: 'Restaurar conta',
+      desc: 'Tem certeza de que deseja restaurar "{name}"? Ela voltará a ficar ativa e aparecerá na lista de contas e nos seletores de transações.',
+      confirmRestore: 'Restaurar conta',
+    },
     saveChanges: 'Salvar alterações',
     backToAccounts: 'Voltar para contas',
     accountNotFound: 'Conta não encontrada',

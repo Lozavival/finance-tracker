@@ -102,8 +102,9 @@ export function TransactionFormDialog({
     setErrors({});
     setShowConvertConfirm(false);
     setPendingDraft(null);
-    const firstAcc = settings.accounts[0]?.id || '';
-    const secondAcc = settings.accounts[1]?.id || settings.accounts[0]?.id || '';
+    const activeAccounts = settings.accounts.filter(a => !a.archived);
+    const firstAcc = activeAccounts[0]?.id || settings.accounts[0]?.id || '';
+    const secondAcc = activeAccounts[1]?.id || activeAccounts[0]?.id || firstAcc;
     const initialAcc = defaultAccount || firstAcc;
 
     if (!editing) {
@@ -334,11 +335,22 @@ export function TransactionFormDialog({
   }, [mode, typesByDirection]);
 
   const accountOptions = useMemo(() => {
-    return settings.accounts.map(a => ({
-      value: a.id,
-      label: a.name,
-    }));
-  }, [settings.accounts]);
+    return settings.accounts
+      .filter(a => !a.archived || a.id === accountId)
+      .map(a => ({
+        value: a.id,
+        label: a.archived ? `${a.name} (${t('accounts.archivedBadge')})` : a.name,
+      }));
+  }, [settings.accounts, accountId, t]);
+
+  const transferAccountOptions = useMemo(() => {
+    return settings.accounts
+      .filter(a => !a.archived || a.id === fromAccountId || a.id === toAccountId)
+      .map(a => ({
+        value: a.id,
+        label: a.archived ? `${a.name} (${t('accounts.archivedBadge')})` : a.name,
+      }));
+  }, [settings.accounts, fromAccountId, toAccountId, t]);
 
   const paymentOptions = useMemo(() => {
     return availablePaymentMethods.map(m => {
@@ -481,14 +493,14 @@ export function TransactionFormDialog({
                     <OptionSelect
                       label={t('transactions.fromAccount')}
                       value={fromAccountId}
-                      options={accountOptions}
+                      options={transferAccountOptions}
                       onChange={setFromAccountId}
                       error={errors.banks}
                     />
                     <OptionSelect
                       label={t('transactions.toAccount')}
                       value={toAccountId}
-                      options={accountOptions}
+                      options={transferAccountOptions}
                       onChange={setToAccountId}
                       error={errors.banks}
                     />

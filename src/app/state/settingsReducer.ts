@@ -23,6 +23,9 @@ export type SettingsAction =
   | { type: 'method/reorder'; payload: { methods: PaymentMethodConfig[] } }
   | { type: 'account/add'; payload: AccountConfig }
   | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } }
+  | { type: 'account/remove'; payload: { id: string } }
+  | { type: 'account/archive'; payload: { id: string } }
+  | { type: 'account/unarchive'; payload: { id: string } }
   | { type: 'goals/updateReferenceIncome'; payload: { income: number } }
   | { type: 'goals/updateMode'; payload: { mode: 'percentage' | 'currency' } }
   | { type: 'goals/updateAllocations'; payload: { categories: GoalCategory[] } }
@@ -153,6 +156,27 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
           if (a.id !== action.payload.id) return a;
           return { ...a, ...action.payload.changes };
         }),
+      };
+    }
+
+    case 'account/remove': {
+      return {
+        ...state,
+        accounts: state.accounts.filter(a => a.id !== action.payload.id),
+      };
+    }
+
+    case 'account/archive': {
+      return {
+        ...state,
+        accounts: state.accounts.map(a => (a.id === action.payload.id ? { ...a, archived: true } : a)),
+      };
+    }
+
+    case 'account/unarchive': {
+      return {
+        ...state,
+        accounts: state.accounts.map(a => (a.id === action.payload.id ? { ...a, archived: false } : a)),
       };
     }
 

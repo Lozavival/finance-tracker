@@ -28,6 +28,7 @@ import { useSettings } from '@/state/SettingsContext';
 import { getToday } from '@/data/dates';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
+import { Trash2 } from 'lucide-react';
 
 type AccountFormDialogProps = {
   open: boolean;
@@ -35,9 +36,17 @@ type AccountFormDialogProps = {
   account?: AccountConfig | null;
   transactions: Transaction[];
   onSave: (account: AccountConfig) => void;
+  onDeleteOrArchive?: (account: AccountConfig) => void;
 };
 
-export function AccountFormDialog({ open, onOpenChange, account, transactions, onSave }: AccountFormDialogProps) {
+export function AccountFormDialog({
+  open,
+  onOpenChange,
+  account,
+  transactions,
+  onSave,
+  onDeleteOrArchive,
+}: AccountFormDialogProps) {
   const isEditing = Boolean(account);
   const { settings, isCreditCard } = useSettings();
   const { t } = useI18n();
@@ -338,6 +347,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
       openingBalance: Math.round(numBalance * 100),
       openingDate,
       allowedPaymentMethods,
+      archived: account?.archived,
       card:
         hasCard && kind !== 'Cash'
           ? {
@@ -501,18 +511,36 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
             )}
           </div>
 
-          <DialogFooter className="border-t border-border p-6 flex-shrink-0 sm:justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button variant="cyan" type="submit">
-              {isEditing ? t('accounts.saveChanges') : t('accounts.addAccount')}
-            </Button>
+          <DialogFooter className="border-t border-border p-6 flex-shrink-0 sm:justify-between items-center gap-2">
+            <div>
+              {isEditing && account && onDeleteOrArchive && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onDeleteOrArchive(account);
+                  }}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5 text-xs px-2"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {t('accounts.deleteOrArchive')}
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button variant="cyan" type="submit">
+                {isEditing ? t('accounts.saveChanges') : t('accounts.addAccount')}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -4,8 +4,16 @@ import { type AccountLedger, getAccountForecast } from '@/data/ledger';
 import { UpcomingList } from './UpcomingList';
 import { CardBillSummary } from './CardBillSummary';
 import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
+import { Badge } from '@/components/primitives/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import { useState, useMemo } from 'react';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronRight, Plus, MoreVertical, Pencil, Archive, ArchiveRestore, Trash2, ChevronDown } from 'lucide-react';
 import { UpcomingPeriodFilter } from '@/components/shared/filters/UpcomingPeriodFilter';
 import { type Transaction } from '@/data/transactions';
 import { resolveUpcomingHorizon, formatShort, type UpcomingPeriodType } from '@/data/dates';
@@ -13,6 +21,9 @@ import { useSettings } from '@/state/SettingsContext';
 import { useFinance } from '@/state/FinanceContext';
 import { getAccountColor, type AccountConfig } from '@/data/settings';
 import { AccountFormDialog } from './AccountFormDialog';
+import { DeleteAccountDialog } from './DeleteAccountDialog';
+import { ArchiveAccountDialog } from './ArchiveAccountDialog';
+import { RestoreAccountDialog } from './RestoreAccountDialog';
 import { useI18n } from '@/i18n';
 
 type AccountsPageProps = {
@@ -38,15 +49,44 @@ export function AccountsPage({
   const { t, formatCents, locale } = useI18n();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<AccountConfig | null>(null);
+
+  const [deleteTargetAccount, setDeleteTargetAccount] = useState<AccountConfig | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [archiveTargetAccount, setArchiveTargetAccount] = useState<AccountConfig | null>(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+
+  const [restoreTargetAccount, setRestoreTargetAccount] = useState<AccountConfig | null>(null);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+
+  const [showArchived, setShowArchived] = useState(false);
 
   const horizonEnd = useMemo(() => {
     return resolveUpcomingHorizon(upcomingPeriod, finance.today);
   }, [finance.today, upcomingPeriod]);
 
+  const activeAccounts = useMemo(() => {
+    return settings.accounts.filter(a => !a.archived);
+  }, [settings.accounts]);
+
+  const archivedAccounts = useMemo(() => {
+    return settings.accounts.filter(a => a.archived);
+  }, [settings.accounts]);
+
   let totalBalance = 0;
   let totalIn = 0;
   let totalOut = 0;
   let totalProjected = 0;
+
+  activeAccounts.forEach(acc => {
+    const ledger = finance.ledgers[acc.id];
+    const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
+    totalBalance += forecast.current;
+    totalIn += forecast.upcomingIn;
+    totalOut += forecast.upcomingOut;
+    totalProjected += forecast.projected;
+  });
 
   const handleSelect = (accountId: string) => {
     if (onAccountSelect) {
@@ -56,26 +96,44 @@ export function AccountsPage({
     }
   };
 
-  const cards = settings.accounts.map(acc => {
+  const handleOpenDelete = (acc: AccountConfig, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setDeleteTargetAccount(acc);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleOpenArchive = (acc: AccountConfig, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setArchiveTargetAccount(acc);
+    setArchiveDialogOpen(true);
+  };
+
+  const handleOpenRestore = (acc: AccountConfig, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setRestoreTargetAccount(acc);
+    setRestoreDialogOpen(true);
+  };
+
+  const handleOpenEdit = (acc: AccountConfig, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingAccount(acc);
+  };
+
+  const activeCards = activeAccounts.map(acc => {
     const details = acc;
     const ledger = finance.ledgers[acc.id];
     const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
 
-    totalBalance += forecast.current;
-    totalIn += forecast.upcomingIn;
-    totalOut += forecast.upcomingOut;
-    totalProjected += forecast.projected;
-
     return (
       <Card
         key={acc.id}
-        className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all cursor-pointer group"
+        className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all cursor-pointer group"
         onClick={() => handleSelect(acc.id)}
       >
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm flex-shrink-0"
               style={{ backgroundColor: getAccountColor(details.color) }}
             >
               {details.initials}
@@ -95,8 +153,35 @@ export function AccountsPage({
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-foreground text-xl font-medium">{formatCents(forecast.current)}</div>
+          <div className="flex items-center gap-1">
+            <div className="text-right mr-1">
+              <div className="text-foreground text-xl font-medium">{formatCents(forecast.current)}</div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover border-border">
+                <DropdownMenuItem onClick={e => handleOpenEdit(acc, e)}>
+                  <Pencil className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
+                  {t('accounts.editAccount')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={e => handleOpenArchive(acc, e)}>
+                  <Archive className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                  {t('accounts.archiveAccount')}
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={e => handleOpenDelete(acc, e)}>
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  {t('accounts.deleteAccount')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -122,7 +207,7 @@ export function AccountsPage({
           </div>
 
           {forecast.lowest.balance < Math.min(forecast.current, forecast.projected) && (
-            <div className="text-xs text-theme-orange mt-2 p-2 bg-orange-500/10 rounded-md">
+            <div className="text-xs text-theme-orange mt-2 p-2 bg-theme-orange/10 rounded-md">
               {t('accounts.dipsTo', {
                 amount: formatCents(forecast.lowest.balance),
                 date: formatShort(forecast.lowest.date, locale),
@@ -139,8 +224,96 @@ export function AccountsPage({
     );
   });
 
-  function handleSaveAccount(newAccount: AccountConfig) {
-    dispatch({ type: 'account/add', payload: newAccount });
+  const archivedCards = archivedAccounts.map(acc => {
+    const details = acc;
+    const ledger = finance.ledgers[acc.id];
+    const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
+
+    return (
+      <Card
+        key={acc.id}
+        className="p-6 bg-foreground/[0.03] backdrop-blur-xl border border-dashed border-border/80 hover:border-theme-cyan/40 transition-all opacity-85 hover:opacity-100 cursor-pointer group"
+        onClick={() => handleSelect(acc.id)}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm flex-shrink-0 grayscale opacity-80"
+              style={{ backgroundColor: getAccountColor(details.color) }}
+            >
+              {details.initials}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
+                  {details.name}
+                </span>
+                <Badge
+                  variant="outline"
+                  className="border-theme-orange/40 bg-theme-orange/10 text-theme-orange text-[10px] px-1.5 py-0"
+                >
+                  {t('accounts.archivedBadge')}
+                </Badge>
+              </div>
+              <div className="text-muted-foreground text-sm">
+                {details.kind === 'Checking'
+                  ? t('accounts.dialog.checking')
+                  : details.kind === 'Savings'
+                    ? t('accounts.dialog.savings')
+                    : details.kind === 'Cash'
+                      ? t('accounts.dialog.cash')
+                      : details.kind}
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-muted-foreground text-lg font-medium">{formatCents(forecast.current)}</div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/50 flex items-center justify-between gap-2 mt-4">
+          <Button size="sm" variant="cyan" onClick={e => handleOpenRestore(acc, e)} className="h-8 text-xs gap-1.5">
+            <ArchiveRestore className="w-3.5 h-3.5" />
+            {t('accounts.unarchiveAccount')}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={e => handleOpenDelete(acc, e)}
+            className="h-8 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {t('accounts.deleteAccount')}
+          </Button>
+        </div>
+      </Card>
+    );
+  });
+
+  function handleSaveAccount(account: AccountConfig) {
+    if (editingAccount) {
+      dispatch({
+        type: 'account/update',
+        payload: {
+          id: account.id,
+          changes: {
+            name: account.name,
+            kind: account.kind,
+            initials: account.initials,
+            color: account.color,
+            openingBalance: account.openingBalance,
+            openingDate: account.openingDate,
+            card: account.card,
+            allowedPaymentMethods: account.allowedPaymentMethods,
+            archived: account.archived,
+          },
+        },
+      });
+      setEditingAccount(null);
+    } else {
+      dispatch({ type: 'account/add', payload: account });
+    }
   }
 
   return (
@@ -171,20 +344,24 @@ export function AccountsPage({
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
           <div className="text-2xl text-theme-red">{formatCents(totalOut)}</div>
         </Card>
-        <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
+        <Card className="p-4 bg-theme-cyan/10 border-theme-cyan/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
           <div className="text-2xl text-theme-cyan">{formatCents(totalProjected)}</div>
         </Card>
       </div>
 
+      {/* Active Accounts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards}
+        {activeCards}
         <button
           type="button"
-          onClick={() => setDialogOpen(true)}
-          className="group relative flex h-full min-h-[350px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/80 bg-foreground/[0.02] p-6 text-center transition-all hover:border-cyan-500/50 hover:bg-cyan-500/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 cursor-pointer"
+          onClick={() => {
+            setEditingAccount(null);
+            setDialogOpen(true);
+          }}
+          className="group relative flex h-full min-h-[350px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/80 bg-foreground/[0.02] p-6 text-center transition-all hover:border-theme-cyan/50 hover:bg-theme-cyan/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-cyan/50 cursor-pointer"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border/80 text-muted-foreground shadow-sm transition-all group-hover:scale-105 group-hover:border-cyan-500/60 group-hover:bg-cyan-500/10 group-hover:text-theme-cyan">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border/80 text-muted-foreground shadow-sm transition-all group-hover:scale-105 group-hover:border-theme-cyan/60 group-hover:bg-theme-cyan/10 group-hover:text-theme-cyan">
             <Plus className="h-6 w-6" />
           </div>
           <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-theme-cyan">
@@ -193,11 +370,105 @@ export function AccountsPage({
         </button>
       </div>
 
+      {/* Archived Accounts Section */}
+      {archivedAccounts.length > 0 && (
+        <div className="border border-border/60 rounded-xl bg-foreground/[0.02] p-6 backdrop-blur-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-theme-orange/10 text-theme-orange">
+                <Archive className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-foreground font-medium flex items-center gap-2">
+                  <span>{t('accounts.archivedSectionTitle', { count: archivedAccounts.length })}</span>
+                  <Badge
+                    variant="outline"
+                    className="border-theme-orange/40 bg-theme-orange/10 text-theme-orange text-xs"
+                  >
+                    {t('accounts.archivedBadge')}
+                  </Badge>
+                </div>
+                <div className="text-muted-foreground text-xs">{t('accounts.archivedSectionDesc')}</div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowArchived(!showArchived)}
+              className="h-8 gap-1.5 border-border bg-foreground/5 text-foreground hover:bg-foreground/10 text-xs"
+            >
+              {showArchived
+                ? t('accounts.hideArchived')
+                : t('accounts.showArchived', { count: archivedAccounts.length })}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+            </Button>
+          </div>
+
+          {showArchived && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">{archivedCards}</div>
+          )}
+        </div>
+      )}
+
       <AccountFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={dialogOpen || Boolean(editingAccount)}
+        onOpenChange={open => {
+          if (!open) {
+            setDialogOpen(false);
+            setEditingAccount(null);
+          }
+        }}
+        account={editingAccount}
         transactions={transactions}
         onSave={handleSaveAccount}
+        onDeleteOrArchive={acc => {
+          setEditingAccount(null);
+          setDialogOpen(false);
+          const hasTx = transactions.some(t => t.accountId === acc.id);
+          if (hasTx) {
+            setArchiveTargetAccount(acc);
+            setArchiveDialogOpen(true);
+          } else {
+            setDeleteTargetAccount(acc);
+            setDeleteDialogOpen(true);
+          }
+        }}
+      />
+
+      <DeleteAccountDialog
+        account={deleteTargetAccount}
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeleteTargetAccount(null);
+        }}
+        transactions={transactions}
+        onSwitchToArchive={acc => {
+          setDeleteDialogOpen(false);
+          setDeleteTargetAccount(null);
+          setArchiveTargetAccount(acc);
+          setArchiveDialogOpen(true);
+        }}
+      />
+
+      <ArchiveAccountDialog
+        account={archiveTargetAccount}
+        open={archiveDialogOpen}
+        onClose={() => {
+          setArchiveDialogOpen(false);
+          setArchiveTargetAccount(null);
+        }}
+        transactions={transactions}
+        recurringRules={financeContext.recurringRules}
+      />
+
+      <RestoreAccountDialog
+        account={restoreTargetAccount}
+        open={restoreDialogOpen}
+        onClose={() => {
+          setRestoreDialogOpen(false);
+          setRestoreTargetAccount(null);
+        }}
       />
     </div>
   );

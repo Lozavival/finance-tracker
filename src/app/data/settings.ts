@@ -168,6 +168,7 @@ export type AccountConfig = {
   color: ColorToken;
   card?: CreditCardConfig;
   allowedPaymentMethods?: string[];
+  archived?: boolean;
 };
 
 import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';

@@ -8,13 +8,20 @@ import { CardStatementsPanel } from './CardStatementsPanel';
 import { BalanceProjectionChart } from './BalanceProjectionChart';
 import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
+import { Badge } from '@/components/primitives/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 import {
   resolvePeriodRange,
   type PeriodFilter as PeriodFilterType,
   sortTransactionsDescending,
   type Transaction,
 } from '@/data/transactions';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { ArrowLeft, Pencil, Archive, ArchiveRestore, Trash2, MoreVertical } from 'lucide-react';
 import { TransactionsMonthTable } from '@/components/shared/TransactionsMonthTable';
 import { TransactionDialogs } from '@/components/shared/transaction-dialogs/TransactionDialogs';
 import { PeriodFilter } from '@/components/shared/filters/PeriodFilter';
@@ -26,6 +33,9 @@ import { useTransactionActions } from '@/state/useTransactionActions';
 import { getAccountColor, type AccountConfig } from '@/data/settings';
 import { getIcon } from '@/data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
+import { DeleteAccountDialog } from './DeleteAccountDialog';
+import { ArchiveAccountDialog } from './ArchiveAccountDialog';
+import { RestoreAccountDialog } from './RestoreAccountDialog';
 import { useI18n } from '@/i18n';
 
 type AccountDetailPageProps = {
@@ -67,6 +77,9 @@ export function AccountDetailPage({
   }, [settings.paymentMethods, allowedMethodIds]);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
 
   const upcomingLimitDate = useMemo(() => {
@@ -177,6 +190,27 @@ export function AccountDetailPage({
         <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}
       </Button>
 
+      {details.archived && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-theme-orange/30 bg-theme-orange/10 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <Archive className="w-5 h-5 text-theme-orange flex-shrink-0" />
+            <div className="text-sm text-foreground">
+              <span className="font-semibold text-theme-orange mr-2">[{t('accounts.archivedBadge')}]</span>
+              {t('accounts.archivedAlert')}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="cyan"
+            onClick={() => setRestoreDialogOpen(true)}
+            className="h-8 gap-1.5 text-xs whitespace-nowrap"
+          >
+            <ArchiveRestore className="w-3.5 h-3.5" />
+            {t('accounts.unarchiveAccount')}
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">
           <div
@@ -186,19 +220,50 @@ export function AccountDetailPage({
             {details.initials}
           </div>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div role="heading" aria-level={1} className="text-foreground text-3xl mb-1">
                 {details.name}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditDialogOpen(true)}
-                className="h-8 gap-1.5 border-border bg-foreground/5 text-foreground hover:bg-foreground/10 text-xs"
-              >
-                <Pencil className="w-3.5 h-3.5 text-theme-cyan" />
-                {t('accounts.editAccount')}
-              </Button>
+              {details.archived && (
+                <Badge
+                  variant="outline"
+                  className="border-theme-orange/40 bg-theme-orange/10 text-theme-orange text-xs"
+                >
+                  {t('accounts.archivedBadge')}
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-popover border-border">
+                  <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+                    <Pencil className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
+                    {t('accounts.editAccount')}
+                  </DropdownMenuItem>
+                  {details.archived ? (
+                    <DropdownMenuItem onClick={() => setRestoreDialogOpen(true)}>
+                      <ArchiveRestore className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
+                      {t('accounts.unarchiveAccount')}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => setArchiveDialogOpen(true)}>
+                      <Archive className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                      {t('accounts.archiveAccount')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} variant="destructive">
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                    {t('accounts.deleteAccount')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <span className="text-muted-foreground text-sm">
@@ -307,7 +372,37 @@ export function AccountDetailPage({
         account={details}
         transactions={transactions}
         onSave={handleSaveAccount}
+        onDeleteOrArchive={() => {
+          const hasTx = transactions.some(t => t.accountId === details.id);
+          if (hasTx) {
+            setArchiveDialogOpen(true);
+          } else {
+            setDeleteDialogOpen(true);
+          }
+        }}
       />
+
+      <DeleteAccountDialog
+        account={details}
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        transactions={transactions}
+        onDeleted={handleBack}
+        onSwitchToArchive={() => {
+          setDeleteDialogOpen(false);
+          setArchiveDialogOpen(true);
+        }}
+      />
+
+      <ArchiveAccountDialog
+        account={details}
+        open={archiveDialogOpen}
+        onClose={() => setArchiveDialogOpen(false)}
+        transactions={transactions}
+        recurringRules={financeContext.recurringRules}
+      />
+
+      <RestoreAccountDialog account={details} open={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)} />
     </div>
   );
 }

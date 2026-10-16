@@ -288,6 +288,47 @@ export const en = {
     addAccount: 'Add account',
     editAccount: 'Edit account',
     deleteAccount: 'Delete Account',
+    archiveAccount: 'Archive account',
+    unarchiveAccount: 'Restore account',
+    archivedBadge: 'Archived',
+    archivedSectionTitle: 'Archived Accounts ({count})',
+    archivedSectionDesc:
+      'Old or deactivated accounts removed from regular views. Historical transactions and statements are preserved.',
+    showArchived: 'Show archived ({count})',
+    hideArchived: 'Hide archived',
+    archivedAlert:
+      'This account is archived and removed from regular views. Historical transactions and statements are preserved.',
+    deleteOrArchive: 'Delete or archive account...',
+    deleteDialog: {
+      title: 'Delete Account',
+      cannotDeleteTitle: 'Account Cannot Be Deleted',
+      hasTransactionsWarning:
+        '"{name}" cannot be permanently deleted because it has {count} associated transaction(s). You can archive it instead to remove it from view while preserving your transaction history.',
+      archivedCannotDeleteDesc:
+        '"{name}" cannot be permanently deleted because it has {count} associated transaction(s). It is already archived, keeping your financial history preserved.',
+      noTransactionsDesc:
+        'Are you sure you want to permanently delete "{name}"? Because it has no associated transactions, it will be permanently removed. This action cannot be undone.',
+      lastAccountWarning: 'Cannot delete the only remaining active account. You must keep at least one active account.',
+      confirmDelete: 'Delete permanently',
+      archiveInstead: 'Archive account instead',
+    },
+    archiveDialog: {
+      title: 'Archive Account',
+      descWithTransactions:
+        'Are you sure you want to archive "{name}"? It will be removed from your active accounts and transaction selectors, but its {count} historical transactions and statements will be preserved.',
+      descNoTransactions:
+        'Are you sure you want to archive "{name}"? It will be removed from your active accounts and transaction selectors.',
+      hasRulesWarning:
+        'This account has {count} active recurring rule(s). Archiving will deactivate it from new transactions.',
+      lastAccountWarning:
+        'Cannot archive the only remaining active account. You must keep at least one active account.',
+      confirmArchive: 'Archive account',
+    },
+    restoreDialog: {
+      title: 'Restore Account',
+      desc: 'Are you sure you want to restore "{name}"? It will become active again and appear in your regular accounts list and new transaction selectors.',
+      confirmRestore: 'Restore account',
+    },
     saveChanges: 'Save changes',
     backToAccounts: 'Back to Accounts',
     accountNotFound: 'Account not found',
