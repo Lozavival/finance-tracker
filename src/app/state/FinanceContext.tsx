@@ -7,22 +7,26 @@ import {
   buildTransferLegs,
   createTransactionId,
 } from '@/data/transactions';
-import { SEEDED_TRANSACTIONS } from '@/data/seed';
+import { SEEDED_TRANSACTIONS, SEEDED_RECURRING_RULES } from '@/data/seed';
 import { getToday } from '@/data/dates';
 import { type CardStatement, buildStatements } from '@/data/cardStatements';
 import { type CashMovement, type AccountLedger, buildCashMovements, buildLedgers } from '@/data/ledger';
 import { buildInstallments, findInstallmentSeries } from '@/data/installments';
+import { type RecurringRule, buildRecurringTransactions, findRecurringSeries } from '@/data/recurring';
 import { useSettings } from './SettingsContext';
 
 export type FinanceContextValue = {
   transactions: Transaction[];
+  recurringRules: RecurringRule[];
   statements: CardStatement[];
   movements: CashMovement[];
   ledgers: Record<string, AccountLedger>;
   today: Date;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
   saveTransactionDraft: (draft: TransactionDraft, editingTarget?: EditingTarget | null) => void;
-  deleteTransactionTarget: (target: Transaction) => void;
+  deleteTransactionTarget: (target: Transaction, scope?: 'only-this' | 'this-and-future' | 'all') => void;
+  cancelRecurringRule: (ruleId: string, effectiveDate?: Date) => void;
+  deleteRecurringRule: (ruleId: string) => void;
   reassignType: (fromTypeId: string, toTypeId: string) => void;
   reassignPaymentMethod: (fromMethodId: string, toMethodId: string) => void;
 };
@@ -32,6 +36,7 @@ const FinanceContext = createContext<FinanceContextValue | null>(null);
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const { settings, isCreditCard, findAccount } = useSettings();
   const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
+  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>(SEEDED_RECURRING_RULES);
   const today = useMemo(() => getToday(), []);
 
   const statements = useMemo(() => buildStatements(transactions, settings, today), [transactions, settings, today]);
@@ -63,6 +68,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             existingIds = editingTarget.series.map(t => t.id);
             groupId = editingTarget.series[0]?.installment?.groupId ?? createTransactionId();
             nextTransactions = nextTransactions.filter(t => t.installment?.groupId !== groupId);
+          } else if (editingTarget.kind === 'recurring') {
+            existingIds = editingTarget.series.map(t => t.id);
+            nextTransactions = nextTransactions.filter(t => t.recurring?.ruleId !== editingTarget.ruleId);
+            if (draft.kind !== 'recurring') {
+              setRecurringRules(prevRules => prevRules.filter(r => r.id !== editingTarget.ruleId));
+            }
           }
         }
 
@@ -95,6 +106,31 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             const newInstallments = buildInstallments(draft, groupId, ids);
             nextTransactions.push(...newInstallments);
           }
+        } else if (draft.kind === 'recurring') {
+          let ruleId = createTransactionId();
+          if (editingTarget && editingTarget.kind === 'recurring') {
+            ruleId = editingTarget.ruleId;
+          }
+          const newRule: RecurringRule = {
+            id: ruleId,
+            description: draft.transaction.description,
+            value: draft.value,
+            direction: draft.transaction.direction,
+            typeId: draft.transaction.typeId,
+            accountId: draft.transaction.accountId,
+            paymentMethodId: draft.transaction.paymentMethodId,
+            startDate: draft.startDate,
+            frequency: draft.frequency,
+            limit: draft.limit,
+            status: 'active',
+            createdAt: new Date(),
+          };
+          setRecurringRules(prevRules => {
+            const filtered = prevRules.filter(r => r.id !== ruleId);
+            return [...filtered, newRule];
+          });
+          const newInstances = buildRecurringTransactions(newRule, i => existingIds[i] ?? createTransactionId());
+          nextTransactions.push(...newInstances);
         }
 
         return nextTransactions;
@@ -103,16 +139,51 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [findAccount, isCreditCard],
   );
 
-  const deleteTransactionTarget = useCallback((target: Transaction) => {
-    setTransactions(prev => {
-      if (target.transferId) {
-        return prev.filter(t => t.transferId !== target.transferId);
-      }
-      if (target.installment) {
-        return prev.filter(t => t.installment?.groupId !== target.installment!.groupId);
-      }
-      return prev.filter(t => t.id !== target.id);
-    });
+  const deleteTransactionTarget = useCallback(
+    (target: Transaction, scope: 'only-this' | 'this-and-future' | 'all' = 'only-this') => {
+      setTransactions(prev => {
+        if (target.transferId) {
+          return prev.filter(t => t.transferId !== target.transferId);
+        }
+        if (target.installment) {
+          return prev.filter(t => t.installment?.groupId !== target.installment!.groupId);
+        }
+        if (target.recurring) {
+          const ruleId = target.recurring.ruleId;
+          if (scope === 'all') {
+            setRecurringRules(rRules => rRules.filter(r => r.id !== ruleId));
+            return prev.filter(t => t.recurring?.ruleId !== ruleId);
+          }
+          if (scope === 'this-and-future') {
+            setRecurringRules(rRules =>
+              rRules.map(r => (r.id === ruleId ? { ...r, status: 'canceled', canceledAt: target.date } : r)),
+            );
+            return prev.filter(t => !(t.recurring?.ruleId === ruleId && t.date.getTime() >= target.date.getTime()));
+          }
+          // 'only-this'
+          return prev.filter(t => t.id !== target.id);
+        }
+        return prev.filter(t => t.id !== target.id);
+      });
+    },
+    [],
+  );
+
+  const cancelRecurringRule = useCallback(
+    (ruleId: string, effectiveDate: Date = today) => {
+      setRecurringRules(prev =>
+        prev.map(r => (r.id === ruleId ? { ...r, status: 'canceled', canceledAt: effectiveDate } : r)),
+      );
+      setTransactions(prev =>
+        prev.filter(t => !(t.recurring?.ruleId === ruleId && t.date.getTime() >= effectiveDate.getTime())),
+      );
+    },
+    [today],
+  );
+
+  const deleteRecurringRule = useCallback((ruleId: string) => {
+    setRecurringRules(prev => prev.filter(r => r.id !== ruleId));
+    setTransactions(prev => prev.filter(t => t.recurring?.ruleId !== ruleId));
   }, []);
 
   const reassignType = useCallback((fromTypeId: string, toTypeId: string) => {
@@ -128,6 +199,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       transactions,
+      recurringRules,
       statements,
       movements,
       ledgers,
@@ -135,17 +207,22 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setTransactions,
       saveTransactionDraft,
       deleteTransactionTarget,
+      cancelRecurringRule,
+      deleteRecurringRule,
       reassignType,
       reassignPaymentMethod,
     }),
     [
       transactions,
+      recurringRules,
       statements,
       movements,
       ledgers,
       today,
       saveTransactionDraft,
       deleteTransactionTarget,
+      cancelRecurringRule,
+      deleteRecurringRule,
       reassignType,
       reassignPaymentMethod,
     ],
@@ -162,4 +239,4 @@ export function useFinance() {
   return context;
 }
 
-export { findTransferLegs, findInstallmentSeries };
+export { findTransferLegs, findInstallmentSeries, findRecurringSeries };

@@ -1,5 +1,5 @@
 import { TransactionFormDialog } from './TransactionFormDialog';
-import { DeleteTransactionDialog } from './DeleteTransactionDialog';
+import { DeleteTransactionDialog, type DeletionScope } from './DeleteTransactionDialog';
 import { type Transaction, type TransactionDraft, type EditingTarget } from '@/data/transactions';
 
 export type TransactionDialogsProps = {
@@ -11,8 +11,9 @@ export type TransactionDialogsProps = {
   setDeleteTarget: (target: Transaction | null) => void;
   defaultDate: Date;
   defaultAccount?: string;
+  initialRecurring?: boolean;
   onSave: (draft: TransactionDraft) => void;
-  onDelete: () => void;
+  onDelete: (scope?: DeletionScope) => void;
 };
 
 export function TransactionDialogs({
@@ -24,6 +25,7 @@ export function TransactionDialogs({
   setDeleteTarget,
   defaultDate,
   defaultAccount,
+  initialRecurring,
   onSave,
   onDelete,
 }: TransactionDialogsProps) {
@@ -34,6 +36,7 @@ export function TransactionDialogs({
         editing={editingTarget}
         defaultDate={defaultDate}
         defaultAccount={defaultAccount}
+        initialRecurring={initialRecurring}
         onOpenChange={open => {
           setDialogOpen(open);
           if (!open) setEditingTarget(null);

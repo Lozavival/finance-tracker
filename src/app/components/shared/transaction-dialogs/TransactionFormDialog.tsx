@@ -9,12 +9,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/primitives/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/primitives/alert-dialog';
 import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
 import { DirectionToggle, DialogMode } from './DirectionToggle';
 import { OptionSelect } from '@/components/shared/OptionSelect';
 import { DateField } from '@/components/shared/DateField';
 import { InstallmentsField } from './InstallmentsField';
+import { RecurringField } from './RecurringField';
 import { type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
@@ -30,6 +41,7 @@ export type TransactionFormDialogProps = {
   editing: EditingTarget | null;
   defaultDate: Date;
   defaultAccount?: string;
+  initialRecurring?: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (draft: TransactionDraft) => void;
 };
@@ -41,6 +53,7 @@ export function TransactionFormDialog({
   editing,
   defaultDate,
   defaultAccount,
+  initialRecurring,
   onOpenChange,
   onSave,
 }: TransactionFormDialogProps) {
@@ -55,6 +68,15 @@ export function TransactionFormDialog({
   const [accountId, setAccountId] = useState<string>('');
   const [paymentMethodId, setPaymentMethodId] = useState<string>('');
   const [installments, setInstallments] = useState<number | ''>(1);
+
+  // Recurrence
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringLimitKind, setRecurringLimitKind] = useState<'infinite' | 'count'>('infinite');
+  const [recurringCount, setRecurringCount] = useState<number | ''>(3);
+
+  // Convert confirmation when disabling recurrence on editing
+  const [showConvertConfirm, setShowConvertConfirm] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<TransactionDraft | null>(null);
 
   // Transfer specific
   const [fromAccountId, setFromAccountId] = useState<string>('');
@@ -78,6 +100,8 @@ export function TransactionFormDialog({
     if (!open) return;
 
     setErrors({});
+    setShowConvertConfirm(false);
+    setPendingDraft(null);
     const firstAcc = settings.accounts[0]?.id || '';
     const secondAcc = settings.accounts[1]?.id || settings.accounts[0]?.id || '';
     const initialAcc = defaultAccount || firstAcc;
@@ -95,6 +119,9 @@ export function TransactionFormDialog({
       const allowedMethods = settings.paymentMethods.filter(m => allowedIds.includes(m.id));
       setPaymentMethodId(allowedMethods[0]?.id || '');
       setInstallments(1);
+      setIsRecurring(Boolean(initialRecurring));
+      setRecurringLimitKind('infinite');
+      setRecurringCount(3);
       setFromAccountId(firstAcc);
       setToAccountId(secondAcc);
       return;
@@ -111,6 +138,7 @@ export function TransactionFormDialog({
       setAccountId(editing.outgoing.accountId);
       setPaymentMethodId(settings.paymentMethods[0]?.id || '');
       setInstallments(1);
+      setIsRecurring(false);
     } else if (editing.kind === 'installments') {
       const first = editing.series[0];
       setMode('expense');
@@ -122,6 +150,27 @@ export function TransactionFormDialog({
       setAccountId(first.accountId);
       if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(editing.series.length);
+      setIsRecurring(false);
+      setFromAccountId(firstAcc);
+      setToAccountId(secondAcc);
+    } else if (editing.kind === 'recurring') {
+      const first = editing.series[0];
+      setMode(first.direction);
+      setDescription(first.description);
+      setValue(String(first.value));
+      setDate(first.date);
+      setTypeId(first.typeId);
+      setAccountId(first.accountId);
+      if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
+      setInstallments(1);
+      setIsRecurring(true);
+      if (first.recurring?.total) {
+        setRecurringLimitKind('count');
+        setRecurringCount(first.recurring.total);
+      } else {
+        setRecurringLimitKind('infinite');
+        setRecurringCount(3);
+      }
       setFromAccountId(firstAcc);
       setToAccountId(secondAcc);
     } else {
@@ -134,10 +183,28 @@ export function TransactionFormDialog({
       setAccountId(tx.accountId);
       if (tx.paymentMethodId) setPaymentMethodId(tx.paymentMethodId);
       setInstallments(1);
+      setIsRecurring(Boolean(tx.recurring));
+      if (tx.recurring?.total) {
+        setRecurringLimitKind('count');
+        setRecurringCount(tx.recurring.total);
+      } else {
+        setRecurringLimitKind('infinite');
+        setRecurringCount(3);
+      }
       setFromAccountId(firstAcc);
       setToAccountId(secondAcc);
     }
-  }, [open, editing, defaultDate, defaultAccount, settings, typesByDirection, findAccount, getAllowedPaymentMethodIds]);
+  }, [
+    open,
+    editing,
+    defaultDate,
+    defaultAccount,
+    initialRecurring,
+    settings,
+    typesByDirection,
+    findAccount,
+    getAllowedPaymentMethodIds,
+  ]);
 
   // Adjust paymentMethodId if selected account changes and current method is not allowed
   useEffect(() => {
@@ -161,6 +228,9 @@ export function TransactionFormDialog({
       }
     }
   }
+
+  const isUncheckingRecurrence = editing?.kind === 'recurring' && !isRecurring;
+  const isEditingInstallments = editing?.kind === 'installments';
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -187,16 +257,35 @@ export function TransactionFormDialog({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || !date) return;
 
+    let draft: TransactionDraft;
     if (mode === 'transfer') {
-      onSave({
+      draft = {
         kind: 'transfer',
         date,
         value: normalizedValue,
         fromAccountId,
         toAccountId,
-      });
+      };
+    } else if (isRecurring) {
+      draft = {
+        kind: 'recurring',
+        transaction: {
+          description: normalizedDescription,
+          direction: mode,
+          typeId,
+          accountId,
+          ...(mode === 'expense' ? { paymentMethodId } : {}),
+        },
+        startDate: date,
+        value: normalizedValue,
+        frequency: 'monthly',
+        limit:
+          recurringLimitKind === 'count'
+            ? { kind: 'count', count: Math.max(1, Number(recurringCount) || 1) }
+            : { kind: 'infinite' },
+      };
     } else if (effectiveInstallments > 1) {
-      onSave({
+      draft = {
         kind: 'installments',
         transaction: {
           description: normalizedDescription,
@@ -208,9 +297,9 @@ export function TransactionFormDialog({
         firstDate: date,
         totalValue: normalizedValue,
         count: effectiveInstallments,
-      });
+      };
     } else {
-      onSave({
+      draft = {
         kind: 'single',
         transaction: {
           description: normalizedDescription,
@@ -221,12 +310,19 @@ export function TransactionFormDialog({
           accountId,
           ...(mode === 'expense' ? { paymentMethodId } : {}),
         },
-      });
+      };
     }
+
+    if (isUncheckingRecurrence) {
+      setPendingDraft(draft);
+      setShowConvertConfirm(true);
+      return;
+    }
+
+    onSave(draft);
   }
 
   const isTransfer = mode === 'transfer';
-  const isEditingSeries = editing?.kind === 'installments';
 
   const typeOptions = useMemo(() => {
     const list = mode === 'income' ? typesByDirection.income : typesByDirection.expense;
@@ -256,145 +352,202 @@ export function TransactionFormDialog({
   }, [availablePaymentMethods]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-2xl">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-border p-6 pr-14">
-            <DialogTitle>{editing ? t('transactions.editTransaction') : t('transactions.addTransaction')}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {isTransfer
-                ? t('transactions.moveMoneyDesc')
-                : editing
-                  ? t('transactions.updateTxDesc')
-                  : t('transactions.recordTxDesc')}
-            </DialogDescription>
-          </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-2xl">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader className="border-b border-border p-6 pr-14">
+              <DialogTitle>
+                {editing ? t('transactions.editTransaction') : t('transactions.addTransaction')}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                {isTransfer
+                  ? t('transactions.moveMoneyDesc')
+                  : editing
+                    ? t('transactions.updateTxDesc')
+                    : t('transactions.recordTxDesc')}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-6 p-6">
-            <DirectionToggle value={mode} onChange={handleModeChange} />
+            <div className="space-y-6 p-6">
+              <DirectionToggle value={mode} onChange={handleModeChange} />
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              {!isTransfer && (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="transaction-description" className="text-foreground">
-                    {t('common.description')}
+              <div className="grid gap-5 sm:grid-cols-2">
+                {!isTransfer && (
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="transaction-description" className="text-foreground">
+                      {t('common.description')}
+                    </Label>
+                    <Input
+                      id="transaction-description"
+                      value={description}
+                      onChange={event => setDescription(event.target.value)}
+                      placeholder={t('transactions.descPlaceholder')}
+                      aria-invalid={Boolean(errors.description)}
+                      className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+                    />
+                    {errors.description && <div className="text-destructive text-sm">{errors.description}</div>}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="text-foreground">
+                    {isRecurring
+                      ? t('transactions.startDate')
+                      : effectiveInstallments > 1
+                        ? t('transactions.firstInstallment')
+                        : t('common.date')}
+                  </Label>
+                  <DateField
+                    placeholder={t('transactions.chooseDate')}
+                    value={date}
+                    onChange={d => setDate(d)}
+                    hasError={Boolean(errors.date)}
+                    className="h-11"
+                  />
+                  {errors.date && <div className="text-destructive text-sm">{errors.date}</div>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transaction-value" className="text-foreground">
+                    {isRecurring
+                      ? t('transactions.valuePerMonth')
+                      : effectiveInstallments > 1
+                        ? t('common.totalValue')
+                        : t('common.value')}
                   </Label>
                   <Input
-                    id="transaction-description"
-                    value={description}
-                    onChange={event => setDescription(event.target.value)}
-                    placeholder={t('transactions.descPlaceholder')}
-                    aria-invalid={Boolean(errors.description)}
+                    id="transaction-value"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={value}
+                    onChange={event => setValue(event.target.value)}
+                    placeholder={t('transactions.amountPlaceholder')}
+                    aria-invalid={Boolean(errors.value)}
                     className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
                   />
-                  {errors.description && <div className="text-red-400 text-sm">{errors.description}</div>}
+                  {errors.value && <div className="text-destructive text-sm">{errors.value}</div>}
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <Label className="text-foreground">
-                  {effectiveInstallments > 1 ? t('transactions.firstInstallment') : t('common.date')}
-                </Label>
-                <DateField
-                  placeholder={t('transactions.chooseDate')}
-                  value={date}
-                  onChange={d => setDate(d)}
-                  hasError={Boolean(errors.date)}
-                  className="h-11"
-                />
-                {errors.date && <div className="text-red-400 text-sm">{errors.date}</div>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="transaction-value" className="text-foreground">
-                  {effectiveInstallments > 1 ? t('common.totalValue') : t('common.value')}
-                </Label>
-                <Input
-                  id="transaction-value"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={value}
-                  onChange={event => setValue(event.target.value)}
-                  placeholder={t('transactions.amountPlaceholder')}
-                  aria-invalid={Boolean(errors.value)}
-                  className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
-                />
-                {errors.value && <div className="text-red-400 text-sm">{errors.value}</div>}
-              </div>
-
-              {!isTransfer ? (
-                <>
-                  <OptionSelect
-                    label={t('common.category')}
-                    value={typeId}
-                    options={typeOptions}
-                    onChange={setTypeId}
-                  />
-                  <OptionSelect
-                    label={t('common.account')}
-                    value={accountId}
-                    options={accountOptions}
-                    onChange={setAccountId}
-                  />
-                  {mode === 'expense' && (
-                    <>
-                      <OptionSelect
-                        label={t('transactions.formOfPayment')}
-                        value={paymentMethodId}
-                        options={paymentOptions}
-                        onChange={setPaymentMethodId}
-                      />
-                      {canUseInstallments && (
-                        <InstallmentsField
-                          value={installments}
-                          onChange={setInstallments}
-                          totalValue={Number(value) || 0}
+                {!isTransfer ? (
+                  <>
+                    <OptionSelect
+                      label={t('common.category')}
+                      value={typeId}
+                      options={typeOptions}
+                      onChange={setTypeId}
+                    />
+                    <OptionSelect
+                      label={t('common.account')}
+                      value={accountId}
+                      options={accountOptions}
+                      onChange={setAccountId}
+                    />
+                    {mode === 'expense' && (
+                      <>
+                        <OptionSelect
+                          label={t('transactions.formOfPayment')}
+                          value={paymentMethodId}
+                          options={paymentOptions}
+                          onChange={setPaymentMethodId}
                         />
-                      )}
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <OptionSelect
-                    label={t('transactions.fromAccount')}
-                    value={fromAccountId}
-                    options={accountOptions}
-                    onChange={setFromAccountId}
-                    error={errors.banks}
-                  />
-                  <OptionSelect
-                    label={t('transactions.toAccount')}
-                    value={toAccountId}
-                    options={accountOptions}
-                    onChange={setToAccountId}
-                    error={errors.banks}
-                  />
-                </>
+                        {canUseInstallments && !isRecurring && (
+                          <InstallmentsField
+                            value={installments}
+                            onChange={setInstallments}
+                            totalValue={Number(value) || 0}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {effectiveInstallments <= 1 && (
+                      <RecurringField
+                        isRecurring={isRecurring}
+                        onRecurringChange={checked => {
+                          setIsRecurring(checked);
+                          if (checked) setInstallments(1);
+                        }}
+                        limitKind={recurringLimitKind}
+                        onLimitKindChange={setRecurringLimitKind}
+                        count={recurringCount}
+                        onCountChange={setRecurringCount}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <OptionSelect
+                      label={t('transactions.fromAccount')}
+                      value={fromAccountId}
+                      options={accountOptions}
+                      onChange={setFromAccountId}
+                      error={errors.banks}
+                    />
+                    <OptionSelect
+                      label={t('transactions.toAccount')}
+                      value={toAccountId}
+                      options={accountOptions}
+                      onChange={setToAccountId}
+                      error={errors.banks}
+                    />
+                  </>
+                )}
+              </div>
+              {isEditingInstallments && !canUseInstallments && (
+                <InlineAlert variant="warning">{t('transactions.installmentsHint')}</InlineAlert>
+              )}
+              {isUncheckingRecurrence && (
+                <InlineAlert variant="warning">{t('transactions.disableRecurrenceWarning')}</InlineAlert>
               )}
             </div>
-            {isEditingSeries && !canUseInstallments && (
-              <InlineAlert variant="warning">{t('transactions.installmentsHint')}</InlineAlert>
-            )}
-          </div>
 
-          <DialogFooter className="border-t border-border p-6 sm:justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            <DialogFooter className="border-t border-border p-6 sm:justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button variant="cyan" type="submit">
+                {editing ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                {editing ? t('transactions.saveChanges') : t('transactions.addTransaction')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showConvertConfirm} onOpenChange={setShowConvertConfirm}>
+        <AlertDialogContent className="border-border bg-popover text-foreground sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('transactions.confirmConvertToSingleTitle')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {t('transactions.confirmConvertToSingleDesc', { description })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-foreground">
+              {t('transactions.keepRecurring')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDraft) {
+                  onSave(pendingDraft);
+                  setShowConvertConfirm(false);
+                  setPendingDraft(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t('common.cancel')}
-            </Button>
-            <Button variant="cyan" type="submit">
-              {editing ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-              {editing ? t('transactions.saveChanges') : t('transactions.addTransaction')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              {t('transactions.convertToSingle')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

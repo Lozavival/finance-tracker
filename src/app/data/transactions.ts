@@ -1,5 +1,6 @@
 import { parseLocalDate, getToday, formatShort, formatMonthYear } from './dates';
 import { type TransactionTypeConfig, TRANSFER_TYPE_ID, colorVar } from './settings';
+import { type RecurringInfo, type RecurrenceLimit } from './recurring';
 
 export type TransactionDirection = 'income' | 'expense';
 export const TRANSACTION_DIRECTIONS = ['income', 'expense'] as const;
@@ -26,6 +27,7 @@ export type Transaction = {
   paymentMethodId?: string;
   transferId?: string;
   installment?: InstallmentInfo;
+  recurring?: RecurringInfo;
 };
 
 export type TransactionDraft =
@@ -43,12 +45,21 @@ export type TransactionDraft =
       firstDate: Date;
       totalValue: number;
       count: number;
+    }
+  | {
+      kind: 'recurring';
+      transaction: Omit<Transaction, 'id' | 'date' | 'value' | 'installment' | 'recurring'>;
+      startDate: Date;
+      value: number;
+      frequency: 'monthly';
+      limit: RecurrenceLimit;
     };
 
 export type EditingTarget =
   | { kind: 'single'; transaction: Transaction }
   | { kind: 'transfer'; outgoing: Transaction; incoming: Transaction }
-  | { kind: 'installments'; series: Transaction[] };
+  | { kind: 'installments'; series: Transaction[] }
+  | { kind: 'recurring'; series: Transaction[]; ruleId: string };
 
 export function buildTransferLegs(
   draft: Extract<TransactionDraft, { kind: 'transfer' }>,

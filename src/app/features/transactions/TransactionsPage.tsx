@@ -1,6 +1,6 @@
 import { getToday } from '@/data/dates';
 import { useMemo, useState } from 'react';
-import { Plus, RotateCcw } from 'lucide-react';
+import { Plus, RotateCcw, Repeat } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card } from '@/components/primitives/card';
 import { TransactionsMonthTable } from '@/components/shared/TransactionsMonthTable';
@@ -8,6 +8,7 @@ import { PeriodFilter } from '@/components/shared/filters/PeriodFilter';
 import { TypeFilter } from './TypeFilter';
 import { DirectionFilter } from './DirectionFilter';
 import { PaymentFilter } from './PaymentFilter';
+import { RecurringRulesDialog } from './RecurringRulesDialog';
 import {
   resolvePeriodRange,
   sortTransactionsDescending,
@@ -34,6 +35,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [recurringRulesOpen, setRecurringRulesOpen] = useState(false);
 
   const {
     dialogOpen,
@@ -42,6 +44,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
     setEditingTarget,
     deleteTarget,
     setDeleteTarget,
+    initialRecurring,
     openAddDialog,
     openEditDialog,
     saveTransaction,
@@ -94,10 +97,20 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
           </div>
           <div className="text-muted-foreground">{t('transactions.subtitle')}</div>
         </div>
-        <Button variant="cyan" onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('transactions.addTransaction')}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setRecurringRulesOpen(true)}
+            className="border-border bg-foreground/5 hover:bg-foreground/10 text-foreground"
+          >
+            <Repeat className="mr-2 h-4 w-4 text-theme-cyan" />
+            {t('transactions.recurringRules')}
+          </Button>
+          <Button variant="cyan" onClick={() => openAddDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('transactions.addTransaction')}
+          </Button>
+        </div>
       </div>
 
       <Card className="gap-0 backdrop-blur-xl overflow-hidden">
@@ -113,7 +126,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
                 variant="ghost"
                 size="sm"
                 onClick={resetFilters}
-                className="text-theme-cyan hover:bg-cyan-500/10 hover:text-theme-cyan"
+                className="text-theme-cyan hover:bg-theme-cyan/10 hover:text-theme-cyan"
               >
                 <RotateCcw className="mr-1 h-4 w-4" />
                 {t('common.clearFilters')}
@@ -148,6 +161,12 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
         )}
       </Card>
 
+      <RecurringRulesDialog
+        open={recurringRulesOpen}
+        onOpenChange={setRecurringRulesOpen}
+        onAddNew={() => openAddDialog({ recurring: true })}
+      />
+
       <TransactionDialogs
         dialogOpen={dialogOpen}
         setDialogOpen={setDialogOpen}
@@ -156,6 +175,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
         defaultDate={getToday()}
+        initialRecurring={initialRecurring}
         onSave={saveTransaction}
         onDelete={deleteTransaction}
       />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, Repeat } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { formatSignedValue, groupTransactionsByMonth, Transaction } from '@/data/transactions';
 import { formatInstallmentLabel } from '@/data/installments';
+import { formatRecurringLabel } from '@/data/recurring';
 import { formatRowDate, getToday } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
@@ -88,6 +89,12 @@ export function TransactionsMonthTable({
                         {transaction.installment && (
                           <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
                             {formatInstallmentLabel(transaction.installment)}
+                          </span>
+                        )}
+                        {transaction.recurring && (
+                          <span className="inline-flex items-center gap-1 text-xs rounded-md bg-theme-cyan/15 border border-theme-cyan/30 px-1.5 py-0.5 text-theme-cyan font-medium">
+                            <Repeat className="w-3 h-3 shrink-0" />
+                            <span>{formatRecurringLabel(transaction.recurring, t('transactions.repeatMonthly'))}</span>
                           </span>
                         )}
                       </div>

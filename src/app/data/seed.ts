@@ -1,5 +1,6 @@
 import { type Transaction } from './transactions';
 import { getToday, addDays, addMonthsClamped } from './dates';
+import { type RecurringRule, buildRecurringTransactions } from './recurring';
 
 export function daysFromToday(days: number): Date {
   return addDays(getToday(), days);
@@ -9,6 +10,36 @@ let seedIdCounter = 1;
 function nextId() {
   return `seed-${seedIdCounter++}`;
 }
+
+export const SEEDED_RECURRING_RULES: RecurringRule[] = [
+  {
+    id: 'rule-salary',
+    description: 'Salary Deposit',
+    typeId: 'income',
+    direction: 'income',
+    value: 5200,
+    accountId: 'boa',
+    startDate: daysFromToday(-70),
+    frequency: 'monthly',
+    limit: { kind: 'infinite' },
+    status: 'active',
+    createdAt: daysFromToday(-70),
+  },
+  {
+    id: 'rule-rent',
+    description: 'Rent',
+    typeId: 'bills',
+    direction: 'expense',
+    value: 1800,
+    accountId: 'boa',
+    paymentMethodId: 'bank-transfer',
+    startDate: daysFromToday(-72),
+    frequency: 'monthly',
+    limit: { kind: 'infinite' },
+    status: 'active',
+    createdAt: daysFromToday(-72),
+  },
+];
 
 export const SEEDED_TRANSACTIONS: Transaction[] = [];
 
@@ -59,22 +90,10 @@ function createMonthly(count: number, startDays: number, txBase: Omit<Transactio
 // Salary on the 5th, Rent on the 3rd.
 // Dip below zero scenario: Rent comes before Salary.
 
-createMonthly(6, -70, {
-  description: 'Salary Deposit',
-  typeId: 'income',
-  direction: 'income',
-  value: 5200,
-  accountId: 'boa',
-});
-
-createMonthly(6, -72, {
-  description: 'Rent',
-  typeId: 'bills',
-  direction: 'expense',
-  value: 1800,
-  accountId: 'boa',
-  paymentMethodId: 'bank-transfer',
-});
+for (const rule of SEEDED_RECURRING_RULES) {
+  const recurringTxs = buildRecurringTransactions(rule, i => `${rule.id}-${i + 1}`);
+  SEEDED_TRANSACTIONS.push(...recurringTxs);
+}
 
 // Some BOA expenses
 addTx({
