@@ -134,12 +134,14 @@ export function AccountDetailPage({
   if (!details) {
     return (
       <div className="space-y-4">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onBack}
-          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
+          className="h-8 px-2 text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm -ml-2"
         >
           <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}
-        </button>
+        </Button>
         <div className="text-foreground text-xl">{t('accounts.accountNotFound')}</div>
       </div>
     );
@@ -166,12 +168,14 @@ export function AccountDetailPage({
 
   return (
     <div className="space-y-8">
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={handleBack}
-        className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
+        className="h-8 px-2 text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm -ml-2"
       >
         <ArrowLeft className="w-4 h-4" /> {t('accounts.backToAccounts')}
-      </button>
+      </Button>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">

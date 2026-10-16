@@ -378,7 +378,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                   aria-invalid={Boolean(errors.name)}
                   className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
                 />
-                {errors.name && <div className="text-xs text-red-400">{errors.name}</div>}
+                {errors.name && <div className="text-xs text-theme-red">{errors.name}</div>}
               </div>
 
               <div className="space-y-2">
@@ -391,19 +391,19 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                 >
                   <ToggleGroupItem
                     value="Checking"
-                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-theme-cyan/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.checking')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Savings"
-                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-theme-cyan/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.savings')}
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="Cash"
-                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-cyan-500/20 data-[state=on]:text-theme-cyan"
+                    className="flex-1 text-xs sm:text-sm px-1.5 data-[state=on]:bg-theme-cyan/20 data-[state=on]:text-theme-cyan"
                   >
                     {t('accounts.dialog.cash')}
                   </ToggleGroupItem>
@@ -430,7 +430,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                     className="h-11 border-border bg-foreground/5 text-foreground uppercase"
                   />
                 </div>
-                {errors.initials && <div className="text-xs text-red-400">{errors.initials}</div>}
+                {errors.initials && <div className="text-xs text-theme-red">{errors.initials}</div>}
               </div>
 
               <ColorPicker value={color} onChange={setColor} label={t('accounts.dialog.themeColor')} />
@@ -459,7 +459,7 @@ export function AccountFormDialog({ open, onOpenChange, account, transactions, o
                   onChange={d => setOpeningDate(d)}
                   className="h-11"
                 />
-                {errors.openingDate && <div className="text-xs text-red-400">{errors.openingDate}</div>}
+                {errors.openingDate && <div className="text-xs text-theme-red">{errors.openingDate}</div>}
               </div>
             </div>
 

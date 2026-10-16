@@ -19,6 +19,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 
 ## Agent & Git Skills Workflow
 
+### UI Review (`ui-code-review` Skill)
+- **Always activate when editing UI**: When designing, implementing, or reviewing UI components, styles, or dialogs, consult and follow the [ui-code-review](.agents/skills/ui-code-review/SKILL.md) skill to audit semantic tokens, theme colors, and component boundaries.
+
 ### Commit Messages (`commit-message-generator` Skill)
 - **Always activate the skill**: When preparing or creating git commits, consult and follow the [commit-message-generator](.agents/skills/commit-message-generator/SKILL.md) skill.
 - **Git Hooks Enforced via Husky**:
@@ -91,13 +94,25 @@ src/
 - **Layouts**: Responsive flexbox and CSS grid layouts. Avoid arbitrary absolute positioning unless implementing overlays, floating badges, or tooltip anchors.
 - **Icons**: Always import Lucide icons via `src/app/data/icons.ts` or directly from `lucide-react` using consistent sizing (`size-4`, `size-5`).
 - **Theming**: Integrated with `next-themes` using CSS variables defined in `src/styles/tokens.css` and `src/styles/palette.css`.
+- **Zero Hardcoded Colors Invariant**: **NEVER** use default Tailwind color palette classes (e.g. `emerald-500`, `cyan-400`, `amber-500`, `red-400`, `blue-600`, `slate-700`, `zinc-800`, etc.). Always use semantic theme tokens:
+  - **Theme Accents**: `theme-cyan`, `theme-green`, `theme-blue`, `theme-orange`, `theme-purple`, `theme-red`, `theme-cyan-btn`, `theme-cyan-btn-hover` (e.g., `text-theme-cyan`, `bg-theme-cyan/15`, `border-theme-green/30`).
+  - **Semantic UI Tokens**: `primary`, `primary-foreground`, `foreground`, `background`, `card`, `popover`, `muted`, `muted-foreground`, `accent`, `border`, `input`, `destructive` (e.g., `bg-card/50`, `border-border/40`, `text-destructive`).
+  - **Dynamic Palette Token Namespace**: Use `--accent-*-raw`, `--accent-*-dot`, and `--accent-*-badge-*` (defined in `palette.css`). Avoid `--color-*-dot` to prevent collisions with Tailwind v4's internal `--color-*` engine.
 
 ### 3. Component Standards & Architecture
 - **Dependency Rule**: `features/*` may import from `components/`, `layout/`, `lib/`, `data/`, `state/`, and `i18n/`. `components/*` must never import from `features/*`. Cross-feature reusable widgets belong in `components/shared/`.
-- Prefer composed primitives from `src/app/components/primitives/` (Radix UI / shadcn/ui) over custom unstyled HTML elements.
-- Keep components focused and modular. Extract subcomponents and helper functions into separate files when a file exceeds manageable size.
+- **Modularity & Sizing**: Decompose monolithic components or dialogs exceeding ~300 lines into focused subcomponents (e.g. separating chart visualizers, sliders, or selector rows).
+- **Pragmatic DRY**: Keep distinct domain dialogs separate when validation or business constraints differ (e.g., `DeleteTypeDialog` vs. `DeleteMethodDialog`); avoid leaky generic wrappers.
+- **System Entity Protection**: Never render destructive actions for system records (`transfer`, `cash`, `credit-card`). Require reassigning transactions before completing deletion of in-use entities.
+- **Primitive UI Components (shadcn/ui & Radix UI)**: Never rebuild standard interactive UI patterns from scratch using raw HTML tags (`<button>`, `<input>`, `<select>`, custom modal overlays, custom checkboxes/switches). Always compose primitives from `src/app/components/primitives/` (`Button`, `Input`, `Dialog`, `AlertDialog`, `Select`, `Switch`, `Tabs`, `Card`, `Tooltip`, etc.) to guarantee accessibility, focus management, keyboard navigation, and design system cohesion.
 
-### 4. TypeScript & Code Quality
+### 4. TypeScript, i18n & Code Quality
 - **Strict Typing**: Strict TypeScript mode is enabled. Never use `any`—define explicit interfaces or types for all entity models, props, and function parameters.
-- **Verification Rule**: Always run `npm run lint` after editing TypeScript or CSS files to catch syntax, type, and lint errors immediately.
+- **Type-Safe Navigation**: Always use the `PageId` union in `src/app/layout/navigation.ts` for view switching.
+- **Internationalization (i18n)**: No hardcoded user-facing strings in UI components. Add all strings symmetrically to `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/pt.ts`.
+- **Verification Rule**: Always run `npm run lint` and `npm run build` after editing TypeScript or CSS files to catch syntax, type, and lint errors immediately.
+- **Color Audit Check**: Before finishing or committing UI modifications, verify that no default Tailwind palette scales were introduced:
+  ```bash
+  git diff | grep -E '\b(emerald|cyan|amber|rose|violet|indigo|sky|blue|red|green|yellow|slate|zinc|gray)-[0-9]{2,3}\b'
+  ```
 
