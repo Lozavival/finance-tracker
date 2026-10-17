@@ -57,25 +57,29 @@ const AlertDialogContent = React.forwardRef<
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
-function AlertDialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
+const AlertDialogHeader = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
+  ({ className, ...props }, ref) => (
     <div
+      ref={ref}
       data-slot="alert-dialog-header"
       className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
       {...props}
     />
-  );
-}
+  ),
+);
+AlertDialogHeader.displayName = 'AlertDialogHeader';
 
-function AlertDialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
+const AlertDialogFooter = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
+  ({ className, ...props }, ref) => (
     <div
+      ref={ref}
       data-slot="alert-dialog-footer"
       className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
-  );
-}
+  ),
+);
+AlertDialogFooter.displayName = 'AlertDialogFooter';
 
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
