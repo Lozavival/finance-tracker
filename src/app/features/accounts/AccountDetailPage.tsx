@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type CardStatement } from '@/data/cardStatements';
 import { type AccountLedger, getAccountForecast } from '@/data/ledger';
@@ -30,7 +30,8 @@ import { resolveUpcomingHorizon, getToday, type UpcomingPeriodType } from '@/dat
 import { useSettings } from '@/state/SettingsContext';
 import { useFinance } from '@/state/FinanceContext';
 import { useTransactionActions } from '@/state/useTransactionActions';
-import { getAccountColor, type AccountConfig } from '@/data/settings';
+import { getAccountColor, getAccountCurrencies, type AccountConfig } from '@/data/settings';
+import { type SupportedCurrency } from '@/i18n/types';
 import { getIcon } from '@/data/icons';
 import { AccountFormDialog } from './AccountFormDialog';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
@@ -66,7 +67,20 @@ export function AccountDetailPage({
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
   const { t, formatCents, getTranslatedMethodName } = useI18n();
   const details = findAccount(accountId);
-  const ledger = finance.ledgers[accountId];
+
+  const currencies = useMemo<SupportedCurrency[]>(() => {
+    return details ? getAccountCurrencies(details) : (['USD'] as SupportedCurrency[]);
+  }, [details]);
+  const isMultiCurrency = currencies.length > 1;
+  const [activePocket, setActivePocket] = useState<SupportedCurrency>(currencies[0] || 'USD');
+
+  useEffect(() => {
+    if (!currencies.includes(activePocket)) {
+      setActivePocket(currencies[0] || 'USD');
+    }
+  }, [currencies, activePocket]);
+
+  const ledger = finance.ledgers[`${accountId}:${activePocket}`] ?? finance.ledgers[accountId];
 
   const allowedMethodIds = useMemo(() => {
     return getAllowedPaymentMethodIds(details);
@@ -131,6 +145,9 @@ export function AccountDetailPage({
     const filtered = transactions
       .filter(transaction => transaction.accountId === accountId)
       .filter(transaction => {
+        if (isMultiCurrency && (transaction.currency ?? 'USD') !== activePocket) {
+          return false;
+        }
         if (periodRange) {
           if (
             transaction.date.getTime() < periodRange.from.getTime() ||
@@ -142,7 +159,7 @@ export function AccountDetailPage({
         return true;
       });
     return sortTransactionsDescending(filtered);
-  }, [period, transactions, accountId, finance.today]);
+  }, [period, transactions, accountId, isMultiCurrency, activePocket, finance.today]);
 
   if (!details) {
     return (
@@ -232,6 +249,11 @@ export function AccountDetailPage({
                   {t('accounts.archivedBadge')}
                 </Badge>
               )}
+              {isMultiCurrency && (
+                <Badge variant="outline" className="border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan text-xs">
+                  {t('accounts.multiCurrencyBadge')}
+                </Badge>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -295,6 +317,28 @@ export function AccountDetailPage({
                 </>
               )}
             </div>
+
+            {isMultiCurrency && (
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  {t('accounts.pockets')}:
+                </span>
+                <div className="flex gap-1.5">
+                  {currencies.map(curr => (
+                    <Button
+                      key={curr}
+                      size="sm"
+                      variant={activePocket === curr ? 'cyan' : 'outline'}
+                      onClick={() => setActivePocket(curr)}
+                      className="h-7 px-3 text-xs"
+                    >
+                      {curr === 'BRL' ? t('accounts.pocketBRL') : t('accounts.pocketUSD')} (
+                      {curr === 'BRL' ? 'R$' : '$'})
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex gap-2 mb-1">
@@ -305,31 +349,36 @@ export function AccountDetailPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.currentBalance')}</div>
-          <div className="text-2xl text-foreground">{formatCents(fullForecast.current)}</div>
+          <div className="text-2xl text-foreground">{formatCents(fullForecast.current, activePocket)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
-          <div className="text-2xl text-theme-green">+{formatCents(fullForecast.upcomingIn)}</div>
+          <div className="text-2xl text-theme-green">+{formatCents(fullForecast.upcomingIn, activePocket)}</div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
-          <div className="text-2xl text-theme-red">{formatCents(fullForecast.upcomingOut)}</div>
+          <div className="text-2xl text-theme-red">{formatCents(fullForecast.upcomingOut, activePocket)}</div>
         </Card>
-        <Card className="p-4 bg-cyan-500/10 border-cyan-500/30">
+        <Card className="p-4 bg-theme-cyan/10 border-theme-cyan/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
-          <div className="text-2xl text-theme-cyan">{formatCents(fullForecast.projected)}</div>
+          <div className="text-2xl text-theme-cyan">{formatCents(fullForecast.projected, activePocket)}</div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6 bg-foreground/5 border-border lg:col-span-2">
           <div className="text-xl text-foreground mb-4">{t('accounts.balanceProjection')}</div>
-          <BalanceProjectionChart series={series} today={finance.today} />
+          <BalanceProjectionChart series={series} today={finance.today} currency={activePocket} />
         </Card>
 
         <Card className="p-6 bg-foreground/5 border-border">
           <div className="text-xl text-foreground mb-4">{t('accounts.upcoming')}</div>
-          <UpcomingList upcoming={fullForecast.upcoming} currentBalance={fullForecast.current} variant="full" />
+          <UpcomingList
+            upcoming={fullForecast.upcoming}
+            currentBalance={fullForecast.current}
+            variant="full"
+            currency={activePocket}
+          />
         </Card>
       </div>
 

@@ -1,17 +1,21 @@
 import { type CashMovement } from '@/data/ledger';
 import { formatShort } from '@/data/dates';
+import { type SupportedCurrency } from '@/i18n/types';
 import { useI18n } from '@/i18n';
 
 export function UpcomingList({
   upcoming,
   currentBalance,
   variant,
+  currency,
 }: {
   upcoming: CashMovement[];
   currentBalance: number;
   variant: 'compact' | 'full';
+  currency?: SupportedCurrency;
 }) {
-  const { t, formatCents, locale } = useI18n();
+  const { t, formatCents, locale, currency: defaultCurrency } = useI18n();
+  const activeCurrency = currency ?? defaultCurrency;
 
   if (upcoming.length === 0)
     return <div className="text-muted-foreground text-sm">{t('accounts.noUpcomingItems')}</div>;
@@ -35,14 +39,14 @@ export function UpcomingList({
                 <span className="text-muted-foreground shrink-0 whitespace-nowrap">{dateStr}</span>
                 <span className="text-foreground truncate">{m.description}</span>
                 {m.isEstimate && (
-                  <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded shrink-0">
+                  <span className="text-[10px] px-1 bg-theme-cyan/20 text-theme-cyan rounded shrink-0">
                     {t('accounts.est')}
                   </span>
                 )}
               </div>
               <span className={`shrink-0 whitespace-nowrap ${m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}`}>
                 {m.amount > 0 ? '+' : '−'}
-                {formatCents(Math.abs(m.amount))}
+                {formatCents(Math.abs(m.amount), activeCurrency)}
               </span>
             </div>
           );
@@ -59,7 +63,7 @@ export function UpcomingList({
                 <div className="text-foreground flex items-center gap-2">
                   <span className="truncate">{m.description}</span>
                   {m.isEstimate && (
-                    <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded shrink-0">
+                    <span className="text-[10px] px-1 bg-theme-cyan/20 text-theme-cyan rounded shrink-0">
                       {t('accounts.est')}
                     </span>
                   )}
@@ -69,9 +73,9 @@ export function UpcomingList({
             <div className="text-right shrink-0">
               <div className={m.amount > 0 ? 'text-theme-green' : 'text-theme-red'}>
                 {m.amount > 0 ? '+' : '−'}
-                {formatCents(Math.abs(m.amount))}
+                {formatCents(Math.abs(m.amount), activeCurrency)}
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5">{formatCents(runningBalance)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{formatCents(runningBalance, activeCurrency)}</div>
             </div>
           </div>
         );

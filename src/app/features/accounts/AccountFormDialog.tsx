@@ -11,6 +11,7 @@ import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
 import { Switch } from '@/components/primitives/switch';
+import { Toggle } from '@/components/primitives/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
 import { DateField } from '@/components/shared/DateField';
 import { ColorPicker } from '@/components/shared/ColorPicker';
@@ -22,7 +23,10 @@ import {
   type ColorToken,
   getAccountColor,
   getAllowedPaymentMethodIds,
+  getAccountCurrencies,
+  getAccountOpeningBalance,
 } from '@/data/settings';
+import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { getToday } from '@/data/dates';
@@ -55,7 +59,9 @@ export function AccountFormDialog({
   const [kind, setKind] = useState<AccountKind>('Checking');
   const [initials, setInitials] = useState('');
   const [color, setColor] = useState<ColorToken>('blue');
-  const [openingBalance, setOpeningBalance] = useState('');
+  const [currencies, setCurrencies] = useState<SupportedCurrency[]>(['USD']);
+  const [openingBalanceBRL, setOpeningBalanceBRL] = useState('0.00');
+  const [openingBalanceUSD, setOpeningBalanceUSD] = useState('0.00');
   const [openingDate, setOpeningDate] = useState<Date | undefined>(getToday());
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
 
@@ -90,6 +96,15 @@ export function AccountFormDialog({
     [settings.paymentMethods],
   );
 
+  function handleToggleCurrency(curr: SupportedCurrency) {
+    if (currencies.includes(curr)) {
+      if (currencies.length === 1) return; // Keep at least one currency
+      setCurrencies(currencies.filter(c => c !== curr));
+    } else {
+      setCurrencies([...currencies, curr]);
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
     setErrors({});
@@ -99,7 +114,10 @@ export function AccountFormDialog({
       setKind(account.kind);
       setInitials(account.initials);
       setColor(account.color);
-      setOpeningBalance((account.openingBalance / 100).toFixed(2));
+      const currs = getAccountCurrencies(account);
+      setCurrencies(currs);
+      setOpeningBalanceBRL((getAccountOpeningBalance(account, 'BRL') / 100).toFixed(2));
+      setOpeningBalanceUSD((getAccountOpeningBalance(account, 'USD') / 100).toFixed(2));
       setOpeningDate(account.openingDate);
       setHasCard(Boolean(account.card));
       setSelectedMethods(getAllowedPaymentMethodIds(account, settings));
@@ -123,7 +141,9 @@ export function AccountFormDialog({
       setKind('Checking');
       setInitials('');
       setColor('cyan');
-      setOpeningBalance('0.00');
+      setCurrencies(['USD']);
+      setOpeningBalanceBRL('0.00');
+      setOpeningBalanceUSD('0.00');
       setOpeningDate(getToday());
       setHasCard(false);
       setSelectedMethods(getDefaultMethodsForKind('Checking', false));
@@ -291,9 +311,22 @@ export function AccountFormDialog({
       nextErrors.initials = t('accounts.errors.initialsMax');
     }
 
-    const numBalance = Number(openingBalance);
-    if (isNaN(numBalance)) {
-      nextErrors.openingBalance = t('accounts.errors.validOpeningBalance');
+    const openingBalances: Partial<Record<SupportedCurrency, number>> = {};
+    if (currencies.includes('BRL')) {
+      const numBRL = Number(openingBalanceBRL);
+      if (isNaN(numBRL)) {
+        nextErrors.openingBalanceBRL = t('accounts.errors.validOpeningBalance');
+      } else {
+        openingBalances.BRL = Math.round(numBRL * 100);
+      }
+    }
+    if (currencies.includes('USD')) {
+      const numUSD = Number(openingBalanceUSD);
+      if (isNaN(numUSD)) {
+        nextErrors.openingBalanceUSD = t('accounts.errors.validOpeningBalance');
+      } else {
+        openingBalances.USD = Math.round(numUSD * 100);
+      }
     }
 
     if (!openingDate) {
@@ -337,14 +370,18 @@ export function AccountFormDialog({
     }
 
     const allowedPaymentMethods = kind === 'Cash' ? ['cash'] : selectedMethods.filter(id => id !== 'cash');
+    const primaryCurrency = currencies[0] || 'USD';
+    const primaryBalance = openingBalances[primaryCurrency] ?? 0;
 
     const result: AccountConfig = {
       id,
       name: trimmedName,
       kind,
+      currencies,
+      openingBalances,
+      openingBalance: primaryBalance,
       initials: trimmedInitials,
       color,
-      openingBalance: Math.round(numBalance * 100),
       openingDate,
       allowedPaymentMethods,
       archived: account?.archived,
@@ -445,21 +482,87 @@ export function AccountFormDialog({
 
               <ColorPicker value={color} onChange={setColor} label={t('accounts.dialog.themeColor')} />
 
-              <div className="space-y-2">
-                <Label htmlFor="opening-balance" className="text-foreground">
-                  {t('accounts.dialog.openingBalance')}
-                </Label>
-                <Input
-                  id="opening-balance"
-                  type="number"
-                  step="0.01"
-                  value={openingBalance}
-                  onChange={e => setOpeningBalance(e.target.value)}
-                  placeholder={t('accounts.dialog.balancePlaceholder')}
-                  className="h-11 border-border bg-foreground/5 text-foreground"
-                />
-                {errors.openingBalance && <div className="text-xs text-red-400">{errors.openingBalance}</div>}
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="text-foreground">{t('dialogs.account.currenciesLabel')}</Label>
+                <div className="flex gap-2">
+                  {(['BRL', 'USD'] as const).map(curr => {
+                    const isSelected = currencies.includes(curr);
+                    return (
+                      <Toggle
+                        key={curr}
+                        pressed={isSelected}
+                        onPressedChange={() => handleToggleCurrency(curr)}
+                        aria-label={curr === 'BRL' ? 'BRL (R$)' : 'USD ($)'}
+                        variant="outline"
+                        className={`flex-1 flex items-center justify-between p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer ${
+                          isSelected
+                            ? 'border-theme-cyan/60 bg-theme-cyan/15 text-theme-cyan font-medium data-[state=on]:bg-theme-cyan/15 data-[state=on]:text-theme-cyan'
+                            : 'border-border bg-foreground/5 text-muted-foreground hover:border-theme-cyan/40 hover:text-foreground'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{curr === 'BRL' ? '🇧🇷 BRL' : '🇺🇸 USD'}</span>
+                          <span className="text-xs opacity-75">{curr === 'BRL' ? '(R$)' : '($)'}</span>
+                        </div>
+                        <span
+                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                            isSelected ? 'border-theme-cyan bg-theme-cyan' : 'border-muted-foreground'
+                          }`}
+                        >
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-background" />}
+                        </span>
+                      </Toggle>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">{t('dialogs.account.currenciesDesc')}</p>
               </div>
+
+              {currencies.includes('BRL') && (
+                <div className="space-y-2">
+                  <Label htmlFor="opening-balance-brl" className="text-foreground">
+                    {t('dialogs.account.pocketBalanceLabel', { currency: 'BRL' })}
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold">
+                      R$
+                    </span>
+                    <Input
+                      id="opening-balance-brl"
+                      type="number"
+                      step="0.01"
+                      value={openingBalanceBRL}
+                      onChange={e => setOpeningBalanceBRL(e.target.value)}
+                      placeholder="0.00"
+                      className="h-11 pl-9 border-border bg-foreground/5 text-foreground"
+                    />
+                  </div>
+                  {errors.openingBalanceBRL && <div className="text-xs text-theme-red">{errors.openingBalanceBRL}</div>}
+                </div>
+              )}
+
+              {currencies.includes('USD') && (
+                <div className="space-y-2">
+                  <Label htmlFor="opening-balance-usd" className="text-foreground">
+                    {t('dialogs.account.pocketBalanceLabel', { currency: 'USD' })}
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold">
+                      $
+                    </span>
+                    <Input
+                      id="opening-balance-usd"
+                      type="number"
+                      step="0.01"
+                      value={openingBalanceUSD}
+                      onChange={e => setOpeningBalanceUSD(e.target.value)}
+                      placeholder="0.00"
+                      className="h-11 pl-7 border-border bg-foreground/5 text-foreground"
+                    />
+                  </div>
+                  {errors.openingBalanceUSD && <div className="text-xs text-theme-red">{errors.openingBalanceUSD}</div>}
+                </div>
+              )}
 
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-foreground">{t('accounts.dialog.openingDate')}</Label>

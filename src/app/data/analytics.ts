@@ -1,17 +1,29 @@
 import { type Transaction } from './transactions';
-import { type Settings, isCreditCard } from './settings';
+import { type Settings, isCreditCard, getAccountCurrencies } from './settings';
 import { type GoalsConfig, calculateMonthlyBudget } from './goals';
 import { type CardStatement } from './cardStatements';
 import { type RecurringRule } from './recurring';
 import { type AccountLedger, balanceAt } from './ledger';
 import { addMonthsClamped, addDays } from './dates';
+import { convertCents } from './currency';
+import { type SupportedCurrency } from '@/i18n/types';
 
 export type DashboardKpis = {
-  totalBalance: number; // in dollars
+  totalBalance: number; // in dollars / preferred currency units
+  totalBalanceCents: number | null; // converted cents in preferred currency, or null if no rate and multi-currency
+  balancesByCurrency: Record<SupportedCurrency, number>; // in cents
+  hasMultipleCurrencies: boolean;
+  hasRate: boolean;
   balanceChangePercentage: number;
   monthlyInflow: number;
+  monthlyInflowCents: number | null;
+  inflowByCurrency: Record<SupportedCurrency, number>; // in cents
   monthlyOutflow: number;
+  monthlyOutflowCents: number | null;
+  outflowByCurrency: Record<SupportedCurrency, number>; // in cents
   netSavings: number;
+  netSavingsCents: number | null;
+  hasMultiCurrencyCashFlow: boolean;
   savingsRate: number; // 0..100
   budgetBase: number;
   budgetSpent: number;
@@ -79,46 +91,122 @@ export function calculateDashboardKpis(
   goalsConfig: GoalsConfig,
   today: Date,
   activeSignalsCount = 0,
+  preferredCurrency: SupportedCurrency = 'USD',
 ): DashboardKpis {
-  // 1. Calculate liquid balance across checking/savings/cash accounts (exclude credit card debt)
-  let totalBalanceCents = 0;
-  let prevMonthBalanceCents = 0;
+  const rate = settings.exchangeRate?.rate;
+  const hasRate = rate !== null && rate !== undefined && rate > 0;
+  const activeAccounts = settings.accounts.filter(a => !a.archived);
+
+  // 1. Calculate liquid balance per currency across checking/savings/cash accounts (exclude credit card debt)
+  const balancesByCurrency: Record<SupportedCurrency, number> = { BRL: 0, USD: 0 };
+  const prevBalancesByCurrency: Record<SupportedCurrency, number> = { BRL: 0, USD: 0 };
 
   const y = today.getFullYear();
   const m = today.getMonth();
   const lastDayOfPrevMonth = new Date(y, m, 0);
 
-  for (const acc of settings.accounts) {
+  for (const acc of activeAccounts) {
     if (!isCreditCard(settings, acc.id)) {
-      const ledger = ledgers[acc.id];
-      if (ledger) {
-        totalBalanceCents += balanceAt(ledger, today);
-        prevMonthBalanceCents += balanceAt(ledger, lastDayOfPrevMonth);
+      const currencies = getAccountCurrencies(acc);
+      for (const curr of currencies) {
+        const pocketLedger = ledgers[`${acc.id}:${curr}`] ?? ledgers[acc.id];
+        if (pocketLedger) {
+          balancesByCurrency[curr] += balanceAt(pocketLedger, today);
+          prevBalancesByCurrency[curr] += balanceAt(pocketLedger, lastDayOfPrevMonth);
+        }
       }
     }
   }
 
-  const totalBalance = totalBalanceCents / 100;
-  const prevMonthBalance = prevMonthBalanceCents / 100;
+  const hasMultipleCurrencies = balancesByCurrency.BRL !== 0 && balancesByCurrency.USD !== 0;
+
+  let convertedBalanceCents: number | null = null;
+  let prevConvertedBalanceCents: number | null = null;
+
+  if (hasRate) {
+    const brlInPref = convertCents(balancesByCurrency.BRL, 'BRL', preferredCurrency, rate) ?? 0;
+    const usdInPref = convertCents(balancesByCurrency.USD, 'USD', preferredCurrency, rate) ?? 0;
+    convertedBalanceCents =
+      preferredCurrency === 'USD' ? balancesByCurrency.USD + brlInPref : balancesByCurrency.BRL + usdInPref;
+
+    const prevBrlInPref = convertCents(prevBalancesByCurrency.BRL, 'BRL', preferredCurrency, rate) ?? 0;
+    const prevUsdInPref = convertCents(prevBalancesByCurrency.USD, 'USD', preferredCurrency, rate) ?? 0;
+    prevConvertedBalanceCents =
+      preferredCurrency === 'USD'
+        ? prevBalancesByCurrency.USD + prevBrlInPref
+        : prevBalancesByCurrency.BRL + prevUsdInPref;
+  } else if (!hasMultipleCurrencies) {
+    if (balancesByCurrency.BRL !== 0 && preferredCurrency === 'BRL') {
+      convertedBalanceCents = balancesByCurrency.BRL;
+      prevConvertedBalanceCents = prevBalancesByCurrency.BRL;
+    } else if (balancesByCurrency.USD !== 0 && preferredCurrency === 'USD') {
+      convertedBalanceCents = balancesByCurrency.USD;
+      prevConvertedBalanceCents = prevBalancesByCurrency.USD;
+    } else if (balancesByCurrency.BRL === 0 && balancesByCurrency.USD === 0) {
+      convertedBalanceCents = 0;
+      prevConvertedBalanceCents = 0;
+    }
+  }
+
+  const totalBalance =
+    convertedBalanceCents !== null ? convertedBalanceCents / 100 : (balancesByCurrency[preferredCurrency] ?? 0) / 100;
+  const prevMonthBalance =
+    prevConvertedBalanceCents !== null
+      ? prevConvertedBalanceCents / 100
+      : (prevBalancesByCurrency[preferredCurrency] ?? 0) / 100;
   const balanceChangePercentage =
     prevMonthBalance !== 0 ? ((totalBalance - prevMonthBalance) / Math.abs(prevMonthBalance)) * 100 : 0;
 
-  // 2. Current month income and expenses (excluding internal transfers)
-  let monthlyInflow = 0;
-  let monthlyOutflow = 0;
+  // 2. Current month income and expenses (excluding internal transfers) per currency
+  const inflowByCurrency: Record<SupportedCurrency, number> = { BRL: 0, USD: 0 };
+  const outflowByCurrency: Record<SupportedCurrency, number> = { BRL: 0, USD: 0 };
 
   for (const t of transactions) {
     if (t.transferId) continue;
     if (t.date.getFullYear() === y && t.date.getMonth() === m) {
+      const curr = t.currency ?? 'USD';
+      const valCents = Math.round(t.value * 100);
       if (t.direction === 'income') {
-        monthlyInflow += t.value;
+        inflowByCurrency[curr] += valCents;
       } else if (t.direction === 'expense') {
-        monthlyOutflow += t.value;
+        outflowByCurrency[curr] += valCents;
       }
     }
   }
 
-  const netSavings = monthlyInflow - monthlyOutflow;
+  const hasBrlCashFlow = inflowByCurrency.BRL > 0 || outflowByCurrency.BRL > 0;
+  const hasUsdCashFlow = inflowByCurrency.USD > 0 || outflowByCurrency.USD > 0;
+  const hasMultiCurrencyCashFlow = hasBrlCashFlow && hasUsdCashFlow;
+  const hasForeignCashFlowWithoutRate = !hasRate && (preferredCurrency === 'BRL' ? hasUsdCashFlow : hasBrlCashFlow);
+
+  let convertedInflowCents: number | null = null;
+  let convertedOutflowCents: number | null = null;
+
+  if (hasRate) {
+    const brlInflowPref = convertCents(inflowByCurrency.BRL, 'BRL', preferredCurrency, rate) ?? 0;
+    const usdInflowPref = convertCents(inflowByCurrency.USD, 'USD', preferredCurrency, rate) ?? 0;
+    convertedInflowCents =
+      preferredCurrency === 'USD' ? inflowByCurrency.USD + brlInflowPref : inflowByCurrency.BRL + usdInflowPref;
+
+    const brlOutflowPref = convertCents(outflowByCurrency.BRL, 'BRL', preferredCurrency, rate) ?? 0;
+    const usdOutflowPref = convertCents(outflowByCurrency.USD, 'USD', preferredCurrency, rate) ?? 0;
+    convertedOutflowCents =
+      preferredCurrency === 'USD' ? outflowByCurrency.USD + brlOutflowPref : outflowByCurrency.BRL + usdOutflowPref;
+  } else if (!hasForeignCashFlowWithoutRate) {
+    convertedInflowCents = inflowByCurrency[preferredCurrency] ?? 0;
+    convertedOutflowCents = outflowByCurrency[preferredCurrency] ?? 0;
+  }
+
+  const monthlyInflow =
+    convertedInflowCents !== null ? convertedInflowCents / 100 : (inflowByCurrency[preferredCurrency] ?? 0) / 100;
+  const monthlyOutflow =
+    convertedOutflowCents !== null ? convertedOutflowCents / 100 : (outflowByCurrency[preferredCurrency] ?? 0) / 100;
+  const convertedNetSavingsCents =
+    convertedInflowCents !== null && convertedOutflowCents !== null
+      ? convertedInflowCents - convertedOutflowCents
+      : null;
+  const netSavings =
+    convertedNetSavingsCents !== null ? convertedNetSavingsCents / 100 : monthlyInflow - monthlyOutflow;
   const savingsRate = monthlyInflow > 0 ? (netSavings / monthlyInflow) * 100 : 0;
 
   // 3. Budget pacing
@@ -133,10 +221,20 @@ export function calculateDashboardKpis(
 
   return {
     totalBalance,
+    totalBalanceCents: convertedBalanceCents,
+    balancesByCurrency,
+    hasMultipleCurrencies,
+    hasRate,
     balanceChangePercentage,
     monthlyInflow,
+    monthlyInflowCents: convertedInflowCents,
+    inflowByCurrency,
     monthlyOutflow,
+    monthlyOutflowCents: convertedOutflowCents,
+    outflowByCurrency,
     netSavings,
+    netSavingsCents: convertedNetSavingsCents,
+    hasMultiCurrencyCashFlow,
     savingsRate,
     budgetBase,
     budgetSpent,
@@ -156,6 +254,9 @@ export function calculateMonthlyCashFlowHistory(
   monthsCount: number,
   today: Date,
   locale = 'en-US',
+  currencyScope: 'all' | SupportedCurrency = 'all',
+  preferredCurrency: SupportedCurrency = 'USD',
+  rate?: number | null,
 ): MonthlyCashFlowPoint[] {
   const result: MonthlyCashFlowPoint[] = [];
 
@@ -170,10 +271,27 @@ export function calculateMonthlyCashFlowHistory(
     for (const t of transactions) {
       if (t.transferId) continue;
       if (t.date.getFullYear() === targetYear && t.date.getMonth() === targetMonth) {
+        const curr = t.currency ?? 'USD';
+        let val = t.value;
+
+        if (currencyScope !== 'all') {
+          if (curr !== currencyScope) continue;
+        } else if (curr !== preferredCurrency) {
+          if (rate && rate > 0) {
+            const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+            if (converted !== null) {
+              val = converted / 100;
+            }
+          } else {
+            // Unconvertible cross-currency: do not sum 1:1
+            continue;
+          }
+        }
+
         if (t.direction === 'income') {
-          income += t.value;
+          income += val;
         } else if (t.direction === 'expense') {
-          expenses += t.value;
+          expenses += val;
         }
       }
     }
@@ -205,6 +323,9 @@ export function calculateCumulativeSpendingPace(
   transactions: Transaction[],
   goalsConfig: GoalsConfig,
   today: Date,
+  currencyScope: 'all' | SupportedCurrency = 'all',
+  preferredCurrency: SupportedCurrency = 'USD',
+  rate?: number | null,
 ): CumulativePacePoint[] {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
@@ -228,14 +349,32 @@ export function calculateCumulativeSpendingPace(
     const tMonth = t.date.getMonth();
     const tDay = t.date.getDate();
 
+    const curr = t.currency ?? 'USD';
+    let val = t.value;
+
+    if (currencyScope !== 'all') {
+      if (curr !== currencyScope) continue;
+    } else if (curr !== preferredCurrency) {
+      if (rate && rate > 0) {
+        const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+        if (converted !== null) {
+          val = converted / 100;
+        }
+      } else {
+        // Unconvertible cross-currency: do not sum 1:1
+        continue;
+      }
+    }
+
     if (tYear === currentYear && tMonth === currentMonth && tDay <= daysInCurrentMonth) {
-      currentMonthDaily[tDay] += t.value;
+      currentMonthDaily[tDay] += val;
     } else if (tYear === prevYear && tMonth === prevMonth && tDay <= daysInPrevMonth) {
-      prevMonthDaily[tDay] += t.value;
+      prevMonthDaily[tDay] += val;
     }
   }
 
-  const budgetSummary = calculateMonthlyBudget(transactions, goalsConfig, today);
+  const targetCurr = currencyScope === 'all' ? preferredCurrency : currencyScope;
+  const budgetSummary = calculateMonthlyBudget(transactions, goalsConfig, today, targetCurr, rate);
   const dailyTarget = budgetSummary.budgetBase > 0 ? budgetSummary.budgetBase / daysInCurrentMonth : 0;
 
   const points: CumulativePacePoint[] = [];
@@ -273,6 +412,9 @@ export function calculateCategoryBreakdown(
   period: 'this-month' | 'last-month' | 'last-90-days',
   mode: 'types' | 'goals',
   today: Date,
+  currencyScope: 'all' | SupportedCurrency = 'all',
+  preferredCurrency: SupportedCurrency = 'USD',
+  rate?: number | null,
 ): { items: CategoryBreakdownItem[]; totalSpend: number } {
   // Determine date ranges for target period and comparison period
   let targetFrom: Date;
@@ -314,10 +456,27 @@ export function calculateCategoryBreakdown(
       catId = goalsConfig.typeMappings[t.typeId] || t.typeId;
     }
 
+    const curr = t.currency ?? 'USD';
+    let val = t.value;
+
+    if (currencyScope !== 'all') {
+      if (curr !== currencyScope) continue;
+    } else if (curr !== preferredCurrency) {
+      if (rate && rate > 0) {
+        const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+        if (converted !== null) {
+          val = converted / 100;
+        }
+      } else {
+        // Unconvertible cross-currency: do not sum 1:1
+        continue;
+      }
+    }
+
     if (tTime >= targetFrom.getTime() && tTime <= targetTo.getTime()) {
-      targetTotals.set(catId, (targetTotals.get(catId) ?? 0) + t.value);
+      targetTotals.set(catId, (targetTotals.get(catId) ?? 0) + val);
     } else if (tTime >= compFrom.getTime() && tTime <= compTo.getTime()) {
-      compTotals.set(catId, (compTotals.get(catId) ?? 0) + t.value);
+      compTotals.set(catId, (compTotals.get(catId) ?? 0) + val);
     }
   }
 
@@ -502,28 +661,30 @@ export function generateSmartFinancialSignals(
 
   // --- 4. Savings Rate Milestone or Deficit Warning ---
   const currentKpis = calculateDashboardKpis(transactions, ledgers, settings, goalsConfig, today);
-  if (currentKpis.monthlyInflow > 0 && currentKpis.savingsRate >= 25) {
-    signals.push({
-      id: 'savings-milestone',
-      type: 'savings-milestone',
-      severity: 'success',
-      titleKey: 'dashboard.signals.savingsMilestoneTitle',
-      descriptionKey: 'dashboard.signals.savingsMilestoneDesc',
-      params: {
-        rate: currentKpis.savingsRate.toFixed(1),
-      },
-    });
-  } else if (currentKpis.netSavings < 0) {
-    signals.push({
-      id: 'deficit-warning',
-      type: 'deficit-warning',
-      severity: 'critical',
-      titleKey: 'dashboard.signals.deficitWarningTitle',
-      descriptionKey: 'dashboard.signals.deficitWarningDesc',
-      params: {
-        amount: Math.abs(currentKpis.netSavings).toFixed(2),
-      },
-    });
+  if (currentKpis.netSavingsCents !== null) {
+    if (currentKpis.monthlyInflow > 0 && currentKpis.savingsRate >= 25) {
+      signals.push({
+        id: 'savings-milestone',
+        type: 'savings-milestone',
+        severity: 'success',
+        titleKey: 'dashboard.signals.savingsMilestoneTitle',
+        descriptionKey: 'dashboard.signals.savingsMilestoneDesc',
+        params: {
+          rate: currentKpis.savingsRate.toFixed(1),
+        },
+      });
+    } else if (currentKpis.netSavings < 0) {
+      signals.push({
+        id: 'deficit-warning',
+        type: 'deficit-warning',
+        severity: 'critical',
+        titleKey: 'dashboard.signals.deficitWarningTitle',
+        descriptionKey: 'dashboard.signals.deficitWarningDesc',
+        params: {
+          amount: Math.abs(currentKpis.netSavings).toFixed(2),
+        },
+      });
+    }
   }
 
   return signals;

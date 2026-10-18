@@ -22,7 +22,7 @@ interface DashboardKpisProps {
 }
 
 export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
-  const { t, formatCurrency } = useI18n();
+  const { t, formatCurrency, formatCents, currency } = useI18n();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
@@ -30,8 +30,15 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
   const activeCount = activeSignals.length;
 
   const isBalanceUp = kpis.balanceChangePercentage >= 0;
-  const isCashFlowPositive = kpis.netSavings >= 0;
+  const isCashFlowPositive = kpis.netSavingsCents !== null ? kpis.netSavingsCents >= 0 : kpis.netSavings >= 0;
   const isBudgetPacingGood = kpis.budgetPercentUsed <= kpis.monthProgressPercent;
+
+  const brlNetCents = kpis.inflowByCurrency.BRL - kpis.outflowByCurrency.BRL;
+  const usdNetCents = kpis.inflowByCurrency.USD - kpis.outflowByCurrency.USD;
+  const hasBrlCashFlow = kpis.inflowByCurrency.BRL > 0 || kpis.outflowByCurrency.BRL > 0;
+  const hasUsdCashFlow = kpis.inflowByCurrency.USD > 0 || kpis.outflowByCurrency.USD > 0;
+  const hasMultiCurrencyCashFlow = hasBrlCashFlow && hasUsdCashFlow;
+  const hasForeignCashFlowWithoutRate = !kpis.hasRate && (currency === 'BRL' ? hasUsdCashFlow : hasBrlCashFlow);
 
   function handleDismiss(id: string) {
     setDismissedIds(prev => new Set(prev).add(id));
@@ -67,8 +74,45 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
           <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium mb-1">
             {t('dashboard.netLiquidBalance')}
           </p>
-          <p className="text-foreground text-2xl font-bold tracking-tight mb-1">{formatCurrency(kpis.totalBalance)}</p>
-          <p className="text-xs text-muted-foreground">{t('dashboard.vsLastMonth')}</p>
+          {kpis.hasRate && kpis.totalBalanceCents !== null ? (
+            <div>
+              <p className="text-foreground text-2xl font-bold tracking-tight mb-1">
+                {formatCents(kpis.totalBalanceCents, currency)}
+              </p>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="truncate">
+                  {formatCents(kpis.balancesByCurrency.BRL, 'BRL')} · {formatCents(kpis.balancesByCurrency.USD, 'USD')}
+                </span>
+                <span className="shrink-0 ml-2 text-muted-foreground/80">{t('dashboard.vsLastMonth')}</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {kpis.hasMultipleCurrencies ? (
+                <div>
+                  <div className="space-y-0.5 mb-1.5">
+                    <p className="text-foreground text-xl font-bold tracking-tight">
+                      {formatCents(kpis.balancesByCurrency.BRL, 'BRL')}
+                    </p>
+                    <p className="text-foreground text-xl font-bold tracking-tight">
+                      {formatCents(kpis.balancesByCurrency.USD, 'USD')}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-theme-cyan font-medium">{t('accounts.breakdown')}</span>
+                    <span className="text-muted-foreground">{t('dashboard.vsLastMonth')}</span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-foreground text-2xl font-bold tracking-tight mb-1">
+                    {formatCurrency(kpis.totalBalance)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.vsLastMonth')}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -83,7 +127,7 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
           </div>
           <div className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-foreground/5 text-muted-foreground border border-border/60">
             <span>
-              {kpis.savingsRate.toFixed(1)}% {t('dashboard.savingsRate')}
+              {kpis.netSavingsCents !== null ? `${kpis.savingsRate.toFixed(1)}%` : '—'} {t('dashboard.savingsRate')}
             </span>
           </div>
         </div>
@@ -92,22 +136,73 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
           <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium mb-1">
             {t('dashboard.monthlyCashFlow')}
           </p>
-          <p
-            className={`text-2xl font-bold tracking-tight mb-1 ${
-              isCashFlowPositive ? 'text-theme-green' : 'text-theme-red'
-            }`}
-          >
-            {isCashFlowPositive ? '+' : ''}
-            {formatCurrency(kpis.netSavings)}
-          </p>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {t('dashboard.inflow')}: {formatCurrency(kpis.monthlyInflow)}
-            </span>
-            <span>
-              {t('dashboard.outflow')}: {formatCurrency(kpis.monthlyOutflow)}
-            </span>
-          </div>
+          {kpis.hasRate && kpis.netSavingsCents !== null ? (
+            <div>
+              <p
+                className={`text-2xl font-bold tracking-tight mb-1 ${
+                  isCashFlowPositive ? 'text-theme-green' : 'text-theme-red'
+                }`}
+              >
+                {isCashFlowPositive ? '+' : ''}
+                {formatCents(kpis.netSavingsCents, currency)}
+              </p>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="truncate">
+                  {hasMultiCurrencyCashFlow ? (
+                    <>
+                      {brlNetCents >= 0 ? '+' : ''}
+                      {formatCents(brlNetCents, 'BRL')} · {usdNetCents >= 0 ? '+' : ''}
+                      {formatCents(usdNetCents, 'USD')}
+                    </>
+                  ) : (
+                    t('dashboard.netSavings')
+                  )}
+                </span>
+                <span className="shrink-0 ml-2 text-muted-foreground/80">{t('dashboard.thisMonth')}</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {hasMultiCurrencyCashFlow || hasForeignCashFlowWithoutRate ? (
+                <div>
+                  <div className="space-y-0.5 mb-1.5">
+                    <p
+                      className={`text-xl font-bold tracking-tight ${
+                        brlNetCents >= 0 ? 'text-theme-green' : 'text-theme-red'
+                      }`}
+                    >
+                      {brlNetCents >= 0 ? '+' : ''}
+                      {formatCents(brlNetCents, 'BRL')}
+                    </p>
+                    <p
+                      className={`text-xl font-bold tracking-tight ${
+                        usdNetCents >= 0 ? 'text-theme-green' : 'text-theme-red'
+                      }`}
+                    >
+                      {usdNetCents >= 0 ? '+' : ''}
+                      {formatCents(usdNetCents, 'USD')}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-theme-green font-medium">{t('accounts.breakdown')}</span>
+                    <span className="text-muted-foreground">{t('dashboard.thisMonth')}</span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p
+                    className={`text-2xl font-bold tracking-tight mb-1 ${
+                      isCashFlowPositive ? 'text-theme-green' : 'text-theme-red'
+                    }`}
+                  >
+                    {isCashFlowPositive ? '+' : ''}
+                    {formatCurrency(kpis.netSavings)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.thisMonth')}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 

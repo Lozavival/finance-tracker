@@ -106,10 +106,15 @@ export type MonthlyBudgetSummary = {
   categories: CategoryBudgetSummary[];
 };
 
+import { convertAmount } from './currency';
+import { type SupportedCurrency } from '@/i18n/types';
+
 export function calculateMonthlyBudget(
   transactions: Transaction[],
   goalsConfig: GoalsConfig,
   targetDate: Date,
+  targetCurrency: SupportedCurrency = 'USD',
+  exchangeRate: number | null = null,
 ): MonthlyBudgetSummary {
   const targetYear = targetDate.getFullYear();
   const targetMonth = targetDate.getMonth();
@@ -123,7 +128,9 @@ export function calculateMonthlyBudget(
   let actualIncome = 0;
   for (const t of monthTransactions) {
     if (t.direction === 'income' && !t.transferId) {
-      actualIncome += t.value;
+      const txCurr = t.currency ?? 'USD';
+      const val = convertAmount(t.value, txCurr, targetCurrency, exchangeRate) ?? t.value;
+      actualIncome += val;
     }
   }
 
@@ -142,7 +149,9 @@ export function calculateMonthlyBudget(
 
   for (const t of monthTransactions) {
     if (t.direction === 'expense' && !t.transferId) {
-      totalExpenses += t.value;
+      const txCurr = t.currency ?? 'USD';
+      const val = convertAmount(t.value, txCurr, targetCurrency, exchangeRate) ?? t.value;
+      totalExpenses += val;
       // Determine which goal category this transaction belongs to
       const targetCatId = goalsConfig.typeMappings[t.typeId] || t.typeId;
       const list = categoryTransactionsMap.get(targetCatId);
@@ -164,7 +173,11 @@ export function calculateMonthlyBudget(
 
   const categorySummaries: CategoryBudgetSummary[] = goalsConfig.categories.map(cat => {
     const txs = categoryTransactionsMap.get(cat.id) || [];
-    const spent = txs.reduce((sum, tx) => sum + tx.value, 0);
+    const spent = txs.reduce((sum, tx) => {
+      const txCurr = tx.currency ?? 'USD';
+      const val = convertAmount(tx.value, txCurr, targetCurrency, exchangeRate) ?? tx.value;
+      return sum + val;
+    }, 0);
     const budgeted = (budgetBase * cat.percentage) / 100;
     const remaining = budgeted - spent;
     const percentageUsed = budgeted > 0 ? (spent / budgeted) * 100 : 0;

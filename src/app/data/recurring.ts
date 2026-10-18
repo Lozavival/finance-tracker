@@ -1,6 +1,8 @@
 import { addMonthsClamped } from './dates';
 import type { Transaction, TransactionDirection } from './transactions';
 
+import { type SupportedCurrency } from '@/i18n/types';
+
 export const RECURRING_PROJECTION_MONTHS = 24;
 
 export type RecurrenceFrequency = 'monthly';
@@ -11,6 +13,7 @@ export type RecurringRule = {
   id: string;
   description: string;
   value: number; // monthly amount (in dollars/currency units, matching Transaction.value)
+  currency?: SupportedCurrency;
   direction: TransactionDirection;
   typeId: string;
   accountId: string;
@@ -58,6 +61,7 @@ export function buildRecurringTransactions(
       typeId: rule.typeId,
       direction: rule.direction,
       value: rule.value,
+      currency: rule.currency,
       accountId: rule.accountId,
       paymentMethodId: rule.paymentMethodId,
       recurring: {

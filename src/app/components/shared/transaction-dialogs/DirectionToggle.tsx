@@ -28,7 +28,7 @@ export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
         <ToggleGroupItem
           value="income"
           aria-label={t('transactions.directionIncome')}
-          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-emerald-400 data-[state=on]:shadow-sm"
+          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-theme-green data-[state=on]:shadow-sm"
         >
           <ArrowDownLeft className="mr-2 h-4 w-4" />
           {t('transactions.directionIncome')}
@@ -36,7 +36,7 @@ export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
         <ToggleGroupItem
           value="expense"
           aria-label={t('transactions.directionExpense')}
-          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-red-400 data-[state=on]:shadow-sm"
+          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-theme-red data-[state=on]:shadow-sm"
         >
           <ArrowUpRight className="mr-2 h-4 w-4" />
           {t('transactions.directionExpense')}
@@ -44,7 +44,7 @@ export function DirectionToggle({ value, onChange }: DirectionToggleProps) {
         <ToggleGroupItem
           value="transfer"
           aria-label={t('transactions.directionTransfer')}
-          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-indigo-400 data-[state=on]:shadow-sm"
+          className="h-11 rounded-lg text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-theme-cyan data-[state=on]:shadow-sm"
         >
           <ArrowLeftRight className="mr-2 h-4 w-4" />
           {t('transactions.directionTransfer')}

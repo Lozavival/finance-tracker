@@ -16,8 +16,10 @@ import { ArrowLeftRight, Flame } from 'lucide-react';
 import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
+import { useSettings } from '@/state/SettingsContext';
 import { type Transaction } from '@/data/transactions';
 import { type GoalsConfig } from '@/data/goals';
+import { type SupportedCurrency } from '@/i18n/types';
 import {
   calculateMonthlyCashFlowHistory,
   calculateCumulativeSpendingPace,
@@ -28,20 +30,31 @@ interface AnalyticsVisualizerProps {
   transactions: Transaction[];
   goalsConfig: GoalsConfig;
   today: Date;
+  currencyScope?: 'all' | SupportedCurrency;
 }
 
-export function AnalyticsVisualizer({ transactions, goalsConfig, today }: AnalyticsVisualizerProps) {
-  const { t, formatCurrency, locale } = useI18n();
+export function AnalyticsVisualizer({
+  transactions,
+  goalsConfig,
+  today,
+  currencyScope = 'all',
+}: AnalyticsVisualizerProps) {
+  const { t, formatCurrency, locale, currency } = useI18n();
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<'cash-flow' | 'spending-pace'>('cash-flow');
   const [timeframe, setTimeframe] = useState<3 | 6 | 12>(6);
 
+  const rate = settings.exchangeRate?.rate;
+  const displayCurrency: SupportedCurrency = currencyScope !== 'all' ? currencyScope : currency;
+  const currencySymbol = displayCurrency === 'BRL' ? 'R$' : '$';
+
   const cashFlowData = useMemo(() => {
-    return calculateMonthlyCashFlowHistory(transactions, timeframe, today, locale);
-  }, [transactions, timeframe, today, locale]);
+    return calculateMonthlyCashFlowHistory(transactions, timeframe, today, locale, currencyScope, currency, rate);
+  }, [transactions, timeframe, today, locale, currencyScope, currency, rate]);
 
   const paceData = useMemo(() => {
-    return calculateCumulativeSpendingPace(transactions, goalsConfig, today);
-  }, [transactions, goalsConfig, today]);
+    return calculateCumulativeSpendingPace(transactions, goalsConfig, today, currencyScope, currency, rate);
+  }, [transactions, goalsConfig, today, currencyScope, currency, rate]);
 
   const CashFlowTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
@@ -54,17 +67,17 @@ export function AnalyticsVisualizer({ transactions, goalsConfig, today }: Analyt
           </p>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">{t('dashboard.inflow')}:</span>
-            <span className="font-medium text-theme-green">+{formatCurrency(data.income)}</span>
+            <span className="font-medium text-theme-green">+{formatCurrency(data.income, displayCurrency)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">{t('dashboard.outflow')}:</span>
-            <span className="font-medium text-theme-red">−{formatCurrency(data.expenses)}</span>
+            <span className="font-medium text-theme-red">−{formatCurrency(data.expenses, displayCurrency)}</span>
           </div>
           <div className="flex justify-between gap-4 pt-1 border-t border-border/60 font-semibold">
             <span className="text-foreground">{t('dashboard.netSavings')}:</span>
             <span className={isPositive ? 'text-theme-green' : 'text-theme-red'}>
               {isPositive ? '+' : ''}
-              {formatCurrency(data.netSavings)}
+              {formatCurrency(data.netSavings, displayCurrency)}
             </span>
           </div>
         </div>
@@ -83,7 +96,7 @@ export function AnalyticsVisualizer({ transactions, goalsConfig, today }: Analyt
             <div key={entry.name} className="flex justify-between gap-4">
               <span className="text-muted-foreground">{entry.name}:</span>
               <span className="font-semibold" style={{ color: entry.color }}>
-                {entry.value !== undefined ? formatCurrency(entry.value) : '—'}
+                {entry.value !== undefined ? formatCurrency(entry.value, displayCurrency) : '—'}
               </span>
             </div>
           ))}
@@ -131,37 +144,46 @@ export function AnalyticsVisualizer({ transactions, goalsConfig, today }: Analyt
         </div>
 
         {/* Controls based on active tab */}
-        {activeTab === 'cash-flow' ? (
-          <div className="flex items-center gap-1">
-            {([3, 6, 12] as const).map(count => (
-              <Button
-                key={count}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setTimeframe(count)}
-                className={`text-xs h-7 px-2.5 rounded-lg border transition-all ${
-                  timeframe === count
-                    ? 'bg-theme-cyan/20 border-theme-cyan/40 text-theme-cyan font-bold'
-                    : 'bg-foreground/5 border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {count === 3 ? t('dashboard.months3') : count === 6 ? t('dashboard.months6') : t('dashboard.months12')}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-theme-cyan inline-block" />
-              {t('dashboard.currentMonth')}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/60 inline-block" />
-              {t('dashboard.previousMonth')}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground/5 border border-border/60 text-muted-foreground">
+            {displayCurrency}
+          </span>
+          {activeTab === 'cash-flow' ? (
+            <div className="flex items-center gap-1">
+              {([3, 6, 12] as const).map(count => (
+                <Button
+                  key={count}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTimeframe(count)}
+                  className={`text-xs h-7 px-2.5 rounded-lg border transition-all ${
+                    timeframe === count
+                      ? 'bg-theme-cyan/20 border-theme-cyan/40 text-theme-cyan font-bold'
+                      : 'bg-foreground/5 border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {count === 3
+                    ? t('dashboard.months3')
+                    : count === 6
+                      ? t('dashboard.months6')
+                      : t('dashboard.months12')}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-theme-cyan inline-block" />
+                {t('dashboard.currentMonth')}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/60 inline-block" />
+                {t('dashboard.previousMonth')}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chart Visualizations */}
@@ -184,7 +206,7 @@ export function AnalyticsVisualizer({ transactions, goalsConfig, today }: Analyt
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={val => `$${Math.round(val / 1000)}k`}
+                tickFormatter={val => `${currencySymbol}${Math.round(val / 1000)}k`}
               />
               <Tooltip content={<CashFlowTooltip />} />
               <Bar
@@ -230,7 +252,7 @@ export function AnalyticsVisualizer({ transactions, goalsConfig, today }: Analyt
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={val => `$${Math.round(val / 1000)}k`}
+                tickFormatter={val => `${currencySymbol}${Math.round(val / 1000)}k`}
               />
               <Tooltip content={<PaceTooltip />} />
               <Line

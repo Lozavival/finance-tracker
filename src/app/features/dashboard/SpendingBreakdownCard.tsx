@@ -6,22 +6,37 @@ import { Button } from '@/components/primitives/button';
 import { useI18n } from '@/i18n';
 import { useSettings } from '@/state/SettingsContext';
 import { type Transaction } from '@/data/transactions';
+import { type SupportedCurrency } from '@/i18n/types';
 import { calculateCategoryBreakdown, type CategoryBreakdownItem } from '@/data/analytics';
 
 interface SpendingBreakdownCardProps {
   transactions: Transaction[];
   today: Date;
+  currencyScope?: 'all' | SupportedCurrency;
 }
 
-export function SpendingBreakdownCard({ transactions, today }: SpendingBreakdownCardProps) {
-  const { t, formatCurrency } = useI18n();
+export function SpendingBreakdownCard({ transactions, today, currencyScope = 'all' }: SpendingBreakdownCardProps) {
+  const { t, formatCurrency, currency } = useI18n();
   const { settings } = useSettings();
   const [mode, setMode] = useState<'types' | 'goals'>('types');
   const [period, setPeriod] = useState<'this-month' | 'last-month' | 'last-90-days'>('this-month');
 
+  const rate = settings.exchangeRate?.rate;
+  const displayCurrency: SupportedCurrency = currencyScope !== 'all' ? currencyScope : currency;
+
   const { items, totalSpend } = useMemo(() => {
-    return calculateCategoryBreakdown(transactions, settings, settings.goals, period, mode, today);
-  }, [transactions, settings, period, mode, today]);
+    return calculateCategoryBreakdown(
+      transactions,
+      settings,
+      settings.goals,
+      period,
+      mode,
+      today,
+      currencyScope,
+      currency,
+      rate,
+    );
+  }, [transactions, settings, period, mode, today, currencyScope, currency, rate]);
 
   const CustomPieTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
@@ -33,7 +48,7 @@ export function SpendingBreakdownCard({ transactions, today }: SpendingBreakdown
             <span>{data.name}</span>
           </div>
           <div className="flex justify-between gap-3 text-muted-foreground">
-            <span>{formatCurrency(data.value)}</span>
+            <span>{formatCurrency(data.value, displayCurrency)}</span>
             <span className="font-bold text-foreground">{data.percentage}%</span>
           </div>
         </div>
@@ -51,6 +66,9 @@ export function SpendingBreakdownCard({ transactions, today }: SpendingBreakdown
             <PieIcon className="size-4 text-theme-purple" />
             <span className="font-semibold text-foreground text-sm tracking-tight">
               {t('dashboard.spendingBreakdown')}
+            </span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-foreground/5 border border-border/60 text-muted-foreground">
+              {displayCurrency}
             </span>
           </div>
 
@@ -141,7 +159,7 @@ export function SpendingBreakdownCard({ transactions, today }: SpendingBreakdown
                   {t('dashboard.totalSpend')}
                 </span>
                 <span className="text-xl font-extrabold text-foreground tracking-tight mt-0.5">
-                  {formatCurrency(totalSpend)}
+                  {formatCurrency(totalSpend, displayCurrency)}
                 </span>
               </div>
             </div>
@@ -176,7 +194,7 @@ export function SpendingBreakdownCard({ transactions, today }: SpendingBreakdown
                       )}
                       <span className="text-muted-foreground w-9 text-right font-medium">{item.percentage}%</span>
                       <span className="text-foreground font-semibold w-16 text-right">
-                        {formatCurrency(item.value)}
+                        {formatCurrency(item.value, displayCurrency)}
                       </span>
                     </div>
                   </div>

@@ -19,7 +19,9 @@ import { type Transaction } from '@/data/transactions';
 import { resolveUpcomingHorizon, formatShort, type UpcomingPeriodType } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
 import { useFinance } from '@/state/FinanceContext';
-import { getAccountColor, type AccountConfig } from '@/data/settings';
+import { getAccountColor, getAccountCurrencies, type AccountConfig } from '@/data/settings';
+import { convertCents } from '@/data/currency';
+import { type SupportedCurrency } from '@/i18n/types';
 import { AccountFormDialog } from './AccountFormDialog';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ArchiveAccountDialog } from './ArchiveAccountDialog';
@@ -46,8 +48,9 @@ export function AccountsPage({
   const finance = propFinance ?? financeContext;
   const transactions = propTransactions ?? financeContext.transactions;
   const { settings, dispatch } = useSettings();
-  const { t, formatCents, locale } = useI18n();
+  const { t, formatCents, locale, currency } = useI18n();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
+  const [currencyFilter, setCurrencyFilter] = useState<'all' | SupportedCurrency>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<AccountConfig | null>(null);
 
@@ -70,23 +73,65 @@ export function AccountsPage({
     return settings.accounts.filter(a => !a.archived);
   }, [settings.accounts]);
 
+  const filteredAccounts = useMemo(() => {
+    if (currencyFilter === 'all') return activeAccounts;
+    return activeAccounts.filter(acc => getAccountCurrencies(acc).includes(currencyFilter));
+  }, [activeAccounts, currencyFilter]);
+
   const archivedAccounts = useMemo(() => {
     return settings.accounts.filter(a => a.archived);
   }, [settings.accounts]);
 
-  let totalBalance = 0;
-  let totalIn = 0;
-  let totalOut = 0;
-  let totalProjected = 0;
+  const totalsByCurrency = useMemo(() => {
+    const result: Record<SupportedCurrency, { balance: number; in: number; out: number; projected: number }> = {
+      BRL: { balance: 0, in: 0, out: 0, projected: 0 },
+      USD: { balance: 0, in: 0, out: 0, projected: 0 },
+    };
 
-  activeAccounts.forEach(acc => {
-    const ledger = finance.ledgers[acc.id];
-    const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
-    totalBalance += forecast.current;
-    totalIn += forecast.upcomingIn;
-    totalOut += forecast.upcomingOut;
-    totalProjected += forecast.projected;
-  });
+    activeAccounts.forEach(acc => {
+      const accCurrencies = getAccountCurrencies(acc);
+      accCurrencies.forEach(curr => {
+        const pocketLedger = finance.ledgers[`${acc.id}:${curr}`] ?? finance.ledgers[acc.id];
+        if (pocketLedger) {
+          const forecast = getAccountForecast(pocketLedger, finance.today, horizonEnd);
+          result[curr].balance += forecast.current;
+          result[curr].in += forecast.upcomingIn;
+          result[curr].out += forecast.upcomingOut;
+          result[curr].projected += forecast.projected;
+        }
+      });
+    });
+
+    return result;
+  }, [activeAccounts, finance.ledgers, finance.today, horizonEnd]);
+
+  const rate = settings.exchangeRate?.rate;
+  const hasRate = rate !== null && rate !== undefined && rate > 0;
+
+  const convertedTotals = useMemo(() => {
+    if (!hasRate) return null;
+    const brlBalConverted = convertCents(totalsByCurrency.BRL.balance, 'BRL', currency, rate) ?? 0;
+    const usdBalConverted = convertCents(totalsByCurrency.USD.balance, 'USD', currency, rate) ?? 0;
+    const brlInConverted = convertCents(totalsByCurrency.BRL.in, 'BRL', currency, rate) ?? 0;
+    const usdInConverted = convertCents(totalsByCurrency.USD.in, 'USD', currency, rate) ?? 0;
+    const brlOutConverted = convertCents(totalsByCurrency.BRL.out, 'BRL', currency, rate) ?? 0;
+    const usdOutConverted = convertCents(totalsByCurrency.USD.out, 'USD', currency, rate) ?? 0;
+    const brlProjConverted = convertCents(totalsByCurrency.BRL.projected, 'BRL', currency, rate) ?? 0;
+    const usdProjConverted = convertCents(totalsByCurrency.USD.projected, 'USD', currency, rate) ?? 0;
+
+    return {
+      balance:
+        currency === 'USD'
+          ? totalsByCurrency.USD.balance + brlBalConverted
+          : totalsByCurrency.BRL.balance + usdBalConverted,
+      in: currency === 'USD' ? totalsByCurrency.USD.in + brlInConverted : totalsByCurrency.BRL.in + usdInConverted,
+      out: currency === 'USD' ? totalsByCurrency.USD.out + brlOutConverted : totalsByCurrency.BRL.out + usdOutConverted,
+      projected:
+        currency === 'USD'
+          ? totalsByCurrency.USD.projected + brlProjConverted
+          : totalsByCurrency.BRL.projected + usdProjConverted,
+    };
+  }, [hasRate, totalsByCurrency, currency, rate]);
 
   const handleSelect = (accountId: string) => {
     if (onAccountSelect) {
@@ -119,10 +164,13 @@ export function AccountsPage({
     setEditingAccount(acc);
   };
 
-  const activeCards = activeAccounts.map(acc => {
+  const activeCards = filteredAccounts.map(acc => {
     const details = acc;
-    const ledger = finance.ledgers[acc.id];
-    const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
+    const accCurrencies = getAccountCurrencies(acc);
+    const isMultiCurrency = accCurrencies.length > 1;
+    const primaryCurr = accCurrencies[0] || 'USD';
+    const primaryLedger = finance.ledgers[`${acc.id}:${primaryCurr}`] ?? finance.ledgers[acc.id];
+    const forecast = getAccountForecast(primaryLedger, finance.today, horizonEnd);
 
     return (
       <Card
@@ -139,8 +187,23 @@ export function AccountsPage({
               {details.initials}
             </div>
             <div>
-              <div className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
-                {details.name}
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
+                  {details.name}
+                </span>
+                {isMultiCurrency && (
+                  <Badge
+                    variant="outline"
+                    className="border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan text-[10px] px-1.5 py-0"
+                  >
+                    {t('accounts.multiCurrencyBadge')}
+                  </Badge>
+                )}
+                {!isMultiCurrency && (
+                  <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 text-muted-foreground">
+                    {primaryCurr}
+                  </Badge>
+                )}
               </div>
               <div className="text-muted-foreground text-sm">
                 {details.kind === 'Checking'
@@ -155,7 +218,21 @@ export function AccountsPage({
           </div>
           <div className="flex items-center gap-1">
             <div className="text-right mr-1">
-              <div className="text-foreground text-xl font-medium">{formatCents(forecast.current)}</div>
+              {isMultiCurrency ? (
+                <div className="space-y-0.5">
+                  {accCurrencies.map(c => {
+                    const l = finance.ledgers[`${acc.id}:${c}`] ?? finance.ledgers[acc.id];
+                    const fc = getAccountForecast(l, finance.today, horizonEnd);
+                    return (
+                      <div key={c} className="text-foreground text-sm font-medium">
+                        {formatCents(fc.current, c)}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-foreground text-xl font-medium">{formatCents(forecast.current, primaryCurr)}</div>
+              )}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
@@ -190,26 +267,31 @@ export function AccountsPage({
           <div className="text-xs text-muted-foreground mb-2 mt-4 font-medium uppercase tracking-wider">
             {t('accounts.nextUp')}
           </div>
-          <UpcomingList upcoming={forecast.upcoming} currentBalance={forecast.current} variant="compact" />
+          <UpcomingList
+            upcoming={forecast.upcoming}
+            currentBalance={forecast.current}
+            variant="compact"
+            currency={primaryCurr}
+          />
         </div>
         <div className="space-y-3 mt-6">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('accounts.upcomingIn')}</span>
-            <span className="text-theme-green">+{formatCents(forecast.upcomingIn)}</span>
+            <span className="text-theme-green">+{formatCents(forecast.upcomingIn, primaryCurr)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('accounts.upcomingOut')}</span>
-            <span className="text-theme-red">{formatCents(forecast.upcomingOut)}</span>
+            <span className="text-theme-red">{formatCents(forecast.upcomingOut, primaryCurr)}</span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-border/50">
             <span className="text-foreground font-medium">{t('accounts.projected')}</span>
-            <span className="text-foreground font-medium">{formatCents(forecast.projected)}</span>
+            <span className="text-foreground font-medium">{formatCents(forecast.projected, primaryCurr)}</span>
           </div>
 
           {forecast.lowest.balance < Math.min(forecast.current, forecast.projected) && (
             <div className="text-xs text-theme-orange mt-2 p-2 bg-theme-orange/10 rounded-md">
               {t('accounts.dipsTo', {
-                amount: formatCents(forecast.lowest.balance),
+                amount: formatCents(forecast.lowest.balance, primaryCurr),
                 date: formatShort(forecast.lowest.date, locale),
               })}
             </div>
@@ -226,7 +308,9 @@ export function AccountsPage({
 
   const archivedCards = archivedAccounts.map(acc => {
     const details = acc;
-    const ledger = finance.ledgers[acc.id];
+    const accCurrencies = getAccountCurrencies(acc);
+    const primaryCurr = accCurrencies[0] || 'USD';
+    const ledger = finance.ledgers[`${acc.id}:${primaryCurr}`] ?? finance.ledgers[acc.id];
     const forecast = getAccountForecast(ledger, finance.today, horizonEnd);
 
     return (
@@ -267,7 +351,9 @@ export function AccountsPage({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-muted-foreground text-lg font-medium">{formatCents(forecast.current)}</div>
+            <div className="text-muted-foreground text-lg font-medium">
+              {formatCents(forecast.current, primaryCurr)}
+            </div>
           </div>
         </div>
 
@@ -302,7 +388,9 @@ export function AccountsPage({
             kind: account.kind,
             initials: account.initials,
             color: account.color,
+            currencies: account.currencies,
             openingBalance: account.openingBalance,
+            openingBalances: account.openingBalances,
             openingDate: account.openingDate,
             card: account.card,
             allowedPaymentMethods: account.allowedPaymentMethods,
@@ -330,24 +418,132 @@ export function AccountsPage({
         </div>
       </div>
 
+      {/* Notice if rate is not set: Breakdown fallback active */}
+      {!hasRate && (
+        <div className="p-3 rounded-lg border border-border/60 bg-foreground/5 text-xs text-muted-foreground flex items-center justify-between">
+          <span>{t('accounts.rateUnavailableNotice')}</span>
+          <span className="font-mono uppercase text-[10px] px-1.5 py-0.5 rounded bg-foreground/10 text-theme-cyan font-medium">
+            {t('accounts.breakdown')}
+          </span>
+        </div>
+      )}
+
       {/* Totals Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.totalBalance')}</div>
-          <div className="text-2xl text-foreground">{formatCents(totalBalance)}</div>
+          {hasRate && convertedTotals ? (
+            <div>
+              <div className="text-2xl text-foreground font-semibold">
+                {formatCents(convertedTotals.balance, currency)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCents(totalsByCurrency.BRL.balance, 'BRL')} · {formatCents(totalsByCurrency.USD.balance, 'USD')}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <div className="text-xl text-foreground font-semibold">
+                {formatCents(totalsByCurrency.BRL.balance, 'BRL')}
+              </div>
+              <div className="text-xl text-foreground font-semibold">
+                {formatCents(totalsByCurrency.USD.balance, 'USD')}
+              </div>
+            </div>
+          )}
         </Card>
+
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
-          <div className="text-2xl text-theme-green">+{formatCents(totalIn)}</div>
+          {hasRate && convertedTotals ? (
+            <div>
+              <div className="text-2xl text-theme-green font-semibold">
+                +{formatCents(convertedTotals.in, currency)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                +{formatCents(totalsByCurrency.BRL.in, 'BRL')} · +{formatCents(totalsByCurrency.USD.in, 'USD')}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <div className="text-xl text-theme-green font-semibold">
+                +{formatCents(totalsByCurrency.BRL.in, 'BRL')}
+              </div>
+              <div className="text-xl text-theme-green font-semibold">
+                +{formatCents(totalsByCurrency.USD.in, 'USD')}
+              </div>
+            </div>
+          )}
         </Card>
+
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
-          <div className="text-2xl text-theme-red">{formatCents(totalOut)}</div>
+          {hasRate && convertedTotals ? (
+            <div>
+              <div className="text-2xl text-theme-red font-semibold">{formatCents(convertedTotals.out, currency)}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCents(totalsByCurrency.BRL.out, 'BRL')} · {formatCents(totalsByCurrency.USD.out, 'USD')}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <div className="text-xl text-theme-red font-semibold">{formatCents(totalsByCurrency.BRL.out, 'BRL')}</div>
+              <div className="text-xl text-theme-red font-semibold">{formatCents(totalsByCurrency.USD.out, 'USD')}</div>
+            </div>
+          )}
         </Card>
+
         <Card className="p-4 bg-theme-cyan/10 border-theme-cyan/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
-          <div className="text-2xl text-theme-cyan">{formatCents(totalProjected)}</div>
+          {hasRate && convertedTotals ? (
+            <div>
+              <div className="text-2xl text-theme-cyan font-semibold">
+                {formatCents(convertedTotals.projected, currency)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCents(totalsByCurrency.BRL.projected, 'BRL')} ·{' '}
+                {formatCents(totalsByCurrency.USD.projected, 'USD')}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <div className="text-xl text-theme-cyan font-semibold">
+                {formatCents(totalsByCurrency.BRL.projected, 'BRL')}
+              </div>
+              <div className="text-xl text-theme-cyan font-semibold">
+                {formatCents(totalsByCurrency.USD.projected, 'USD')}
+              </div>
+            </div>
+          )}
         </Card>
+      </div>
+
+      {/* Currency Filter Tabs */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={currencyFilter === 'all' ? 'cyan' : 'outline'}
+          onClick={() => setCurrencyFilter('all')}
+          className="h-8 text-xs"
+        >
+          {t('accounts.filterAll')}
+        </Button>
+        <Button
+          size="sm"
+          variant={currencyFilter === 'BRL' ? 'cyan' : 'outline'}
+          onClick={() => setCurrencyFilter('BRL')}
+          className="h-8 text-xs"
+        >
+          {t('accounts.filterBRL')} (R$)
+        </Button>
+        <Button
+          size="sm"
+          variant={currencyFilter === 'USD' ? 'cyan' : 'outline'}
+          onClick={() => setCurrencyFilter('USD')}
+          className="h-8 text-xs"
+        >
+          {t('accounts.filterUSD')} ($)
+        </Button>
       </div>
 
       {/* Active Accounts Grid */}

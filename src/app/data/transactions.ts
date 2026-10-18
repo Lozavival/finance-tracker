@@ -16,6 +16,9 @@ export type InstallmentInfo = {
   total: number;
 };
 
+import { type SupportedCurrency } from '@/i18n/types';
+import { convertAmount } from './currency';
+
 export type Transaction = {
   id: string;
   date: Date;
@@ -23,6 +26,7 @@ export type Transaction = {
   typeId: string;
   direction: TransactionDirection;
   value: number;
+  currency?: SupportedCurrency;
   accountId: string;
   paymentMethodId?: string;
   transferId?: string;
@@ -35,9 +39,12 @@ export type TransactionDraft =
   | {
       kind: 'transfer';
       date: Date;
-      value: number;
+      value: number; // sent value in fromCurrency
+      toValue?: number; // received value in toCurrency
       fromAccountId: string;
+      fromCurrency?: SupportedCurrency;
       toAccountId: string;
+      toCurrency?: SupportedCurrency;
     }
   | {
       kind: 'installments';
@@ -66,18 +73,29 @@ export function buildTransferLegs(
   transferId: string,
   ids: [string, string],
   accountNames?: { fromName?: string; toName?: string },
+  currencies?: { fromCurrency?: SupportedCurrency; toCurrency?: SupportedCurrency },
 ): [Transaction, Transaction] {
+  const fromCurrency = draft.fromCurrency ?? currencies?.fromCurrency ?? 'USD';
+  const toCurrency = draft.toCurrency ?? currencies?.toCurrency ?? fromCurrency;
+  const toValue = draft.toValue ?? draft.value;
+  const isCross = fromCurrency !== toCurrency;
+
   const toLabel = accountNames?.toName ? ` to ${accountNames.toName}` : '';
   const fromLabel = accountNames?.fromName ? ` from ${accountNames.fromName}` : '';
+  const rateLabel =
+    isCross && toValue > 0
+      ? ` (${toValue} ${toCurrency} @ ${(draft.value / toValue).toFixed(2)} ${fromCurrency}/${toCurrency})`
+      : '';
 
   return [
     {
       id: ids[0],
       date: draft.date,
-      description: `Transfer${toLabel}`,
+      description: `Transfer${toLabel}${rateLabel}`,
       typeId: TRANSFER_TYPE_ID,
       direction: 'expense',
       value: draft.value,
+      currency: fromCurrency,
       accountId: draft.fromAccountId,
       transferId,
     },
@@ -87,7 +105,8 @@ export function buildTransferLegs(
       description: `Transfer${fromLabel}`,
       typeId: TRANSFER_TYPE_ID,
       direction: 'income',
-      value: draft.value,
+      value: toValue,
+      currency: toCurrency,
       accountId: draft.toAccountId,
       transferId,
     },
@@ -115,20 +134,26 @@ export type CategoryTotal = {
   dotClassName?: string;
 };
 
-export function formatCurrency(amount: number, currency = 'USD', locale = 'en-US') {
+export function formatCurrency(amount: number, currency: SupportedCurrency = 'USD', locale = 'en-US') {
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
     }).format(amount);
   } catch {
-    return `$${amount.toFixed(2)}`;
+    const symbol = currency === 'BRL' ? 'R$' : '$';
+    return `${symbol}${amount.toFixed(2)}`;
   }
 }
 
-export function formatSignedValue(transaction: Transaction, currency = 'USD', locale = 'en-US') {
+export function formatSignedValue(
+  transaction: Transaction,
+  fallbackCurrency: SupportedCurrency = 'USD',
+  locale = 'en-US',
+) {
   const sign = transaction.direction === 'income' ? '+' : '−';
-  return `${sign}${formatCurrency(transaction.value, currency, locale)}`;
+  const curr = transaction.currency ?? fallbackCurrency;
+  return `${sign}${formatCurrency(transaction.value, curr, locale)}`;
 }
 
 export function getLatestMonthRange(transactions: Transaction[]) {
@@ -149,12 +174,21 @@ export function sortTransactionsAscending(transactions: Transaction[]) {
 export function aggregateExpensesByCategory(
   transactions: Transaction[],
   types: TransactionTypeConfig[],
+  targetCurrency?: SupportedCurrency,
+  exchangeRate?: number | null,
 ): CategoryTotal[] {
   const totals = new Map<string, number>();
 
   transactions.forEach(transaction => {
     if (transaction.direction === 'expense' && !transaction.transferId) {
-      totals.set(transaction.typeId, (totals.get(transaction.typeId) ?? 0) + transaction.value);
+      let val = transaction.value;
+      if (targetCurrency && transaction.currency && transaction.currency !== targetCurrency) {
+        const converted = convertAmount(transaction.value, transaction.currency, targetCurrency, exchangeRate ?? null);
+        if (converted !== null) {
+          val = converted;
+        }
+      }
+      totals.set(transaction.typeId, (totals.get(transaction.typeId) ?? 0) + val);
     }
   });
 

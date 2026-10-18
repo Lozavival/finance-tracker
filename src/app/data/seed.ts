@@ -18,6 +18,7 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
     typeId: 'income',
     direction: 'income',
     value: 5200,
+    currency: 'USD',
     accountId: 'boa',
     startDate: daysFromToday(-70),
     frequency: 'monthly',
@@ -31,6 +32,7 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
     typeId: 'bills',
     direction: 'expense',
     value: 1800,
+    currency: 'USD',
     accountId: 'boa',
     paymentMethodId: 'bank-transfer',
     startDate: daysFromToday(-72),
@@ -41,11 +43,19 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
   },
 ];
 
+import { type SupportedCurrency } from '@/i18n/types';
+
 export const SEEDED_TRANSACTIONS: Transaction[] = [];
+
+function inferAccountCurrency(accountId: string): SupportedCurrency {
+  if (accountId === 'nubank' || accountId === 'cash-wallet') return 'BRL';
+  return 'USD';
+}
 
 // Helper to add
 function addTx(tx: Omit<Transaction, 'id'>) {
-  SEEDED_TRANSACTIONS.push({ id: nextId(), ...tx });
+  const currency = tx.currency ?? inferAccountCurrency(tx.accountId);
+  SEEDED_TRANSACTIONS.push({ id: nextId(), ...tx, currency });
 }
 
 function addTransfer(
@@ -54,15 +64,25 @@ function addTransfer(
   fromAccountId: string,
   toAccountId: string,
   fromName = 'Bank of America',
-  toName = 'Goldman Sachs',
+  toName = 'Wise',
+  fromCurrency?: SupportedCurrency,
+  toCurrency?: SupportedCurrency,
+  toValue?: number,
 ) {
+  const fCurr = fromCurrency ?? inferAccountCurrency(fromAccountId);
+  const tCurr = toCurrency ?? inferAccountCurrency(toAccountId);
+  const tVal = toValue ?? value;
+  const isCross = fCurr !== tCurr;
+  const rateLabel = isCross && tVal > 0 ? ` (${tVal} ${tCurr} @ ${(value / tVal).toFixed(2)} ${fCurr}/${tCurr})` : '';
   const transferId = `tf-${seedIdCounter++}`;
+
   addTx({
     date,
-    description: `Transfer to ${toName}`,
+    description: `Transfer to ${toName}${rateLabel}`,
     typeId: 'transfer',
     direction: 'expense',
     value,
+    currency: fCurr,
     accountId: fromAccountId,
     transferId,
   });
@@ -71,7 +91,8 @@ function addTransfer(
     description: `Transfer from ${fromName}`,
     typeId: 'transfer',
     direction: 'income',
-    value,
+    value: tVal,
+    currency: tCurr,
     accountId: toAccountId,
     transferId,
   });
@@ -212,21 +233,63 @@ addTx({
 });
 
 // ---------------------------------------------------------
-// Goldman Sachs (Savings)
-// Monthly transfer from BoA
-let tfCur = daysFromToday(-60);
-for (let i = 0; i < 4; i++) {
-  addTransfer(tfCur, 1000, 'boa', 'gs', 'Bank of America', 'Goldman Sachs');
-  tfCur = addMonthsClamped(tfCur, 1);
-}
-
-// Monthly interest
-createMonthly(6, -88, {
-  description: 'Interest Yield',
+// Nubank (BRL Checking)
+addTx({
+  date: daysFromToday(-40),
+  description: 'Salary / Consulting',
   typeId: 'income',
   direction: 'income',
-  value: 45.32,
-  accountId: 'gs',
+  value: 7500,
+  currency: 'BRL',
+  accountId: 'nubank',
+  paymentMethodId: 'pix',
+});
+addTx({
+  date: daysFromToday(-10),
+  description: 'Salary / Consulting',
+  typeId: 'income',
+  direction: 'income',
+  value: 7500,
+  currency: 'BRL',
+  accountId: 'nubank',
+  paymentMethodId: 'pix',
+});
+addTx({
+  date: daysFromToday(-14),
+  description: 'Pão de Açúcar Supermarket',
+  typeId: 'food-dining',
+  direction: 'expense',
+  value: 385.5,
+  currency: 'BRL',
+  accountId: 'nubank',
+  paymentMethodId: 'debit-card',
+});
+addTx({
+  date: daysFromToday(-7),
+  description: 'Internet & Mobile (Claro)',
+  typeId: 'bills',
+  direction: 'expense',
+  value: 189.9,
+  currency: 'BRL',
+  accountId: 'nubank',
+  paymentMethodId: 'pix',
+});
+
+// ---------------------------------------------------------
+// Wise (Multi-Currency: BRL & USD)
+// Cross-currency transfer: 500 BRL from Nubank to buy 100 USD in Wise
+addTransfer(daysFromToday(-4), 500, 'nubank', 'wise', 'Nubank', 'Wise USD', 'BRL', 'USD', 100);
+
+// USD Investment purchased with 50 USD from Wise USD pocket
+addTx({
+  date: daysFromToday(-2),
+  description: 'Vanguard S&P 500 ETF (VOO)',
+  typeId: 'shopping',
+  direction: 'expense',
+  value: 50.0,
+  currency: 'USD',
+  accountId: 'wise',
+  paymentMethodId: 'bank-transfer',
 });
 
 // ---------------------------------------------------------

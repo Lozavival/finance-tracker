@@ -8,6 +8,7 @@ import { PeriodFilter } from '@/components/shared/filters/PeriodFilter';
 import { TypeFilter } from './TypeFilter';
 import { DirectionFilter } from './DirectionFilter';
 import { PaymentFilter } from './PaymentFilter';
+import { CurrencyFilter } from './CurrencyFilter';
 import { RecurringRulesDialog } from './RecurringRulesDialog';
 import {
   resolvePeriodRange,
@@ -20,6 +21,7 @@ import {
 import { TransactionDialogs } from '@/components/shared/transaction-dialogs/TransactionDialogs';
 import { useTransactionActions } from '@/state/useTransactionActions';
 import { useFinance } from '@/state/FinanceContext';
+import { type SupportedCurrency } from '@/i18n/types';
 import { useI18n } from '@/i18n';
 
 type TransactionsPageProps = {
@@ -35,6 +37,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [currencyFilter, setCurrencyFilter] = useState<'all' | SupportedCurrency>('all');
   const [recurringRulesOpen, setRecurringRulesOpen] = useState(false);
 
   const {
@@ -72,20 +75,28 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
           return false;
         }
       }
+      if (currencyFilter !== 'all' && (transaction.currency ?? 'USD') !== currencyFilter) {
+        return false;
+      }
       return true;
     });
 
     return sortTransactionsDescending(filtered);
-  }, [period, selectedTypes, direction, selectedPayments, transactions]);
+  }, [period, selectedTypes, direction, selectedPayments, currencyFilter, transactions]);
 
   const filtersActive =
-    period.kind !== 'up-to-today' || selectedTypes.length > 0 || direction !== 'all' || selectedPayments.length > 0;
+    period.kind !== 'up-to-today' ||
+    selectedTypes.length > 0 ||
+    direction !== 'all' ||
+    selectedPayments.length > 0 ||
+    currencyFilter !== 'all';
 
   function resetFilters() {
     setPeriod({ kind: 'up-to-today' });
     setSelectedTypes([]);
     setDirection('all');
     setSelectedPayments([]);
+    setCurrencyFilter('all');
   }
 
   return (
@@ -120,6 +131,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
             <TypeFilter value={selectedTypes} onChange={setSelectedTypes} />
             <DirectionFilter value={direction} onChange={setDirection} />
             <PaymentFilter value={selectedPayments} onChange={setSelectedPayments} />
+            <CurrencyFilter value={currencyFilter} onChange={setCurrencyFilter} />
 
             {filtersActive && (
               <Button

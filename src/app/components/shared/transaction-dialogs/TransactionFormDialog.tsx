@@ -31,7 +31,9 @@ import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { getIcon } from '@/data/icons';
-import { TRANSFER_TYPE_ID } from '@/data/settings';
+import { TRANSFER_TYPE_ID, getAccountCurrencies } from '@/data/settings';
+import { convertAmount } from '@/data/currency';
+import { type SupportedCurrency } from '@/i18n/types';
 import { useI18n } from '@/i18n';
 
 export type { EditingTarget };
@@ -46,7 +48,7 @@ export type TransactionFormDialogProps = {
   onSave: (draft: TransactionDraft) => void;
 };
 
-type FormErrors = Partial<Record<'description' | 'value' | 'date' | 'banks', string>>;
+type FormErrors = Partial<Record<'description' | 'value' | 'toValue' | 'date' | 'banks', string>>;
 
 export function TransactionFormDialog({
   open,
@@ -63,6 +65,7 @@ export function TransactionFormDialog({
   const [mode, setMode] = useState<DialogMode>('expense');
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
+  const [currency, setCurrency] = useState<SupportedCurrency>('USD');
   const [date, setDate] = useState<Date | undefined>(defaultDate);
   const [typeId, setTypeId] = useState<string>('');
   const [accountId, setAccountId] = useState<string>('');
@@ -80,11 +83,74 @@ export function TransactionFormDialog({
 
   // Transfer specific
   const [fromAccountId, setFromAccountId] = useState<string>('');
+  const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>('USD');
   const [toAccountId, setToAccountId] = useState<string>('');
+  const [toCurrency, setToCurrency] = useState<SupportedCurrency>('USD');
+  const [toValue, setToValue] = useState<string>('');
 
   const [errors, setErrors] = useState<FormErrors>({});
 
   const selectedAccount = useMemo(() => findAccount(accountId), [findAccount, accountId]);
+
+  const fromAccount = useMemo(() => findAccount(fromAccountId), [findAccount, fromAccountId]);
+  const toAccount = useMemo(() => findAccount(toAccountId), [findAccount, toAccountId]);
+
+  const accountCurrencies = useMemo<SupportedCurrency[]>(() => {
+    return selectedAccount ? getAccountCurrencies(selectedAccount) : (['USD'] as SupportedCurrency[]);
+  }, [selectedAccount]);
+
+  const fromAccountCurrencies = useMemo<SupportedCurrency[]>(() => {
+    return fromAccount ? getAccountCurrencies(fromAccount) : (['USD'] as SupportedCurrency[]);
+  }, [fromAccount]);
+
+  const toAccountCurrencies = useMemo<SupportedCurrency[]>(() => {
+    return toAccount ? getAccountCurrencies(toAccount) : (['USD'] as SupportedCurrency[]);
+  }, [toAccount]);
+
+  useEffect(() => {
+    if (!accountCurrencies.includes(currency)) {
+      setCurrency(accountCurrencies[0] || 'USD');
+    }
+  }, [accountCurrencies, currency]);
+
+  useEffect(() => {
+    if (!fromAccountCurrencies.includes(fromCurrency)) {
+      setFromCurrency(fromAccountCurrencies[0] || 'USD');
+    }
+  }, [fromAccountCurrencies, fromCurrency]);
+
+  useEffect(() => {
+    if (!toAccountCurrencies.includes(toCurrency)) {
+      setToCurrency(toAccountCurrencies[0] || 'USD');
+    }
+  }, [toAccountCurrencies, toCurrency]);
+
+  const isCrossTransfer = mode === 'transfer' && fromCurrency !== toCurrency;
+
+  const effectiveRateDisplay = useMemo(() => {
+    if (!isCrossTransfer) return null;
+    const numSent = Number(value);
+    const numReceived = Number(toValue);
+    if (!numSent || !numReceived || numSent <= 0 || numReceived <= 0) return null;
+
+    if (fromCurrency === 'BRL' && toCurrency === 'USD') {
+      return (numSent / numReceived).toFixed(2);
+    }
+    if (fromCurrency === 'USD' && toCurrency === 'BRL') {
+      return (numReceived / numSent).toFixed(2);
+    }
+    return (numSent / numReceived).toFixed(2);
+  }, [isCrossTransfer, value, toValue, fromCurrency, toCurrency]);
+
+  function handleApplyLiveRate() {
+    if (!settings.exchangeRate.rate) return;
+    const numSent = Number(value);
+    if (!numSent || numSent <= 0) return;
+    const converted = convertAmount(numSent, fromCurrency, toCurrency, settings.exchangeRate.rate);
+    if (converted !== null) {
+      setToValue(converted.toFixed(2));
+    }
+  }
 
   // Filter payment methods: only allow methods configured for this account
   const availablePaymentMethods = useMemo(() => {
@@ -111,11 +177,13 @@ export function TransactionFormDialog({
       setMode('expense');
       setDescription('');
       setValue('');
+      setToValue('');
       setDate(defaultDate);
       setTypeId(typesByDirection.expense[0]?.id || '');
       setAccountId(initialAcc);
-      // Determine initial payment method
       const acc = findAccount(initialAcc);
+      const accCurrs = getAccountCurrencies(acc);
+      setCurrency(accCurrs[0] || 'USD');
       const allowedIds = getAllowedPaymentMethodIds(acc);
       const allowedMethods = settings.paymentMethods.filter(m => allowedIds.includes(m.id));
       setPaymentMethodId(allowedMethods[0]?.id || '');
@@ -124,19 +192,25 @@ export function TransactionFormDialog({
       setRecurringLimitKind('infinite');
       setRecurringCount(3);
       setFromAccountId(firstAcc);
+      setFromCurrency(getAccountCurrencies(findAccount(firstAcc))[0] || 'USD');
       setToAccountId(secondAcc);
+      setToCurrency(getAccountCurrencies(findAccount(secondAcc))[0] || 'USD');
       return;
     }
 
     if (editing.kind === 'transfer') {
       setMode('transfer');
       setValue(String(editing.outgoing.value));
+      setToValue(String(editing.incoming.value));
       setDate(editing.outgoing.date);
       setFromAccountId(editing.outgoing.accountId);
+      setFromCurrency(editing.outgoing.currency ?? 'USD');
       setToAccountId(editing.incoming.accountId);
+      setToCurrency(editing.incoming.currency ?? 'USD');
       setDescription('');
       setTypeId(TRANSFER_TYPE_ID);
       setAccountId(editing.outgoing.accountId);
+      setCurrency(editing.outgoing.currency ?? 'USD');
       setPaymentMethodId(settings.paymentMethods[0]?.id || '');
       setInstallments(1);
       setIsRecurring(false);
@@ -146,22 +220,29 @@ export function TransactionFormDialog({
       setDescription(first.description);
       const total = editing.series.reduce((sum, tx) => sum + tx.value, 0);
       setValue(total.toFixed(2));
+      setToValue('');
       setDate(first.date);
       setTypeId(first.typeId);
       setAccountId(first.accountId);
+      setCurrency(first.currency ?? 'USD');
       if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(editing.series.length);
       setIsRecurring(false);
       setFromAccountId(firstAcc);
+      setFromCurrency(getAccountCurrencies(findAccount(firstAcc))[0] || 'USD');
       setToAccountId(secondAcc);
+      setToCurrency(getAccountCurrencies(findAccount(secondAcc))[0] || 'USD');
     } else if (editing.kind === 'recurring') {
       const first = editing.series[0];
       setMode(first.direction);
       setDescription(first.description);
       setValue(String(first.value));
+      setToValue('');
       setDate(first.date);
       setTypeId(first.typeId);
       setAccountId(first.accountId);
+      const acc = findAccount(first.accountId);
+      setCurrency(first.currency ?? getAccountCurrencies(acc)[0] ?? 'USD');
       if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(1);
       setIsRecurring(true);
@@ -173,15 +254,19 @@ export function TransactionFormDialog({
         setRecurringCount(3);
       }
       setFromAccountId(firstAcc);
+      setFromCurrency(getAccountCurrencies(findAccount(firstAcc))[0] || 'USD');
       setToAccountId(secondAcc);
+      setToCurrency(getAccountCurrencies(findAccount(secondAcc))[0] || 'USD');
     } else {
       const tx = editing.transaction;
       setMode(tx.direction);
       setDescription(tx.description);
       setValue(String(tx.value));
+      setToValue('');
       setDate(tx.date);
       setTypeId(tx.typeId);
       setAccountId(tx.accountId);
+      setCurrency(tx.currency ?? 'USD');
       if (tx.paymentMethodId) setPaymentMethodId(tx.paymentMethodId);
       setInstallments(1);
       setIsRecurring(Boolean(tx.recurring));
@@ -193,7 +278,9 @@ export function TransactionFormDialog({
         setRecurringCount(3);
       }
       setFromAccountId(firstAcc);
+      setFromCurrency(getAccountCurrencies(findAccount(firstAcc))[0] || 'USD');
       setToAccountId(secondAcc);
+      setToCurrency(getAccountCurrencies(findAccount(secondAcc))[0] || 'USD');
     }
   }, [
     open,
@@ -238,6 +325,7 @@ export function TransactionFormDialog({
     const nextErrors: FormErrors = {};
     const normalizedDescription = description.trim();
     const normalizedValue = Number(value);
+    const normalizedToValue = isCrossTransfer ? Number(toValue) : normalizedValue;
 
     if (mode !== 'transfer' && !normalizedDescription) {
       nextErrors.description = t('transactions.errors.enterDescription');
@@ -245,13 +333,16 @@ export function TransactionFormDialog({
     if (!value || !Number.isFinite(normalizedValue) || normalizedValue <= 0) {
       nextErrors.value = t('transactions.errors.enterValue');
     }
+    if (isCrossTransfer && (!toValue || !Number.isFinite(normalizedToValue) || normalizedToValue <= 0)) {
+      nextErrors.toValue = t('transactions.errors.enterValue');
+    }
     if (effectiveInstallments > 1 && normalizedValue < effectiveInstallments * 0.01) {
       nextErrors.value = t('transactions.errors.valueTooSmall');
     }
     if (!date) {
       nextErrors.date = t('transactions.errors.chooseDate');
     }
-    if (mode === 'transfer' && fromAccountId === toAccountId) {
+    if (mode === 'transfer' && fromAccountId === toAccountId && fromCurrency === toCurrency) {
       nextErrors.banks = t('transactions.errors.differentAccounts');
     }
 
@@ -264,8 +355,11 @@ export function TransactionFormDialog({
         kind: 'transfer',
         date,
         value: normalizedValue,
+        toValue: normalizedToValue,
         fromAccountId,
+        fromCurrency,
         toAccountId,
+        toCurrency,
       };
     } else if (isRecurring) {
       draft = {
@@ -275,6 +369,7 @@ export function TransactionFormDialog({
           direction: mode,
           typeId,
           accountId,
+          currency,
           ...(mode === 'expense' ? { paymentMethodId } : {}),
         },
         startDate: date,
@@ -293,6 +388,7 @@ export function TransactionFormDialog({
           direction: mode,
           typeId,
           accountId,
+          currency,
           paymentMethodId,
         },
         firstDate: date,
@@ -305,6 +401,7 @@ export function TransactionFormDialog({
         transaction: {
           description: normalizedDescription,
           value: normalizedValue,
+          currency,
           date,
           direction: mode,
           typeId,
@@ -402,60 +499,92 @@ export function TransactionFormDialog({
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-foreground">
-                    {isRecurring
-                      ? t('transactions.startDate')
-                      : effectiveInstallments > 1
-                        ? t('transactions.firstInstallment')
-                        : t('common.date')}
-                  </Label>
-                  <DateField
-                    placeholder={t('transactions.chooseDate')}
-                    value={date}
-                    onChange={d => setDate(d)}
-                    hasError={Boolean(errors.date)}
-                    className="h-11"
-                  />
-                  {errors.date && <div className="text-destructive text-sm">{errors.date}</div>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="transaction-value" className="text-foreground">
-                    {isRecurring
-                      ? t('transactions.valuePerMonth')
-                      : effectiveInstallments > 1
-                        ? t('common.totalValue')
-                        : t('common.value')}
-                  </Label>
-                  <Input
-                    id="transaction-value"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={value}
-                    onChange={event => setValue(event.target.value)}
-                    placeholder={t('transactions.amountPlaceholder')}
-                    aria-invalid={Boolean(errors.value)}
-                    className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
-                  />
-                  {errors.value && <div className="text-destructive text-sm">{errors.value}</div>}
-                </div>
-
                 {!isTransfer ? (
                   <>
+                    <div className="space-y-2">
+                      <Label className="text-foreground">
+                        {isRecurring
+                          ? t('transactions.startDate')
+                          : effectiveInstallments > 1
+                            ? t('transactions.firstInstallment')
+                            : t('common.date')}
+                      </Label>
+                      <DateField
+                        placeholder={t('transactions.chooseDate')}
+                        value={date}
+                        onChange={d => setDate(d)}
+                        hasError={Boolean(errors.date)}
+                        className="h-11"
+                      />
+                      {errors.date && <div className="text-destructive text-sm">{errors.date}</div>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="transaction-value" className="text-foreground">
+                        {isRecurring
+                          ? `${t('transactions.valuePerMonth')} (${currency === 'BRL' ? 'R$' : '$'})`
+                          : effectiveInstallments > 1
+                            ? `${t('common.totalValue')} (${currency === 'BRL' ? 'R$' : '$'})`
+                            : `${t('common.value')} (${currency === 'BRL' ? 'R$' : '$'})`}
+                      </Label>
+                      <Input
+                        id="transaction-value"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={value}
+                        onChange={event => setValue(event.target.value)}
+                        placeholder={t('transactions.amountPlaceholder')}
+                        aria-invalid={Boolean(errors.value)}
+                        className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+                      />
+                      {errors.value && <div className="text-destructive text-sm">{errors.value}</div>}
+                    </div>
+
                     <OptionSelect
                       label={t('common.category')}
                       value={typeId}
                       options={typeOptions}
                       onChange={setTypeId}
                     />
-                    <OptionSelect
-                      label={t('common.account')}
-                      value={accountId}
-                      options={accountOptions}
-                      onChange={setAccountId}
-                    />
+
+                    <div className="space-y-2">
+                      <OptionSelect
+                        label={t('common.account')}
+                        value={accountId}
+                        options={accountOptions}
+                        onChange={setAccountId}
+                      />
+                      {accountCurrencies.length > 1 ? (
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {t('dialogs.transaction.currencyLabel')}:
+                          </span>
+                          <div className="flex gap-1.5">
+                            {accountCurrencies.map(curr => (
+                              <Button
+                                key={curr}
+                                type="button"
+                                size="sm"
+                                variant={currency === curr ? 'cyan' : 'outline'}
+                                onClick={() => setCurrency(curr)}
+                                className="h-7 px-2.5 text-xs"
+                              >
+                                {curr} ({curr === 'BRL' ? 'R$' : '$'})
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
+                          <span>{t('dialogs.transaction.currencyLabel')}:</span>
+                          <span className="font-semibold text-foreground uppercase">
+                            {currency} ({currency === 'BRL' ? 'R$' : '$'})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
                     {mode === 'expense' && (
                       <>
                         <OptionSelect
@@ -490,20 +619,141 @@ export function TransactionFormDialog({
                   </>
                 ) : (
                   <>
-                    <OptionSelect
-                      label={t('transactions.fromAccount')}
-                      value={fromAccountId}
-                      options={transferAccountOptions}
-                      onChange={setFromAccountId}
-                      error={errors.banks}
-                    />
-                    <OptionSelect
-                      label={t('transactions.toAccount')}
-                      value={toAccountId}
-                      options={transferAccountOptions}
-                      onChange={setToAccountId}
-                      error={errors.banks}
-                    />
+                    <div className="space-y-2">
+                      <OptionSelect
+                        label={t('transactions.fromAccount')}
+                        value={fromAccountId}
+                        options={transferAccountOptions}
+                        onChange={setFromAccountId}
+                        error={errors.banks}
+                      />
+                      {fromAccountCurrencies.length > 1 && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {t('dialogs.transaction.currencyLabel')}:
+                          </span>
+                          <div className="flex gap-1.5">
+                            {fromAccountCurrencies.map(curr => (
+                              <Button
+                                key={curr}
+                                type="button"
+                                size="sm"
+                                variant={fromCurrency === curr ? 'cyan' : 'outline'}
+                                onClick={() => setFromCurrency(curr)}
+                                className="h-7 px-2.5 text-xs"
+                              >
+                                {curr} ({curr === 'BRL' ? 'R$' : '$'})
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <OptionSelect
+                        label={t('transactions.toAccount')}
+                        value={toAccountId}
+                        options={transferAccountOptions}
+                        onChange={setToAccountId}
+                        error={errors.banks}
+                      />
+                      {toAccountCurrencies.length > 1 && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {t('dialogs.transaction.currencyLabel')}:
+                          </span>
+                          <div className="flex gap-1.5">
+                            {toAccountCurrencies.map(curr => (
+                              <Button
+                                key={curr}
+                                type="button"
+                                size="sm"
+                                variant={toCurrency === curr ? 'cyan' : 'outline'}
+                                onClick={() => setToCurrency(curr)}
+                                className="h-7 px-2.5 text-xs"
+                              >
+                                {curr} ({curr === 'BRL' ? 'R$' : '$'})
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-foreground">{t('common.date')}</Label>
+                      <DateField
+                        placeholder={t('transactions.chooseDate')}
+                        value={date}
+                        onChange={d => setDate(d)}
+                        hasError={Boolean(errors.date)}
+                        className="h-11"
+                      />
+                      {errors.date && <div className="text-destructive text-sm">{errors.date}</div>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="transaction-value" className="text-foreground">
+                        {isCrossTransfer
+                          ? `${t('dialogs.transaction.sendAmountLabel')} (${fromCurrency === 'BRL' ? 'R$' : '$'})`
+                          : `${t('common.value')} (${fromCurrency === 'BRL' ? 'R$' : '$'})`}
+                      </Label>
+                      <Input
+                        id="transaction-value"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={value}
+                        onChange={event => setValue(event.target.value)}
+                        placeholder={t('transactions.amountPlaceholder')}
+                        aria-invalid={Boolean(errors.value)}
+                        className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+                      />
+                      {errors.value && <div className="text-destructive text-sm">{errors.value}</div>}
+                    </div>
+
+                    {isCrossTransfer && (
+                      <div className="space-y-2">
+                        <Label htmlFor="transaction-to-value" className="text-foreground">
+                          {`${t('dialogs.transaction.receiveAmountLabel')} (${toCurrency === 'BRL' ? 'R$' : '$'})`}
+                        </Label>
+                        <Input
+                          id="transaction-to-value"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={toValue}
+                          onChange={event => setToValue(event.target.value)}
+                          placeholder={t('transactions.amountPlaceholder')}
+                          aria-invalid={Boolean(errors.toValue)}
+                          className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+                        />
+                        {errors.toValue && <div className="text-destructive text-sm">{errors.toValue}</div>}
+                      </div>
+                    )}
+
+                    {isCrossTransfer && (
+                      <div className="sm:col-span-2 rounded-lg border border-border/40 bg-foreground/5 p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{t('dialogs.transaction.effectiveRate')}:</span>
+                          <span className="font-mono text-foreground font-medium">
+                            {effectiveRateDisplay ? `1 USD = R$ ${effectiveRateDisplay}` : '—'}
+                          </span>
+                        </div>
+                        {settings.exchangeRate.rate && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleApplyLiveRate}
+                            className="h-7 text-xs border-border hover:bg-foreground/10 text-theme-cyan"
+                          >
+                            {t('dialogs.transaction.useLiveRate')} (1 USD = {settings.exchangeRate.rate.toFixed(2)} BRL)
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
