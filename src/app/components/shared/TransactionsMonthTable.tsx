@@ -75,7 +75,7 @@ export function TransactionsMonthTable({
                 return (
                   <TableRow
                     key={transaction.id}
-                    className={`border-border/50 hover:bg-cyan-500/10 transition-colors group ${
+                    className={`border-border/50 hover:bg-theme-cyan/10 transition-colors group ${
                       isFuture ? 'opacity-60' : ''
                     }`}
                     title={isFuture ? t('transactions.scheduled') : undefined}
@@ -115,7 +115,12 @@ export function TransactionsMonthTable({
                         transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
                       }`}
                     >
-                      {formatSignedValue(transaction, currency, locale)}
+                      <div className="flex items-center justify-end gap-1.5 font-medium">
+                        <span>{formatSignedValue(transaction, currency, locale)}</span>
+                        <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-foreground/10 text-muted-foreground uppercase">
+                          {transaction.currency ?? 'USD'}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="w-12 text-right">
                       <DropdownMenu>
@@ -132,7 +137,7 @@ export function TransactionsMonthTable({
                         <DropdownMenuContent align="end" className="bg-popover border-border text-foreground">
                           <DropdownMenuItem
                             onSelect={() => onEdit(transaction)}
-                            className="focus:bg-cyan-500/20 focus:text-theme-cyan cursor-pointer"
+                            className="focus:bg-theme-cyan/20 focus:text-theme-cyan cursor-pointer"
                           >
                             <Pencil className="mr-2 h-4 w-4" />
                             {t('common.edit')}

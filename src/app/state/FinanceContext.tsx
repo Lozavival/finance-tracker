@@ -14,6 +14,7 @@ import { type CashMovement, type AccountLedger, buildCashMovements, buildLedgers
 import { buildInstallments, findInstallmentSeries } from '@/data/installments';
 import { type RecurringRule, buildRecurringTransactions, findRecurringSeries } from '@/data/recurring';
 import { useSettings } from './SettingsContext';
+import { getAccountCurrencies } from '@/data/settings';
 
 export type FinanceContextValue = {
   transactions: Transaction[];
@@ -81,7 +82,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
         if (draft.kind === 'single') {
           const id = existingIds[0] ?? createTransactionId();
-          nextTransactions.push({ ...draft.transaction, id });
+          const acc = findAccount(draft.transaction.accountId);
+          const currency = draft.transaction.currency ?? getAccountCurrencies(acc)[0] ?? 'USD';
+          nextTransactions.push({ ...draft.transaction, currency, id });
         } else if (draft.kind === 'transfer') {
           const ids: [string, string] = [
             existingIds[0] ?? createTransactionId(),
@@ -89,23 +92,43 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           ];
           const fromAcc = findAccount(draft.fromAccountId);
           const toAcc = findAccount(draft.toAccountId);
-          const legs = buildTransferLegs(draft, transferId, ids, {
-            fromName: fromAcc?.name,
-            toName: toAcc?.name,
-          });
+          const fromCurrency = draft.fromCurrency ?? getAccountCurrencies(fromAcc)[0] ?? 'USD';
+          const toCurrency = draft.toCurrency ?? getAccountCurrencies(toAcc)[0] ?? fromCurrency;
+          const legs = buildTransferLegs(
+            draft,
+            transferId,
+            ids,
+            {
+              fromName: fromAcc?.name,
+              toName: toAcc?.name,
+            },
+            {
+              fromCurrency,
+              toCurrency,
+            },
+          );
           nextTransactions.push(legs[0], legs[1]);
         } else if (draft.kind === 'installments') {
+          const acc = findAccount(draft.transaction.accountId);
+          const currency = draft.transaction.currency ?? getAccountCurrencies(acc)[0] ?? 'USD';
+          const updatedDraft = {
+            ...draft,
+            transaction: {
+              ...draft.transaction,
+              currency,
+            },
+          };
           if (!isCreditCard(draft.transaction.paymentMethodId)) {
             const id = existingIds[0] ?? createTransactionId();
             nextTransactions.push({
-              ...draft.transaction,
+              ...updatedDraft.transaction,
               id,
               date: draft.firstDate,
               value: draft.totalValue,
             });
           } else {
             const ids = Array.from({ length: draft.count }, (_, i) => existingIds[i] ?? createTransactionId());
-            const newInstallments = buildInstallments(draft, groupId, ids);
+            const newInstallments = buildInstallments(updatedDraft, groupId, ids);
             nextTransactions.push(...newInstallments);
           }
         } else if (draft.kind === 'recurring') {
@@ -113,10 +136,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           if (editingTarget && editingTarget.kind === 'recurring') {
             ruleId = editingTarget.ruleId;
           }
+          const acc = findAccount(draft.transaction.accountId);
+          const currency = draft.transaction.currency ?? getAccountCurrencies(acc)[0] ?? 'USD';
           const newRule: RecurringRule = {
             id: ruleId,
             description: draft.transaction.description,
             value: draft.value,
+            currency,
             direction: draft.transaction.direction,
             typeId: draft.transaction.typeId,
             accountId: draft.transaction.accountId,

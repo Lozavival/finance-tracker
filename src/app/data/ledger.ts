@@ -1,6 +1,14 @@
+import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from './transactions';
 import { type CardStatement } from './cardStatements';
-import { type Settings, findAccount, isCreditCard, TRANSFER_TYPE_ID } from './settings';
+import {
+  type Settings,
+  findAccount,
+  isCreditCard,
+  TRANSFER_TYPE_ID,
+  getAccountCurrencies,
+  getAccountOpeningBalance,
+} from './settings';
 import { addDays, formatShort } from './dates';
 
 export type CashMovementKind = 'opening' | 'transaction' | 'card-bill';
@@ -9,8 +17,9 @@ export type CashMovement = {
   id: string;
   accountId: string;
   account: string; // compatibility alias
+  currency: SupportedCurrency;
   date: Date;
-  amount: number; // cents
+  amount: number; // cents in currency
   kind: CashMovementKind;
   description: string;
   isTransfer: boolean;
@@ -27,28 +36,36 @@ export function buildCashMovements(
   const movements: CashMovement[] = [];
 
   for (const acc of settings.accounts) {
-    movements.push({
-      id: `opening-${acc.id}`,
-      accountId: acc.id,
-      account: acc.id,
-      date: acc.openingDate,
-      amount: acc.openingBalance,
-      kind: 'opening',
-      description: 'Opening Balance',
-      isTransfer: false,
-      isEstimate: false,
-    });
+    const currencies = getAccountCurrencies(acc);
+    for (const curr of currencies) {
+      const openingAmount = getAccountOpeningBalance(acc, curr);
+      movements.push({
+        id: `opening-${acc.id}-${curr}`,
+        accountId: acc.id,
+        account: acc.id,
+        currency: curr,
+        date: acc.openingDate,
+        amount: openingAmount,
+        kind: 'opening',
+        description: 'Opening Balance',
+        isTransfer: false,
+        isEstimate: false,
+      });
+    }
   }
 
   for (const tx of transactions) {
     if (isCreditCard(settings, tx.paymentMethodId)) continue;
     const isTransfer = tx.typeId === TRANSFER_TYPE_ID && !!tx.transferId;
     const amount = Math.round(tx.value * 100) * (tx.direction === 'income' ? 1 : -1);
+    const acc = findAccount(settings, tx.accountId);
+    const curr = tx.currency ?? getAccountCurrencies(acc)[0] ?? 'USD';
 
     movements.push({
       id: `tx-${tx.id}`,
       accountId: tx.accountId,
       account: tx.accountId,
+      currency: curr,
       date: tx.date,
       amount,
       kind: 'transaction',
@@ -64,6 +81,7 @@ export function buildCashMovements(
       id: `bill-${stmt.id}`,
       accountId: stmt.accountId,
       account: stmt.accountId,
+      currency: stmt.currency,
       date: stmt.dueDate,
       amount: -stmt.total,
       kind: 'card-bill',
@@ -85,6 +103,7 @@ export type BalancePoint = { date: Date; balance: number };
 export type AccountLedger = {
   accountId: string;
   account: string; // compatibility alias
+  currency: SupportedCurrency;
   movements: CashMovement[];
   points: BalancePoint[];
 };
@@ -93,7 +112,22 @@ export function buildLedgers(movements: CashMovement[], settings: Settings): Rec
   const ledgers: Record<string, AccountLedger> = {};
 
   for (const acc of settings.accounts) {
-    ledgers[acc.id] = { accountId: acc.id, account: acc.id, movements: [], points: [] };
+    const currencies = getAccountCurrencies(acc);
+    for (const curr of currencies) {
+      const pocketKey = `${acc.id}:${curr}`;
+      ledgers[pocketKey] = {
+        accountId: acc.id,
+        account: acc.id,
+        currency: curr,
+        movements: [],
+        points: [],
+      };
+    }
+    // Alias root accountId to primary currency pocket for seamless backward compatibility
+    const primary = currencies[0];
+    if (primary) {
+      ledgers[acc.id] = ledgers[`${acc.id}:${primary}`];
+    }
   }
 
   const sortedMovements = [...movements].sort(
@@ -101,22 +135,38 @@ export function buildLedgers(movements: CashMovement[], settings: Settings): Rec
   );
 
   for (const m of sortedMovements) {
-    if (ledgers[m.accountId]) {
+    const pocketKey = `${m.accountId}:${m.currency}`;
+    if (ledgers[pocketKey]) {
+      ledgers[pocketKey].movements.push(m);
+    } else if (ledgers[m.accountId]) {
       ledgers[m.accountId].movements.push(m);
     }
   }
 
-  for (const acc of Object.values(ledgers)) {
+  const distinctLedgers = new Set(Object.values(ledgers));
+  for (const ledger of distinctLedgers) {
     let balance = 0;
     const pointsMap = new Map<number, { date: Date; balance: number }>();
-    for (const m of acc.movements) {
+    for (const m of ledger.movements) {
       balance += m.amount;
       pointsMap.set(m.date.getTime(), { date: m.date, balance });
     }
-    acc.points = Array.from(pointsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+    ledger.points = Array.from(pointsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   return ledgers;
+}
+
+export function getAccountLedger(
+  ledgers: Record<string, AccountLedger>,
+  accountId: string,
+  currency?: SupportedCurrency,
+): AccountLedger | undefined {
+  if (currency) {
+    const key = `${accountId}:${currency}`;
+    if (ledgers[key]) return ledgers[key];
+  }
+  return ledgers[accountId];
 }
 
 export function balanceAt(ledger: AccountLedger, date: Date): number {

@@ -149,6 +149,9 @@ export type PaymentMethodConfig = {
   behavior: 'standard' | 'credit-card';
 };
 
+import { type SupportedCurrency } from '@/i18n/types';
+import { type ExchangeRateState, INITIAL_EXCHANGE_RATE_STATE } from './currency';
+
 export type CreditCardConfig = {
   name: string;
   closingDay: number;
@@ -162,7 +165,9 @@ export type AccountConfig = {
   id: string;
   name: string;
   kind: AccountKind;
-  openingBalance: number; // cents
+  currencies: SupportedCurrency[];
+  openingBalance?: number; // legacy single-currency compatibility (cents)
+  openingBalances?: Partial<Record<SupportedCurrency, number>>; // cents per pocket
   openingDate: Date;
   initials: string;
   color: ColorToken;
@@ -171,6 +176,24 @@ export type AccountConfig = {
   archived?: boolean;
 };
 
+export function getAccountCurrencies(account?: AccountConfig): SupportedCurrency[] {
+  if (!account) return ['USD'];
+  if (account.currencies && account.currencies.length > 0) {
+    return account.currencies;
+  }
+  return ['USD'];
+}
+
+export function getAccountOpeningBalance(account: AccountConfig, currency: SupportedCurrency): number {
+  if (account.openingBalances && account.openingBalances[currency] !== undefined) {
+    return account.openingBalances[currency]!;
+  }
+  if (getAccountCurrencies(account)[0] === currency && account.openingBalance !== undefined) {
+    return account.openingBalance;
+  }
+  return 0;
+}
+
 import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';
 
 export type Settings = {
@@ -178,6 +201,7 @@ export type Settings = {
   paymentMethods: PaymentMethodConfig[];
   accounts: AccountConfig[];
   goals: GoalsConfig;
+  exchangeRate: ExchangeRateState;
 };
 
 export const TRANSFER_TYPE_ID = 'transfer';
@@ -280,7 +304,9 @@ export const DEFAULT_SETTINGS: Settings = {
       id: 'boa',
       name: 'Bank of America',
       kind: 'Checking',
-      openingBalance: 320000, // $3200
+      currencies: ['USD'],
+      openingBalances: { USD: 320000 }, // $3,200.00
+      openingBalance: 320000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'BA',
       color: 'blue',
@@ -293,10 +319,35 @@ export const DEFAULT_SETTINGS: Settings = {
       },
     },
     {
+      id: 'nubank',
+      name: 'Nubank',
+      kind: 'Checking',
+      currencies: ['BRL'],
+      openingBalances: { BRL: 450000 }, // R$ 4,500.00
+      openingBalance: 450000,
+      openingDate: parseLocalDate('2025-01-01'),
+      initials: 'NU',
+      color: 'violet',
+      allowedPaymentMethods: ['pix', 'debit-card', 'bank-transfer'],
+    },
+    {
+      id: 'wise',
+      name: 'Wise',
+      kind: 'Checking',
+      currencies: ['BRL', 'USD'],
+      openingBalances: { BRL: 250000, USD: 80000 }, // R$ 2,500.00 & $800.00
+      openingDate: parseLocalDate('2025-01-01'),
+      initials: 'WS',
+      color: 'emerald',
+      allowedPaymentMethods: ['pix', 'debit-card', 'bank-transfer'],
+    },
+    {
       id: 'citi',
       name: 'Citigroup',
       kind: 'Checking',
-      openingBalance: 120000, // $1200
+      currencies: ['USD'],
+      openingBalances: { USD: 120000 }, // $1,200.00
+      openingBalance: 120000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'CI',
       color: 'cyan',
@@ -309,27 +360,20 @@ export const DEFAULT_SETTINGS: Settings = {
       },
     },
     {
-      id: 'gs',
-      name: 'Goldman Sachs',
-      kind: 'Savings',
-      openingBalance: 1800000, // $18000
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'GS',
-      color: 'slate',
-      allowedPaymentMethods: ['bank-transfer'],
-    },
-    {
       id: 'cash-wallet',
       name: 'Cash / Wallet',
       kind: 'Cash',
-      openingBalance: 15000, // $150.00
+      currencies: ['BRL'],
+      openingBalances: { BRL: 20000 }, // R$ 200.00
+      openingBalance: 20000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'CW',
-      color: 'emerald',
+      color: 'teal',
       allowedPaymentMethods: ['cash'],
     },
   ],
   goals: DEFAULT_GOALS_CONFIG,
+  exchangeRate: INITIAL_EXCHANGE_RATE_STATE,
 };
 
 export function findType(settings: Settings, id: string): TransactionTypeConfig | undefined {

@@ -41,7 +41,7 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
           pressed={draft === 'income'}
           onPressedChange={pressed => setDraft(pressed ? 'income' : 'all')}
           variant="outline"
-          className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
+          className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-theme-cyan/40 data-[state=on]:bg-theme-cyan/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-theme-cyan/20`}
         >
           {t('transactions.directionIncome')}
         </Toggle>
@@ -49,7 +49,7 @@ export function DirectionFilter({ value, onChange }: DirectionFilterProps) {
           pressed={draft === 'expense'}
           onPressedChange={pressed => setDraft(pressed ? 'expense' : 'all')}
           variant="outline"
-          className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20`}
+          className={`flex-1 rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-theme-cyan/40 data-[state=on]:bg-theme-cyan/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-theme-cyan/20`}
         >
           {t('transactions.directionExpense')}
         </Toggle>

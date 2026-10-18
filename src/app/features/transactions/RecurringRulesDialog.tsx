@@ -17,6 +17,7 @@ import { useFinance } from '@/state/FinanceContext';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
 import type { RecurringRule } from '@/data/recurring';
+import { getAccountCurrencies } from '@/data/settings';
 
 export type RecurringRulesDialogProps = {
   open: boolean;
@@ -80,6 +81,7 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
                 const typeConfig = findType(rule.typeId);
                 const isIncome = rule.direction === 'income';
                 const isActive = rule.status === 'active';
+                const ruleCurrency = rule.currency ?? (account ? getAccountCurrencies(account)[0] : 'USD');
 
                 return (
                   <div
@@ -113,7 +115,14 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
                         </div>
                         <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                           {typeConfig && <CategoryChip typeConfig={typeConfig} size="sm" />}
-                          {account && <span>• {account.name}</span>}
+                          {account && (
+                            <span className="inline-flex items-center gap-1.5">
+                              • <span>{account.name}</span>
+                              <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-foreground/10 text-muted-foreground uppercase">
+                                {ruleCurrency}
+                              </span>
+                            </span>
+                          )}
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             <span>{t('transactions.startsOn', { date: formatDate(rule.startDate) })}</span>
@@ -128,7 +137,7 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
                           }`}
                         >
                           {isIncome ? '+' : '−'}
-                          {formatCurrency(rule.value)}
+                          {formatCurrency(rule.value, ruleCurrency)}
                         </div>
                         <div className="text-[11px] text-muted-foreground">{t('transactions.valuePerMonth')}</div>
                       </div>

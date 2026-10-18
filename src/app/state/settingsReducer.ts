@@ -6,6 +6,8 @@ import {
 } from '@/data/settings';
 import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '@/data/goals';
 
+import { type ExchangeRateState } from '@/data/currency';
+
 export type SettingsAction =
   | { type: 'type/add'; payload: TransactionTypeConfig }
   | {
@@ -33,10 +35,20 @@ export type SettingsAction =
   | { type: 'goals/updateCategory'; payload: { id: string; changes: Partial<Omit<GoalCategory, 'id'>> } }
   | { type: 'goals/deleteCategory'; payload: { id: string } }
   | { type: 'goals/resetAllocations' }
-  | { type: 'goals/updateTypeMappings'; payload: { mappings: Record<string, string> } };
+  | { type: 'goals/updateTypeMappings'; payload: { mappings: Record<string, string> } }
+  | { type: 'settings/updateExchangeRate'; payload: Partial<ExchangeRateState> };
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
   switch (action.type) {
+    case 'settings/updateExchangeRate': {
+      return {
+        ...state,
+        exchangeRate: {
+          ...state.exchangeRate,
+          ...action.payload,
+        },
+      };
+    }
     case 'type/add': {
       return {
         ...state,

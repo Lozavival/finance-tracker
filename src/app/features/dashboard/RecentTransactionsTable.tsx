@@ -22,7 +22,7 @@ export function RecentTransactionsTable({ transactions }: TransactionsTableProps
     .slice(0, 8);
 
   return (
-    <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300">
+    <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border transition-all duration-300">
       <div role="heading" aria-level={2} className="text-foreground text-lg mb-4">
         {t('dashboard.recentTransactions')}
       </div>
@@ -46,7 +46,7 @@ export function RecentTransactionsTable({ transactions }: TransactionsTableProps
               return (
                 <TableRow
                   key={transaction.id}
-                  className="border-b border-border/50 hover:bg-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group"
+                  className="border-b border-border/50 hover:bg-theme-cyan/10 transition-all duration-300 group"
                 >
                   <TableCell className="text-foreground">{formatFull(transaction.date)}</TableCell>
                   <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
@@ -68,7 +68,12 @@ export function RecentTransactionsTable({ transactions }: TransactionsTableProps
                   <TableCell
                     className={`text-right ${transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'}`}
                   >
-                    {formatSignedValue(transaction, currency, locale)}
+                    <div className="flex items-center justify-end gap-1.5 font-medium">
+                      <span>{formatSignedValue(transaction, currency, locale)}</span>
+                      <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-foreground/10 text-muted-foreground uppercase">
+                        {transaction.currency ?? 'USD'}
+                      </span>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

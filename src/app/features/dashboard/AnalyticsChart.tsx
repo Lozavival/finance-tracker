@@ -71,7 +71,7 @@ export function SpendingByCategoryChart({
 
   return (
     <Card
-      className={`p-6 bg-foreground/5 backdrop-blur-xl border border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 ${className}`}
+      className={`p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-purple/40 transition-all duration-300 ${className}`}
     >
       <div className="text-foreground text-lg">{t('dashboard.spendingByCategory')}</div>
 
@@ -145,10 +145,16 @@ export function AnalyticsChart() {
     { typeId: 'bills', name: t('defaults.types.bills'), value: 2800, color: 'var(--accent-amber-dot)' },
   ];
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{ value: number; payload: { date: string } }>;
+  }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-popover/95 backdrop-blur-xl border border-cyan-500/50 rounded-lg p-3 shadow-lg shadow-cyan-500/20">
+        <div className="bg-popover/95 backdrop-blur-xl border border-theme-cyan/50 rounded-lg p-3 shadow-lg">
           <p className="text-muted-foreground text-sm">{payload[0].payload.date}</p>
           <p className="text-theme-cyan">{formatCurrency(payload[0].value)}</p>
         </div>
@@ -160,7 +166,7 @@ export function AnalyticsChart() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Revenue Chart - Takes 2 columns */}
-      <Card className="lg:col-span-2 p-6 bg-foreground/5 backdrop-blur-xl border border-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/20 transition-all duration-300">
+      <Card className="lg:col-span-2 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 transition-all duration-300">
         <div className="flex items-center justify-between mb-6">
           <div role="heading" aria-level={2} className="text-foreground text-lg">
             {t('dashboard.revenueGrowth')}
@@ -176,8 +182,8 @@ export function AnalyticsChart() {
                 onClick={() => setTimePeriod(period)}
                 className={`rounded-lg transition-all duration-300 ${
                   timePeriod === period
-                    ? 'bg-cyan-500/30 border-cyan-400/50 text-theme-cyan shadow-md shadow-cyan-500/20 hover:bg-cyan-500/30 hover:text-theme-cyan'
-                    : 'bg-foreground/5 border border-border text-muted-foreground hover:border-cyan-400/30'
+                    ? 'bg-theme-cyan/20 border-theme-cyan text-theme-cyan font-medium'
+                    : 'bg-foreground/5 border border-border text-muted-foreground hover:border-theme-cyan/40'
                 }`}
               >
                 {period}
@@ -190,8 +196,8 @@ export function AnalyticsChart() {
           <AreaChart data={revenueData[timePeriod]}>
             <defs>
               <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-cyan-500)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-green-500)" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--theme-cyan)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--theme-green)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" opacity={0.5} />
@@ -207,8 +213,8 @@ export function AnalyticsChart() {
             />
             <defs>
               <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--color-cyan-500)" />
-                <stop offset="100%" stopColor="var(--color-green-500)" />
+                <stop offset="0%" stopColor="var(--theme-cyan)" />
+                <stop offset="100%" stopColor="var(--theme-green)" />
               </linearGradient>
             </defs>
           </AreaChart>

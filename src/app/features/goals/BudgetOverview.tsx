@@ -26,7 +26,7 @@ type BudgetOverviewProps = {
 
 export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: BudgetOverviewProps) {
   const { settings } = useSettings();
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCurrency, locale, currency } = useI18n();
   // Current selected month: default to current month (e.g. October 2026)
   const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
     const now = new Date();
@@ -45,8 +45,14 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
 
   // Calculate budget metrics for the selected month
   const budget: MonthlyBudgetSummary = useMemo(() => {
-    return calculateMonthlyBudget(transactions, goalsConfig, selectedMonth);
-  }, [transactions, goalsConfig, selectedMonth]);
+    return calculateMonthlyBudget(
+      transactions,
+      goalsConfig,
+      selectedMonth,
+      currency,
+      settings.exchangeRate?.rate ?? null,
+    );
+  }, [transactions, goalsConfig, selectedMonth, currency, settings.exchangeRate?.rate]);
 
   return (
     <div className="space-y-8">

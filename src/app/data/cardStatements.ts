@@ -1,5 +1,6 @@
+import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from './transactions';
-import { type CreditCardConfig, type Settings, findAccount, isCreditCard } from './settings';
+import { type CreditCardConfig, type Settings, findAccount, isCreditCard, getAccountCurrencies } from './settings';
 import { toLocalDateString } from './dates';
 
 export type StatementStatus = 'open' | 'closed' | 'paid';
@@ -9,6 +10,7 @@ export type CardStatement = {
   accountId: string;
   account: string; // compatibility alias with accountId
   cardName: string;
+  currency: SupportedCurrency;
   periodStart: Date;
   closingDate: Date;
   dueDate: Date;
@@ -84,6 +86,7 @@ export function buildStatements(transactions: Transaction[], settings: Settings,
         accountId: tx.accountId,
         account: tx.accountId,
         cardName: accountDetails.card.name,
+        currency: tx.currency ?? getAccountCurrencies(accountDetails)[0] ?? 'USD',
         periodStart: dates.periodStart,
         closingDate: dates.closingDate,
         dueDate: dates.dueDate,
