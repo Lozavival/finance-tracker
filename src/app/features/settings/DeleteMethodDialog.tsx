@@ -78,7 +78,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
     if (!canDelete || !method) return;
 
     if (hasTransactions && effectiveReplacementId) {
-      // Reassign transactions
+      // Reassign transactions in memory
       const nextTxs = transactions.map(t => {
         if (t.paymentMethodId === method.id) {
           return { ...t, paymentMethodId: effectiveReplacementId };
@@ -88,7 +88,13 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
       onTransactionsChange(nextTxs);
     }
 
-    dispatch({ type: 'method/remove', payload: { id: method.id } });
+    dispatch({
+      type: 'method/remove',
+      payload: {
+        id: method.id,
+        replacementId: hasTransactions && effectiveReplacementId ? effectiveReplacementId : undefined,
+      },
+    });
     handleClose();
   }
 

@@ -1,5 +1,5 @@
 import { getToday } from '@/data/dates';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, RotateCcw, Repeat } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card } from '@/components/primitives/card';
@@ -39,6 +39,11 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [currencyFilter, setCurrencyFilter] = useState<'all' | SupportedCurrency>('all');
   const [recurringRulesOpen, setRecurringRulesOpen] = useState(false);
+
+  useEffect(() => {
+    const range = resolvePeriodRange(period);
+    void finance.ensureTransactionsLoaded(range ? range.from : null);
+  }, [period, finance]);
 
   const {
     dialogOpen,

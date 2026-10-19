@@ -12,6 +12,7 @@ import {
   DEFAULT_CURRENCY,
 } from './types';
 import { dictionaries, en, type Translations } from './locales';
+import { getFinanceRepository } from '@/data/repository';
 
 export type TranslationKey = NestedKeyOf<Translations>;
 
@@ -89,6 +90,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(STORAGE_LOCALE_KEY, newLocale);
       document.documentElement.lang = newLocale;
     }
+    void getFinanceRepository()
+      .updatePreferences({ language: newLocale })
+      .catch(() => {});
   }, []);
 
   const setCurrency = useCallback((newCurrency: SupportedCurrency) => {
@@ -96,6 +100,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_CURRENCY_KEY, newCurrency);
     }
+    void getFinanceRepository()
+      .updatePreferences({ currency: newCurrency })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

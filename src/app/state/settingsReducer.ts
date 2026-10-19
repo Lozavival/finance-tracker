@@ -9,19 +9,20 @@ import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } fro
 import { type ExchangeRateState } from '@/data/currency';
 
 export type SettingsAction =
+  | { type: 'settings/hydrate'; payload: Settings }
   | { type: 'type/add'; payload: TransactionTypeConfig }
   | {
       type: 'type/update';
       payload: { id: string; changes: Partial<Omit<TransactionTypeConfig, 'id' | 'system'>> };
     }
-  | { type: 'type/remove'; payload: { id: string } }
+  | { type: 'type/remove'; payload: { id: string; replacementId?: string } }
   | { type: 'type/reorder'; payload: { types: TransactionTypeConfig[] } }
   | { type: 'method/add'; payload: PaymentMethodConfig }
   | {
       type: 'method/update';
       payload: { id: string; changes: Partial<Omit<PaymentMethodConfig, 'id' | 'behavior'>> };
     }
-  | { type: 'method/remove'; payload: { id: string } }
+  | { type: 'method/remove'; payload: { id: string; replacementId?: string } }
   | { type: 'method/reorder'; payload: { methods: PaymentMethodConfig[] } }
   | { type: 'account/add'; payload: AccountConfig }
   | { type: 'account/update'; payload: { id: string; changes: Partial<Omit<AccountConfig, 'id'>> } }
@@ -40,6 +41,9 @@ export type SettingsAction =
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
   switch (action.type) {
+    case 'settings/hydrate': {
+      return action.payload;
+    }
     case 'settings/updateExchangeRate': {
       return {
         ...state,

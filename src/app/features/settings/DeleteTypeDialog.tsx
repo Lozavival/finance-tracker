@@ -71,7 +71,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
     if (!canDelete || !typeConfig) return;
 
     if (hasTransactions && effectiveReplacementId) {
-      // Reassign transactions
+      // Reassign transactions in memory
       const nextTxs = transactions.map(t => {
         if (t.typeId === typeConfig.id) {
           return { ...t, typeId: effectiveReplacementId };
@@ -81,7 +81,13 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
       onTransactionsChange(nextTxs);
     }
 
-    dispatch({ type: 'type/remove', payload: { id: typeConfig.id } });
+    dispatch({
+      type: 'type/remove',
+      payload: {
+        id: typeConfig.id,
+        replacementId: hasTransactions && effectiveReplacementId ? effectiveReplacementId : undefined,
+      },
+    });
     handleClose();
   }
 

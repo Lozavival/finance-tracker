@@ -140,6 +140,11 @@ export function AccountDetailPage({
 
   const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'preset', days: 30 });
 
+  useEffect(() => {
+    const range = resolvePeriodRange(period, finance.today);
+    void financeContext.ensureTransactionsLoaded(range ? range.from : null);
+  }, [period, finance.today, financeContext]);
+
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period, finance.today);
     const filtered = transactions
