@@ -1,17 +1,18 @@
 import { Label } from '@/components/primitives/label';
 import { Input } from '@/components/primitives/input';
 import { MAX_INSTALLMENTS, splitInstallmentValues } from '@/data/installments';
-import { useI18n } from '@/i18n';
+import { useI18n, type SupportedCurrency } from '@/i18n';
 
 export type InstallmentsFieldProps = {
   value: number | '';
   onChange: (value: number | '') => void;
   totalValue: number;
+  currency?: SupportedCurrency;
   error?: string;
 };
 
-export function InstallmentsField({ value, onChange, totalValue, error }: InstallmentsFieldProps) {
-  const { t, formatCurrency } = useI18n();
+export function InstallmentsField({ value, onChange, totalValue, currency, error }: InstallmentsFieldProps) {
+  const { t, formatCents } = useI18n();
   const numericValue = typeof value === 'number' ? value : 1;
   const parts = splitInstallmentValues(totalValue || 0, numericValue);
   const first = parts[0] || 0;
@@ -21,8 +22,8 @@ export function InstallmentsField({ value, onChange, totalValue, error }: Instal
     numericValue <= 1
       ? null
       : first === rest
-        ? `${numericValue} × ${formatCurrency(first)}`
-        : `1 × ${formatCurrency(first)} + ${numericValue - 1} × ${formatCurrency(rest)}`;
+        ? `${numericValue} × ${formatCents(first, currency)}`
+        : `1 × ${formatCents(first, currency)} + ${numericValue - 1} × ${formatCents(rest, currency)}`;
 
   return (
     <div className="space-y-2">
@@ -48,7 +49,7 @@ export function InstallmentsField({ value, onChange, totalValue, error }: Instal
         aria-invalid={Boolean(error)}
         className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
       />
-      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {error && <div className="text-destructive text-sm">{error}</div>}
       {preview && !error && <div className="text-muted-foreground text-sm">{preview}</div>}
     </div>
   );

@@ -32,6 +32,8 @@ export function buildCashMovements(
   transactions: Transaction[],
   statements: CardStatement[],
   settings: Settings,
+  historicalRollups?: Record<string, number>,
+  rollupDate?: Date,
 ): CashMovement[] {
   const movements: CashMovement[] = [];
 
@@ -51,21 +53,35 @@ export function buildCashMovements(
         isTransfer: false,
         isEstimate: false,
       });
+
+      const rollupDelta = historicalRollups?.[`${acc.id}:${curr}`] ?? 0;
+      if (rollupDelta !== 0) {
+        movements.push({
+          id: `rollup-${acc.id}-${curr}`,
+          accountId: acc.id,
+          account: acc.id,
+          currency: curr,
+          date: rollupDate && rollupDate.getTime() > acc.openingDate.getTime() ? rollupDate : acc.openingDate,
+          amount: rollupDelta,
+          kind: 'opening',
+          description: 'Historical Balance Rollup',
+          isTransfer: false,
+          isEstimate: false,
+        });
+      }
     }
   }
 
   for (const tx of transactions) {
     if (isCreditCard(settings, tx.paymentMethodId)) continue;
     const isTransfer = tx.typeId === TRANSFER_TYPE_ID && !!tx.transferId;
-    const amount = Math.round(tx.value * 100) * (tx.direction === 'income' ? 1 : -1);
-    const acc = findAccount(settings, tx.accountId);
-    const curr = tx.currency ?? getAccountCurrencies(acc)[0] ?? 'USD';
+    const amount = tx.value * (tx.direction === 'income' ? 1 : -1);
 
     movements.push({
       id: `tx-${tx.id}`,
       accountId: tx.accountId,
       account: tx.accountId,
-      currency: curr,
+      currency: tx.currency,
       date: tx.date,
       amount,
       kind: 'transaction',

@@ -11,6 +11,7 @@ import { GoalAllocationsDonut } from './GoalAllocationsDonut';
 import { GoalCategoryAllocationSliders } from './GoalCategoryAllocationSliders';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useSettings } from '@/state/SettingsContext';
+import { centsToDollars, dollarsToCents } from '@/data/currency';
 import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 
@@ -43,7 +44,7 @@ export function GoalsConfigPanel({
   const { t, formatCurrency, currency, supportedCurrencies } = useI18n();
   const currencySymbol = supportedCurrencies.find(c => c.code === currency)?.symbol || '$';
   const [referenceIncomeInput, setReferenceIncomeInput] = useState<string>(() =>
-    String(goalsConfig.referenceMonthlyIncome),
+    String(centsToDollars(goalsConfig.referenceMonthlyIncome)),
   );
 
   // Local state for allocations so user can drag sliders and then click "Save Goals"
@@ -91,7 +92,7 @@ export function GoalsConfigPanel({
   const isExactly100 = Math.abs(totalAllocated - 100) < 0.05;
 
   function handleSaveIncome() {
-    onUpdateReferenceIncome(numericReferenceIncome);
+    onUpdateReferenceIncome(dollarsToCents(numericReferenceIncome));
     toast.success(t('goals.toasts.incomeUpdated'));
   }
 
@@ -127,8 +128,9 @@ export function GoalsConfigPanel({
       );
       return;
     }
-    if (numericReferenceIncome !== goalsConfig.referenceMonthlyIncome) {
-      onUpdateReferenceIncome(numericReferenceIncome);
+    const incomeCents = dollarsToCents(numericReferenceIncome);
+    if (incomeCents !== goalsConfig.referenceMonthlyIncome) {
+      onUpdateReferenceIncome(incomeCents);
     }
     onUpdateAllocations(localCategories);
     toast.success(t('goals.toasts.goalsSaved'));
@@ -159,7 +161,7 @@ export function GoalsConfigPanel({
       {/* GOALS TAB CONTENT */}
       <div className="mt-6 space-y-6 focus-visible:outline-none">
         {/* REFERENCE MONTHLY INCOME CARD */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all rounded-2xl shadow-sm">
+        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all rounded-2xl shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-1.5">
@@ -188,7 +190,7 @@ export function GoalsConfigPanel({
                     value={referenceIncomeInput}
                     onChange={e => setReferenceIncomeInput(e.target.value)}
                     placeholder="1000000"
-                    className={`h-12 ${currencySymbol.length > 1 ? 'pl-12' : 'pl-8'} text-xl font-bold border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground rounded-xl outline-none focus:border-cyan-400 focus:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all`}
+                    className={`h-12 ${currencySymbol.length > 1 ? 'pl-12' : 'pl-8'} text-xl font-bold border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground rounded-xl outline-none focus:border-theme-cyan focus:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all`}
                   />
                 </div>
               </div>
@@ -221,7 +223,7 @@ export function GoalsConfigPanel({
               onClick={() => onUpdateMode('percentage')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
                 goalsConfig.mode === 'percentage'
-                  ? 'bg-cyan-500/20 border border-cyan-400/40 text-theme-cyan shadow-sm'
+                  ? 'bg-theme-cyan/20 border border-theme-cyan/40 text-theme-cyan shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -233,7 +235,7 @@ export function GoalsConfigPanel({
               onClick={() => onUpdateMode('currency')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
                 goalsConfig.mode === 'currency'
-                  ? 'bg-cyan-500/20 border border-cyan-400/40 text-theme-cyan shadow-sm'
+                  ? 'bg-theme-cyan/20 border border-theme-cyan/40 text-theme-cyan shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -253,7 +255,7 @@ export function GoalsConfigPanel({
           />
 
           {/* RIGHT COLUMN: Controle de Orçamento (Sliders & Inputs) */}
-          <Card className="lg:col-span-7 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all rounded-2xl shadow-sm space-y-6">
+          <Card className="lg:col-span-7 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all rounded-2xl shadow-sm space-y-6">
             <GoalCategoryAllocationSliders
               categories={localCategories}
               settings={settings}
@@ -278,7 +280,7 @@ export function GoalsConfigPanel({
               <div className="text-sm font-bold flex items-center gap-2">
                 <span
                   className={
-                    isExactly100 ? 'text-theme-green' : totalAllocated < 100 ? 'text-amber-500' : 'text-destructive'
+                    isExactly100 ? 'text-theme-green' : totalAllocated < 100 ? 'text-theme-orange' : 'text-destructive'
                   }
                 >
                   {isCurrencyMode

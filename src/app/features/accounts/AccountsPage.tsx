@@ -389,7 +389,6 @@ export function AccountsPage({
             initials: account.initials,
             color: account.color,
             currencies: account.currencies,
-            openingBalance: account.openingBalance,
             openingBalances: account.openingBalances,
             openingDate: account.openingDate,
             card: account.card,

@@ -217,6 +217,8 @@ export const en = {
     statusFailed: 'Failed',
     noTransactionsFound: 'No transactions found',
     noTransactionsFilterDesc: 'Try a different period or transaction type.',
+    loadMore: 'Load more ({remaining} remaining)',
+    showingTransactions: 'Showing {shown} of {total} transactions',
     scheduled: 'Scheduled',
     deleteConfirmTitle: 'Delete Transaction',
     deleteConfirmDesc: 'Are you sure you want to delete this transaction? This action cannot be undone.',

@@ -17,7 +17,6 @@ import { useFinance } from '@/state/FinanceContext';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
 import type { RecurringRule } from '@/data/recurring';
-import { getAccountCurrencies } from '@/data/settings';
 
 export type RecurringRulesDialogProps = {
   open: boolean;
@@ -28,7 +27,7 @@ export type RecurringRulesDialogProps = {
 export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: RecurringRulesDialogProps) {
   const { recurringRules, cancelRecurringRule, deleteRecurringRule } = useFinance();
   const { findAccount, findType } = useSettings();
-  const { t, formatCurrency, formatDate } = useI18n();
+  const { t, formatCents, formatDate } = useI18n();
   const [ruleToCancel, setRuleToCancel] = useState<RecurringRule | null>(null);
   const [ruleToDelete, setRuleToDelete] = useState<RecurringRule | null>(null);
 
@@ -81,7 +80,7 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
                 const typeConfig = findType(rule.typeId);
                 const isIncome = rule.direction === 'income';
                 const isActive = rule.status === 'active';
-                const ruleCurrency = rule.currency ?? (account ? getAccountCurrencies(account)[0] : 'USD');
+                const ruleCurrency = rule.currency;
 
                 return (
                   <div
@@ -137,7 +136,7 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
                           }`}
                         >
                           {isIncome ? '+' : '−'}
-                          {formatCurrency(rule.value, ruleCurrency)}
+                          {formatCents(rule.value, ruleCurrency)}
                         </div>
                         <div className="text-[11px] text-muted-foreground">{t('transactions.valuePerMonth')}</div>
                       </div>

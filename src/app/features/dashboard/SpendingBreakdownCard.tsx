@@ -16,7 +16,7 @@ interface SpendingBreakdownCardProps {
 }
 
 export function SpendingBreakdownCard({ transactions, today, currencyScope = 'all' }: SpendingBreakdownCardProps) {
-  const { t, formatCurrency, currency } = useI18n();
+  const { t, formatCents, currency } = useI18n();
   const { settings } = useSettings();
   const [mode, setMode] = useState<'types' | 'goals'>('types');
   const [period, setPeriod] = useState<'this-month' | 'last-month' | 'last-90-days'>('this-month');
@@ -48,7 +48,7 @@ export function SpendingBreakdownCard({ transactions, today, currencyScope = 'al
             <span>{data.name}</span>
           </div>
           <div className="flex justify-between gap-3 text-muted-foreground">
-            <span>{formatCurrency(data.value, displayCurrency)}</span>
+            <span>{formatCents(data.value, displayCurrency)}</span>
             <span className="font-bold text-foreground">{data.percentage}%</span>
           </div>
         </div>
@@ -159,7 +159,7 @@ export function SpendingBreakdownCard({ transactions, today, currencyScope = 'al
                   {t('dashboard.totalSpend')}
                 </span>
                 <span className="text-xl font-extrabold text-foreground tracking-tight mt-0.5">
-                  {formatCurrency(totalSpend, displayCurrency)}
+                  {formatCents(totalSpend, displayCurrency)}
                 </span>
               </div>
             </div>
@@ -194,7 +194,7 @@ export function SpendingBreakdownCard({ transactions, today, currencyScope = 'al
                       )}
                       <span className="text-muted-foreground w-9 text-right font-medium">{item.percentage}%</span>
                       <span className="text-foreground font-semibold w-16 text-right">
-                        {formatCurrency(item.value, displayCurrency)}
+                        {formatCents(item.value, displayCurrency)}
                       </span>
                     </div>
                   </div>

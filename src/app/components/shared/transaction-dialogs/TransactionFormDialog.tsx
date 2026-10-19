@@ -32,7 +32,7 @@ import { CategoryChip } from '@/components/shared/CategoryChip';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { getIcon } from '@/data/icons';
 import { TRANSFER_TYPE_ID, getAccountCurrencies } from '@/data/settings';
-import { convertAmount } from '@/data/currency';
+import { convertAmount, centsToDollars, dollarsToCents } from '@/data/currency';
 import { type SupportedCurrency } from '@/i18n/types';
 import { useI18n } from '@/i18n';
 
@@ -200,17 +200,17 @@ export function TransactionFormDialog({
 
     if (editing.kind === 'transfer') {
       setMode('transfer');
-      setValue(String(editing.outgoing.value));
-      setToValue(String(editing.incoming.value));
+      setValue(String(centsToDollars(editing.outgoing.value)));
+      setToValue(String(centsToDollars(editing.incoming.value)));
       setDate(editing.outgoing.date);
       setFromAccountId(editing.outgoing.accountId);
-      setFromCurrency(editing.outgoing.currency ?? 'USD');
+      setFromCurrency(editing.outgoing.currency);
       setToAccountId(editing.incoming.accountId);
-      setToCurrency(editing.incoming.currency ?? 'USD');
+      setToCurrency(editing.incoming.currency);
       setDescription('');
       setTypeId(TRANSFER_TYPE_ID);
       setAccountId(editing.outgoing.accountId);
-      setCurrency(editing.outgoing.currency ?? 'USD');
+      setCurrency(editing.outgoing.currency);
       setPaymentMethodId(settings.paymentMethods[0]?.id || '');
       setInstallments(1);
       setIsRecurring(false);
@@ -218,13 +218,13 @@ export function TransactionFormDialog({
       const first = editing.series[0];
       setMode('expense');
       setDescription(first.description);
-      const total = editing.series.reduce((sum, tx) => sum + tx.value, 0);
-      setValue(total.toFixed(2));
+      const totalCents = editing.series.reduce((sum, tx) => sum + tx.value, 0);
+      setValue(centsToDollars(totalCents).toFixed(2));
       setToValue('');
       setDate(first.date);
       setTypeId(first.typeId);
       setAccountId(first.accountId);
-      setCurrency(first.currency ?? 'USD');
+      setCurrency(first.currency);
       if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(editing.series.length);
       setIsRecurring(false);
@@ -236,13 +236,12 @@ export function TransactionFormDialog({
       const first = editing.series[0];
       setMode(first.direction);
       setDescription(first.description);
-      setValue(String(first.value));
+      setValue(String(centsToDollars(first.value)));
       setToValue('');
       setDate(first.date);
       setTypeId(first.typeId);
       setAccountId(first.accountId);
-      const acc = findAccount(first.accountId);
-      setCurrency(first.currency ?? getAccountCurrencies(acc)[0] ?? 'USD');
+      setCurrency(first.currency);
       if (first.paymentMethodId) setPaymentMethodId(first.paymentMethodId);
       setInstallments(1);
       setIsRecurring(true);
@@ -261,12 +260,12 @@ export function TransactionFormDialog({
       const tx = editing.transaction;
       setMode(tx.direction);
       setDescription(tx.description);
-      setValue(String(tx.value));
+      setValue(String(centsToDollars(tx.value)));
       setToValue('');
       setDate(tx.date);
       setTypeId(tx.typeId);
       setAccountId(tx.accountId);
-      setCurrency(tx.currency ?? 'USD');
+      setCurrency(tx.currency);
       if (tx.paymentMethodId) setPaymentMethodId(tx.paymentMethodId);
       setInstallments(1);
       setIsRecurring(Boolean(tx.recurring));
@@ -349,13 +348,16 @@ export function TransactionFormDialog({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || !date) return;
 
+    const valueCents = dollarsToCents(normalizedValue);
+    const toValueCents = dollarsToCents(normalizedToValue);
+
     let draft: TransactionDraft;
     if (mode === 'transfer') {
       draft = {
         kind: 'transfer',
         date,
-        value: normalizedValue,
-        toValue: normalizedToValue,
+        value: valueCents,
+        toValue: toValueCents,
         fromAccountId,
         fromCurrency,
         toAccountId,
@@ -373,7 +375,7 @@ export function TransactionFormDialog({
           ...(mode === 'expense' ? { paymentMethodId } : {}),
         },
         startDate: date,
-        value: normalizedValue,
+        value: valueCents,
         frequency: 'monthly',
         limit:
           recurringLimitKind === 'count'
@@ -392,7 +394,7 @@ export function TransactionFormDialog({
           paymentMethodId,
         },
         firstDate: date,
-        totalValue: normalizedValue,
+        totalValue: valueCents,
         count: effectiveInstallments,
       };
     } else {
@@ -400,7 +402,7 @@ export function TransactionFormDialog({
         kind: 'single',
         transaction: {
           description: normalizedDescription,
-          value: normalizedValue,
+          value: valueCents,
           currency,
           date,
           direction: mode,
@@ -597,7 +599,8 @@ export function TransactionFormDialog({
                           <InstallmentsField
                             value={installments}
                             onChange={setInstallments}
-                            totalValue={Number(value) || 0}
+                            totalValue={dollarsToCents(Number(value) || 0)}
+                            currency={currency}
                           />
                         )}
                       </>

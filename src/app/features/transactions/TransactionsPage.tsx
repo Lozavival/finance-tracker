@@ -33,7 +33,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
   const { t } = useI18n();
   const finance = useFinance();
   const transactions = propTransactions ?? finance.transactions;
-  const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
+  const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'preset', days: 30 });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [direction, setDirection] = useState<'all' | TransactionDirection>('all');
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -75,7 +75,7 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
           return false;
         }
       }
-      if (currencyFilter !== 'all' && (transaction.currency ?? 'USD') !== currencyFilter) {
+      if (currencyFilter !== 'all' && transaction.currency !== currencyFilter) {
         return false;
       }
       return true;
@@ -85,14 +85,14 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
   }, [period, selectedTypes, direction, selectedPayments, currencyFilter, transactions]);
 
   const filtersActive =
-    period.kind !== 'up-to-today' ||
+    !(period.kind === 'preset' && period.days === 30) ||
     selectedTypes.length > 0 ||
     direction !== 'all' ||
     selectedPayments.length > 0 ||
     currencyFilter !== 'all';
 
   function resetFilters() {
-    setPeriod({ kind: 'up-to-today' });
+    setPeriod({ kind: 'preset', days: 30 });
     setSelectedTypes([]);
     setDirection('all');
     setSelectedPayments([]);

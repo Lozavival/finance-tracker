@@ -370,8 +370,6 @@ export function AccountFormDialog({
     }
 
     const allowedPaymentMethods = kind === 'Cash' ? ['cash'] : selectedMethods.filter(id => id !== 'cash');
-    const primaryCurrency = currencies[0] || 'USD';
-    const primaryBalance = openingBalances[primaryCurrency] ?? 0;
 
     const result: AccountConfig = {
       id,
@@ -379,7 +377,6 @@ export function AccountFormDialog({
       kind,
       currencies,
       openingBalances,
-      openingBalance: primaryBalance,
       initials: trimmedInitials,
       color,
       openingDate,

@@ -1,6 +1,6 @@
 import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from './transactions';
-import { type CreditCardConfig, type Settings, findAccount, isCreditCard, getAccountCurrencies } from './settings';
+import { type CreditCardConfig, type Settings, findAccount, isCreditCard } from './settings';
 import { toLocalDateString } from './dates';
 
 export type StatementStatus = 'open' | 'closed' | 'paid';
@@ -86,7 +86,7 @@ export function buildStatements(transactions: Transaction[], settings: Settings,
         accountId: tx.accountId,
         account: tx.accountId,
         cardName: accountDetails.card.name,
-        currency: tx.currency ?? getAccountCurrencies(accountDetails)[0] ?? 'USD',
+        currency: tx.currency,
         periodStart: dates.periodStart,
         closingDate: dates.closingDate,
         dueDate: dates.dueDate,
@@ -100,7 +100,7 @@ export function buildStatements(transactions: Transaction[], settings: Settings,
 
     const stmt = statementMap.get(id)!;
     stmt.items.push(tx);
-    const cents = Math.round(tx.value * 100);
+    const cents = tx.value;
     if (tx.direction === 'expense') {
       stmt.charges += cents;
     } else {

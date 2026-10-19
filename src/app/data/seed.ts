@@ -17,7 +17,7 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
     description: 'Salary Deposit',
     typeId: 'income',
     direction: 'income',
-    value: 5200,
+    value: 520000,
     currency: 'USD',
     accountId: 'boa',
     startDate: daysFromToday(-70),
@@ -31,7 +31,7 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
     description: 'Rent',
     typeId: 'bills',
     direction: 'expense',
-    value: 1800,
+    value: 180000,
     currency: 'USD',
     accountId: 'boa',
     paymentMethodId: 'bank-transfer',
@@ -44,6 +44,7 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
 ];
 
 import { type SupportedCurrency } from '@/i18n/types';
+import { dollarsToCents } from '@/data/currency';
 
 export const SEEDED_TRANSACTIONS: Transaction[] = [];
 
@@ -52,10 +53,19 @@ function inferAccountCurrency(accountId: string): SupportedCurrency {
   return 'USD';
 }
 
-// Helper to add
-function addTx(tx: Omit<Transaction, 'id'>) {
+type SeedTransactionInput = Omit<Transaction, 'id' | 'currency'> & {
+  currency?: SupportedCurrency;
+};
+
+// Helper to add (converts human-readable dollar literals to integer cents)
+function addTx(tx: SeedTransactionInput) {
   const currency = tx.currency ?? inferAccountCurrency(tx.accountId);
-  SEEDED_TRANSACTIONS.push({ id: nextId(), ...tx, currency });
+  SEEDED_TRANSACTIONS.push({
+    id: nextId(),
+    ...tx,
+    value: dollarsToCents(tx.value),
+    currency,
+  });
 }
 
 function addTransfer(
@@ -98,7 +108,7 @@ function addTransfer(
   });
 }
 
-function createMonthly(count: number, startDays: number, txBase: Omit<Transaction, 'id' | 'date'>) {
+function createMonthly(count: number, startDays: number, txBase: Omit<SeedTransactionInput, 'date'>) {
   let cur = daysFromToday(startDays);
   for (let i = 0; i < count; i++) {
     addTx({ ...txBase, date: cur });

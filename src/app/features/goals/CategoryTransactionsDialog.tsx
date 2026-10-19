@@ -23,7 +23,7 @@ export function CategoryTransactionsDialog({
   transactions,
   monthLabel,
 }: CategoryTransactionsDialogProps) {
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
   if (!category) return null;
 
   const colorConfig = COLOR_CONFIG[category.color] ?? COLOR_CONFIG.blue;
@@ -51,7 +51,7 @@ export function CategoryTransactionsDialog({
                 </span>
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                {t('goals.transactionsForMonth', { month: monthLabel, amount: formatCurrency(totalSpent) })}
+                {t('goals.transactionsForMonth', { month: monthLabel, amount: formatCents(totalSpent) })}
               </DialogDescription>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function CategoryTransactionsDialog({
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-foreground flex-shrink-0 ml-4">
-                  {formatCurrency(tx.value)}
+                  {formatCents(tx.value, tx.currency)}
                 </div>
               </div>
             ))

@@ -220,6 +220,8 @@ export const pt: Translations = {
     statusFailed: 'Falhou',
     noTransactionsFound: 'Nenhuma transação encontrada',
     noTransactionsFilterDesc: 'Tente um período ou tipo de transação diferente.',
+    loadMore: 'Carregar mais ({remaining} restantes)',
+    showingTransactions: 'Exibindo {shown} de {total} transações',
     scheduled: 'Agendada',
     deleteConfirmTitle: 'Excluir transação',
     deleteConfirmDesc: 'Tem certeza de que deseja excluir esta transação? Esta ação não pode ser desfeita.',

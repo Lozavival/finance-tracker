@@ -26,7 +26,7 @@ type BudgetOverviewProps = {
 
 export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: BudgetOverviewProps) {
   const { settings } = useSettings();
-  const { t, formatCurrency, locale, currency } = useI18n();
+  const { t, formatCents, locale, currency } = useI18n();
   // Current selected month: default to current month (e.g. October 2026)
   const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
     const now = new Date();
@@ -69,35 +69,33 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
       {/* Top 3 KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Your Income */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/40 hover:shadow-[0_0_25px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
+        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_25px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-theme-cyan">
+            <div className="w-10 h-10 rounded-xl bg-theme-cyan/20 border border-theme-cyan/30 flex items-center justify-center text-theme-cyan">
               <DollarSign className="w-5 h-5" />
             </div>
             <span className="text-sm font-medium text-foreground">{t('goals.yourIncome')}</span>
           </div>
-          <div className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(budget.actualIncome)}</div>
+          <div className="text-3xl font-bold text-foreground tracking-tight">{formatCents(budget.actualIncome)}</div>
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
             <span>{t('goals.incomeReceiptsDesc')}</span>
             {goalsConfig.referenceMonthlyIncome > 0 && (
               <span className="text-theme-cyan/90 font-medium">
-                {t('goals.plannedBaseline', { amount: formatCurrency(goalsConfig.referenceMonthlyIncome) })}
+                {t('goals.plannedBaseline', { amount: formatCents(goalsConfig.referenceMonthlyIncome) })}
               </span>
             )}
           </div>
         </Card>
 
         {/* Monthly Expenses */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-blue-500/40 hover:shadow-[0_0_25px_var(--shadow-glow-blue)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
+        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-blue/40 hover:shadow-[0_0_25px_var(--shadow-glow-blue)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-theme-blue">
+            <div className="w-10 h-10 rounded-xl bg-theme-blue/20 border border-theme-blue/30 flex items-center justify-center text-theme-blue">
               <Receipt className="w-5 h-5" />
             </div>
             <span className="text-sm font-medium text-foreground">{t('goals.monthlyExpenses')}</span>
           </div>
-          <div className="text-3xl font-bold text-foreground tracking-tight">
-            {formatCurrency(budget.totalExpenses)}
-          </div>
+          <div className="text-3xl font-bold text-foreground tracking-tight">{formatCents(budget.totalExpenses)}</div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
             <span className="w-2 h-2 rounded-full border border-muted-foreground inline-block" />
             <span>{t('goals.incomeUsed', { percent: formatPercent(budget.usedPercentage) })}</span>
@@ -105,9 +103,9 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
         </Card>
 
         {/* Remaining Balance */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-emerald-500/40 hover:shadow-[0_0_25px_var(--shadow-glow-green)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
+        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-green/40 hover:shadow-[0_0_25px_var(--shadow-glow-green)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-theme-green">
+            <div className="w-10 h-10 rounded-xl bg-theme-green/20 border border-theme-green/30 flex items-center justify-center text-theme-green">
               <PiggyBank className="w-5 h-5" />
             </div>
             <span className="text-sm font-medium text-foreground">{t('goals.remainingBalance')}</span>
@@ -117,12 +115,12 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
               budget.remainingBalance >= 0 ? 'text-theme-green' : 'text-theme-red'
             }`}
           >
-            {formatCurrency(budget.remainingBalance)}
+            {formatCents(budget.remainingBalance)}
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
             <span>{t('goals.netCashFlow')}</span>
             <span>
-              {t('goals.remaining')}: {formatCurrency(budget.remainingBudget)}
+              {t('goals.remaining')}: {formatCents(budget.remainingBudget)}
             </span>
           </div>
         </Card>
@@ -138,7 +136,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
 
           <button
             onClick={onAdjustGoals}
-            className="group flex items-center gap-1.5 text-sm font-medium text-theme-cyan hover:text-cyan-400 transition-colors"
+            className="group flex items-center gap-1.5 text-sm font-medium text-theme-cyan hover:text-theme-cyan/80 transition-colors"
           >
             <span>{t('goals.adjustGoals')}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -163,7 +161,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             return (
               <Card
                 key={category.id}
-                className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group"
+                className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group"
               >
                 <div>
                   {/* Category Card Header */}
@@ -215,13 +213,13 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                       <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
                         {t('goals.spent')}
                       </div>
-                      <div className="text-base font-bold text-foreground mt-0.5">{formatCurrency(spent)}</div>
+                      <div className="text-base font-bold text-foreground mt-0.5">{formatCents(spent)}</div>
                     </div>
                     <div className="pl-3">
                       <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
                         {t('goals.budgeted')}
                       </div>
-                      <div className="text-base font-bold text-foreground mt-0.5">{formatCurrency(budgeted)}</div>
+                      <div className="text-base font-bold text-foreground mt-0.5">{formatCents(budgeted)}</div>
                     </div>
                   </div>
                 </div>
@@ -232,12 +230,12 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
                     {isOverBudget ? (
                       <span className="text-destructive flex items-center gap-1">
                         <TrendingDown className="w-3.5 h-3.5" />
-                        {t('goals.overBudgetAmount', { amount: formatCurrency(Math.abs(remaining)) })}
+                        {t('goals.overBudgetAmount', { amount: formatCents(Math.abs(remaining)) })}
                       </span>
                     ) : (
                       <span className="text-theme-green flex items-center gap-1">
                         <TrendingUp className="w-3.5 h-3.5" />
-                        {t('goals.remainingAmount', { amount: formatCurrency(remaining) })}
+                        {t('goals.remainingAmount', { amount: formatCents(remaining) })}
                       </span>
                     )}
                   </div>

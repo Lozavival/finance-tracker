@@ -1,5 +1,5 @@
-import React from 'react';
-import { MoreVertical, Pencil, Trash2, Repeat } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MoreVertical, Pencil, Trash2, Repeat, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
@@ -16,6 +16,8 @@ import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { useI18n } from '@/i18n';
 
+const PAGE_SIZE = 50;
+
 export type TransactionsMonthTableProps = {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
@@ -30,13 +32,20 @@ export function TransactionsMonthTable({
   showAccount = true,
 }: TransactionsMonthTableProps) {
   const { findType, findAccount, findMethod } = useSettings();
-  const { t, currency, locale } = useI18n();
-  const groups = groupTransactionsByMonth(transactions, locale);
+  const { t, locale } = useI18n();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [transactions]);
 
   if (transactions.length === 0) {
     return null;
   }
 
+  const pagedTransactions = transactions.slice(0, visibleCount);
+  const remainingCount = Math.max(0, transactions.length - pagedTransactions.length);
+  const groups = groupTransactionsByMonth(pagedTransactions, locale);
   const today = getToday();
 
   return (
@@ -116,9 +125,9 @@ export function TransactionsMonthTable({
                       }`}
                     >
                       <div className="flex items-center justify-end gap-1.5 font-medium">
-                        <span>{formatSignedValue(transaction, currency, locale)}</span>
+                        <span>{formatSignedValue(transaction, locale)}</span>
                         <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-foreground/10 text-muted-foreground uppercase">
-                          {transaction.currency ?? 'USD'}
+                          {transaction.currency}
                         </span>
                       </div>
                     </TableCell>
@@ -160,6 +169,26 @@ export function TransactionsMonthTable({
           ))}
         </TableBody>
       </Table>
+      {remainingCount > 0 && (
+        <div className="border-t border-border/50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-foreground/5">
+          <span className="text-xs text-muted-foreground">
+            {t('transactions.showingTransactions', {
+              shown: pagedTransactions.length,
+              total: transactions.length,
+            })}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+            className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10 hover:text-theme-cyan"
+          >
+            <ChevronDown className="mr-1.5 h-4 w-4 text-theme-cyan" />
+            {t('transactions.loadMore', { remaining: remainingCount })}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

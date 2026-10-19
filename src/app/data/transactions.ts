@@ -17,7 +17,7 @@ export type InstallmentInfo = {
 };
 
 import { type SupportedCurrency } from '@/i18n/types';
-import { convertAmount } from './currency';
+import { convertCents, formatCents } from './currency';
 
 export type Transaction = {
   id: string;
@@ -25,8 +25,8 @@ export type Transaction = {
   description: string;
   typeId: string;
   direction: TransactionDirection;
-  value: number;
-  currency?: SupportedCurrency;
+  value: number; // integer cents
+  currency: SupportedCurrency;
   accountId: string;
   paymentMethodId?: string;
   transferId?: string;
@@ -39,25 +39,25 @@ export type TransactionDraft =
   | {
       kind: 'transfer';
       date: Date;
-      value: number; // sent value in fromCurrency
-      toValue?: number; // received value in toCurrency
+      value: number; // sent value in integer cents (fromCurrency)
+      toValue?: number; // received value in integer cents (toCurrency)
       fromAccountId: string;
-      fromCurrency?: SupportedCurrency;
+      fromCurrency: SupportedCurrency;
       toAccountId: string;
-      toCurrency?: SupportedCurrency;
+      toCurrency: SupportedCurrency;
     }
   | {
       kind: 'installments';
       transaction: Omit<Transaction, 'id' | 'date' | 'value' | 'installment'>;
       firstDate: Date;
-      totalValue: number;
+      totalValue: number; // integer cents
       count: number;
     }
   | {
       kind: 'recurring';
       transaction: Omit<Transaction, 'id' | 'date' | 'value' | 'installment' | 'recurring'>;
       startDate: Date;
-      value: number;
+      value: number; // integer cents
       frequency: 'monthly';
       limit: RecurrenceLimit;
     };
@@ -73,10 +73,8 @@ export function buildTransferLegs(
   transferId: string,
   ids: [string, string],
   accountNames?: { fromName?: string; toName?: string },
-  currencies?: { fromCurrency?: SupportedCurrency; toCurrency?: SupportedCurrency },
 ): [Transaction, Transaction] {
-  const fromCurrency = draft.fromCurrency ?? currencies?.fromCurrency ?? 'USD';
-  const toCurrency = draft.toCurrency ?? currencies?.toCurrency ?? fromCurrency;
+  const { fromCurrency, toCurrency } = draft;
   const toValue = draft.toValue ?? draft.value;
   const isCross = fromCurrency !== toCurrency;
 
@@ -84,7 +82,7 @@ export function buildTransferLegs(
   const fromLabel = accountNames?.fromName ? ` from ${accountNames.fromName}` : '';
   const rateLabel =
     isCross && toValue > 0
-      ? ` (${toValue} ${toCurrency} @ ${(draft.value / toValue).toFixed(2)} ${fromCurrency}/${toCurrency})`
+      ? ` (${(toValue / 100).toFixed(2)} ${toCurrency} @ ${(draft.value / toValue).toFixed(2)} ${fromCurrency}/${toCurrency})`
       : '';
 
   return [
@@ -146,14 +144,9 @@ export function formatCurrency(amount: number, currency: SupportedCurrency = 'US
   }
 }
 
-export function formatSignedValue(
-  transaction: Transaction,
-  fallbackCurrency: SupportedCurrency = 'USD',
-  locale = 'en-US',
-) {
+export function formatSignedValue(transaction: Transaction, locale = 'en-US') {
   const sign = transaction.direction === 'income' ? '+' : '−';
-  const curr = transaction.currency ?? fallbackCurrency;
-  return `${sign}${formatCurrency(transaction.value, curr, locale)}`;
+  return `${sign}${formatCents(transaction.value, transaction.currency, locale)}`;
 }
 
 export function getLatestMonthRange(transactions: Transaction[]) {
@@ -182,8 +175,8 @@ export function aggregateExpensesByCategory(
   transactions.forEach(transaction => {
     if (transaction.direction === 'expense' && !transaction.transferId) {
       let val = transaction.value;
-      if (targetCurrency && transaction.currency && transaction.currency !== targetCurrency) {
-        const converted = convertAmount(transaction.value, transaction.currency, targetCurrency, exchangeRate ?? null);
+      if (targetCurrency && transaction.currency !== targetCurrency) {
+        const converted = convertCents(transaction.value, transaction.currency, targetCurrency, exchangeRate ?? null);
         if (converted !== null) {
           val = converted;
         }

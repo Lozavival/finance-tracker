@@ -3,12 +3,12 @@ import type { Transaction, TransactionDraft, InstallmentInfo } from './transacti
 
 export const MAX_INSTALLMENTS = 48;
 
-/** Splits a total into `count` cent-exact parts; remainder goes to the first part. */
-export function splitInstallmentValues(total: number, count: number): number[] {
-  const cents = Math.round(total * 100);
+/** Splits a total (in integer cents) into `count` cent-exact parts; remainder goes to the first part. */
+export function splitInstallmentValues(totalCents: number, count: number): number[] {
+  const cents = Math.round(totalCents);
   const base = Math.floor(cents / count);
   const remainder = cents - base * count;
-  return Array.from({ length: count }, (_, i) => (base + (i === 0 ? remainder : 0)) / 100);
+  return Array.from({ length: count }, (_, i) => base + (i === 0 ? remainder : 0));
 }
 
 /** Adds months keeping the day, clamped to the target month's last day. */

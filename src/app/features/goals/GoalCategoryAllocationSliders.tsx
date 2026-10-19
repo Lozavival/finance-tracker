@@ -52,7 +52,7 @@ export function GoalCategoryAllocationSliders({
           type="button"
           size="sm"
           onClick={onAddCategoryClick}
-          className="bg-cyan-500/10 border border-cyan-400/30 hover:bg-cyan-500/20 text-theme-cyan text-xs gap-1.5 h-9 rounded-lg transition-all"
+          className="bg-theme-cyan/10 border border-theme-cyan/30 hover:bg-theme-cyan/20 text-theme-cyan text-xs gap-1.5 h-9 rounded-lg transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>{t('goals.addCategory')}</span>
@@ -111,7 +111,7 @@ export function GoalCategoryAllocationSliders({
                       step={100}
                       value={Math.round(monthlyEquivalent)}
                       onChange={e => onCategoryDollarInputChange(cat.id, e.target.value)}
-                      className="w-24 h-8 text-right text-sm font-semibold border-border bg-foreground/5 text-foreground rounded-lg p-1.5 outline-none focus:border-cyan-400"
+                      className="w-24 h-8 text-right text-sm font-semibold border-border bg-foreground/5 text-foreground rounded-lg p-1.5 outline-none focus:border-theme-cyan"
                     />
                   </div>
                 ) : (
@@ -123,7 +123,7 @@ export function GoalCategoryAllocationSliders({
                       step={0.5}
                       value={cat.percentage}
                       onChange={e => onCategoryPercentInputChange(cat.id, e.target.value)}
-                      className="w-16 h-8 text-center text-sm font-semibold border-border bg-foreground/5 text-foreground rounded-lg p-1 outline-none focus:border-cyan-400"
+                      className="w-16 h-8 text-center text-sm font-semibold border-border bg-foreground/5 text-foreground rounded-lg p-1 outline-none focus:border-theme-cyan"
                     />
                     <span className="text-xs text-muted-foreground font-medium">%</span>
                   </div>

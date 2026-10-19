@@ -12,8 +12,8 @@ export type RecurrenceLimit = { kind: 'infinite' } | { kind: 'count'; count: num
 export type RecurringRule = {
   id: string;
   description: string;
-  value: number; // monthly amount (in dollars/currency units, matching Transaction.value)
-  currency?: SupportedCurrency;
+  value: number; // monthly amount in integer cents
+  currency: SupportedCurrency;
   direction: TransactionDirection;
   typeId: string;
   accountId: string;

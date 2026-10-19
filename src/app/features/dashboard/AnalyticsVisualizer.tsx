@@ -39,7 +39,7 @@ export function AnalyticsVisualizer({
   today,
   currencyScope = 'all',
 }: AnalyticsVisualizerProps) {
-  const { t, formatCurrency, locale, currency } = useI18n();
+  const { t, formatCents, locale, currency } = useI18n();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<'cash-flow' | 'spending-pace'>('cash-flow');
   const [timeframe, setTimeframe] = useState<3 | 6 | 12>(6);
@@ -67,17 +67,17 @@ export function AnalyticsVisualizer({
           </p>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">{t('dashboard.inflow')}:</span>
-            <span className="font-medium text-theme-green">+{formatCurrency(data.income, displayCurrency)}</span>
+            <span className="font-medium text-theme-green">+{formatCents(data.income, displayCurrency)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">{t('dashboard.outflow')}:</span>
-            <span className="font-medium text-theme-red">−{formatCurrency(data.expenses, displayCurrency)}</span>
+            <span className="font-medium text-theme-red">−{formatCents(data.expenses, displayCurrency)}</span>
           </div>
           <div className="flex justify-between gap-4 pt-1 border-t border-border/60 font-semibold">
             <span className="text-foreground">{t('dashboard.netSavings')}:</span>
             <span className={isPositive ? 'text-theme-green' : 'text-theme-red'}>
               {isPositive ? '+' : ''}
-              {formatCurrency(data.netSavings, displayCurrency)}
+              {formatCents(data.netSavings, displayCurrency)}
             </span>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function AnalyticsVisualizer({
             <div key={entry.name} className="flex justify-between gap-4">
               <span className="text-muted-foreground">{entry.name}:</span>
               <span className="font-semibold" style={{ color: entry.color }}>
-                {entry.value !== undefined ? formatCurrency(entry.value, displayCurrency) : '—'}
+                {entry.value !== undefined ? formatCents(entry.value, displayCurrency) : '—'}
               </span>
             </div>
           ))}
@@ -206,7 +206,7 @@ export function AnalyticsVisualizer({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={val => `${currencySymbol}${Math.round(val / 1000)}k`}
+                tickFormatter={val => `${currencySymbol}${Math.round(val / 100000)}k`}
               />
               <Tooltip content={<CashFlowTooltip />} />
               <Bar
@@ -252,7 +252,7 @@ export function AnalyticsVisualizer({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={val => `${currencySymbol}${Math.round(val / 1000)}k`}
+                tickFormatter={val => `${currencySymbol}${Math.round(val / 100000)}k`}
               />
               <Tooltip content={<PaceTooltip />} />
               <Line

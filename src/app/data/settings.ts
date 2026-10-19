@@ -166,7 +166,6 @@ export type AccountConfig = {
   name: string;
   kind: AccountKind;
   currencies: SupportedCurrency[];
-  openingBalance?: number; // legacy single-currency compatibility (cents)
   openingBalances?: Partial<Record<SupportedCurrency, number>>; // cents per pocket
   openingDate: Date;
   initials: string;
@@ -185,13 +184,7 @@ export function getAccountCurrencies(account?: AccountConfig): SupportedCurrency
 }
 
 export function getAccountOpeningBalance(account: AccountConfig, currency: SupportedCurrency): number {
-  if (account.openingBalances && account.openingBalances[currency] !== undefined) {
-    return account.openingBalances[currency]!;
-  }
-  if (getAccountCurrencies(account)[0] === currency && account.openingBalance !== undefined) {
-    return account.openingBalance;
-  }
-  return 0;
+  return account.openingBalances?.[currency] ?? 0;
 }
 
 import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';
@@ -306,7 +299,6 @@ export const DEFAULT_SETTINGS: Settings = {
       kind: 'Checking',
       currencies: ['USD'],
       openingBalances: { USD: 320000 }, // $3,200.00
-      openingBalance: 320000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'BA',
       color: 'blue',
@@ -324,7 +316,6 @@ export const DEFAULT_SETTINGS: Settings = {
       kind: 'Checking',
       currencies: ['BRL'],
       openingBalances: { BRL: 450000 }, // R$ 4,500.00
-      openingBalance: 450000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'NU',
       color: 'violet',
@@ -347,7 +338,6 @@ export const DEFAULT_SETTINGS: Settings = {
       kind: 'Checking',
       currencies: ['USD'],
       openingBalances: { USD: 120000 }, // $1,200.00
-      openingBalance: 120000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'CI',
       color: 'cyan',
@@ -365,7 +355,6 @@ export const DEFAULT_SETTINGS: Settings = {
       kind: 'Cash',
       currencies: ['BRL'],
       openingBalances: { BRL: 20000 }, // R$ 200.00
-      openingBalance: 20000,
       openingDate: parseLocalDate('2025-01-01'),
       initials: 'CW',
       color: 'teal',
@@ -374,6 +363,23 @@ export const DEFAULT_SETTINGS: Settings = {
   ],
   goals: DEFAULT_GOALS_CONFIG,
   exchangeRate: INITIAL_EXCHANGE_RATE_STATE,
+};
+
+export const PRODUCTION_DEFAULT_SETTINGS: Settings = {
+  ...DEFAULT_SETTINGS,
+  accounts: [
+    {
+      id: 'cash-wallet',
+      name: 'Cash / Wallet',
+      kind: 'Cash',
+      currencies: ['BRL', 'USD'],
+      openingBalances: { BRL: 0, USD: 0 },
+      openingDate: parseLocalDate('2025-01-01'),
+      initials: 'CW',
+      color: 'teal',
+      allowedPaymentMethods: ['cash'],
+    },
+  ],
 };
 
 export function findType(settings: Settings, id: string): TransactionTypeConfig | undefined {

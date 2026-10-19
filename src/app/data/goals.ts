@@ -78,7 +78,7 @@ export const DEFAULT_TYPE_MAPPINGS: Record<string, string> = {
 };
 
 export const DEFAULT_GOALS_CONFIG: GoalsConfig = {
-  referenceMonthlyIncome: 1000000, // $1,000,000.00
+  referenceMonthlyIncome: 100000000, // $1,000,000.00 in cents
   mode: 'percentage',
   categories: DEFAULT_GOAL_CATEGORIES,
   typeMappings: DEFAULT_TYPE_MAPPINGS,
@@ -86,9 +86,9 @@ export const DEFAULT_GOALS_CONFIG: GoalsConfig = {
 
 export type CategoryBudgetSummary = {
   category: GoalCategory;
-  budgeted: number;
-  spent: number;
-  remaining: number;
+  budgeted: number; // integer cents
+  spent: number; // integer cents
+  remaining: number; // integer cents
   percentageUsed: number; // spent / budgeted * 100
   txCount: number;
   transactions: Transaction[];
@@ -96,17 +96,17 @@ export type CategoryBudgetSummary = {
 
 export type MonthlyBudgetSummary = {
   monthDate: Date;
-  actualIncome: number;
-  budgetBase: number;
-  totalBudgeted: number;
-  totalExpenses: number;
-  remainingBalance: number;
-  remainingBudget: number;
+  actualIncome: number; // integer cents
+  budgetBase: number; // integer cents
+  totalBudgeted: number; // integer cents
+  totalExpenses: number; // integer cents
+  remainingBalance: number; // integer cents
+  remainingBudget: number; // integer cents
   usedPercentage: number; // totalExpenses / budgetBase * 100
   categories: CategoryBudgetSummary[];
 };
 
-import { convertAmount } from './currency';
+import { convertCents } from './currency';
 import { type SupportedCurrency } from '@/i18n/types';
 
 export function calculateMonthlyBudget(
@@ -124,17 +124,16 @@ export function calculateMonthlyBudget(
     return t.date.getFullYear() === targetYear && t.date.getMonth() === targetMonth;
   });
 
-  // Calculate actual income (exclude internal transfers)
+  // Calculate actual income in cents (exclude internal transfers)
   let actualIncome = 0;
   for (const t of monthTransactions) {
     if (t.direction === 'income' && !t.transferId) {
-      const txCurr = t.currency ?? 'USD';
-      const val = convertAmount(t.value, txCurr, targetCurrency, exchangeRate) ?? t.value;
+      const val = convertCents(t.value, t.currency, targetCurrency, exchangeRate) ?? t.value;
       actualIncome += val;
     }
   }
 
-  // Base for computing category targets:
+  // Base for computing category targets (in cents):
   // Use expected reference monthly income if configured; fallback to actual income if 0
   const budgetBase = goalsConfig.referenceMonthlyIncome > 0 ? goalsConfig.referenceMonthlyIncome : actualIncome;
 
@@ -149,8 +148,7 @@ export function calculateMonthlyBudget(
 
   for (const t of monthTransactions) {
     if (t.direction === 'expense' && !t.transferId) {
-      const txCurr = t.currency ?? 'USD';
-      const val = convertAmount(t.value, txCurr, targetCurrency, exchangeRate) ?? t.value;
+      const val = convertCents(t.value, t.currency, targetCurrency, exchangeRate) ?? t.value;
       totalExpenses += val;
       // Determine which goal category this transaction belongs to
       const targetCatId = goalsConfig.typeMappings[t.typeId] || t.typeId;
@@ -174,11 +172,10 @@ export function calculateMonthlyBudget(
   const categorySummaries: CategoryBudgetSummary[] = goalsConfig.categories.map(cat => {
     const txs = categoryTransactionsMap.get(cat.id) || [];
     const spent = txs.reduce((sum, tx) => {
-      const txCurr = tx.currency ?? 'USD';
-      const val = convertAmount(tx.value, txCurr, targetCurrency, exchangeRate) ?? tx.value;
+      const val = convertCents(tx.value, tx.currency, targetCurrency, exchangeRate) ?? tx.value;
       return sum + val;
     }, 0);
-    const budgeted = (budgetBase * cat.percentage) / 100;
+    const budgeted = Math.round((budgetBase * cat.percentage) / 100);
     const remaining = budgeted - spent;
     const percentageUsed = budgeted > 0 ? (spent / budgeted) * 100 : 0;
 

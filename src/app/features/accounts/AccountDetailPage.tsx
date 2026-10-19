@@ -138,14 +138,14 @@ export function AccountDetailPage({
     }
   };
 
-  const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'up-to-today' });
+  const [period, setPeriod] = useState<PeriodFilterType>({ kind: 'preset', days: 30 });
 
   const visibleTransactions = useMemo(() => {
     const periodRange = resolvePeriodRange(period, finance.today);
     const filtered = transactions
       .filter(transaction => transaction.accountId === accountId)
       .filter(transaction => {
-        if (isMultiCurrency && (transaction.currency ?? 'USD') !== activePocket) {
+        if (isMultiCurrency && transaction.currency !== activePocket) {
           return false;
         }
         if (periodRange) {
@@ -187,7 +187,8 @@ export function AccountDetailPage({
           kind: updated.kind,
           initials: updated.initials,
           color: updated.color,
-          openingBalance: updated.openingBalance,
+          currencies: updated.currencies,
+          openingBalances: updated.openingBalances,
           openingDate: updated.openingDate,
           card: updated.card,
           allowedPaymentMethods: updated.allowedPaymentMethods,

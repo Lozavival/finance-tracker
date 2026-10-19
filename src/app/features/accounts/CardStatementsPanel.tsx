@@ -17,7 +17,7 @@ type CardStatementsPanelProps = {
 
 export function CardStatementsPanel({ accountId, statements }: CardStatementsPanelProps) {
   const { settings, findAccount } = useSettings();
-  const { t, formatCurrency, formatCents, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
   const account = findAccount(accountId);
   const usage = getCardUsage(statements, accountId, settings);
   const accountStatements = useMemo(
@@ -128,7 +128,7 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
                     }
                   >
                     {item.direction === 'income' ? '-' : ''}
-                    {formatCurrency(item.value)}
+                    {formatCents(item.value, item.currency)}
                   </span>
                 </div>
               ))}

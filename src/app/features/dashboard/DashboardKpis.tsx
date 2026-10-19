@@ -22,7 +22,7 @@ interface DashboardKpisProps {
 }
 
 export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
-  const { t, formatCurrency, formatCents, currency } = useI18n();
+  const { t, formatCents, currency } = useI18n();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
@@ -106,7 +106,7 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
               ) : (
                 <div>
                   <p className="text-foreground text-2xl font-bold tracking-tight mb-1">
-                    {formatCurrency(kpis.totalBalance)}
+                    {formatCents(kpis.totalBalance)}
                   </p>
                   <p className="text-xs text-muted-foreground">{t('dashboard.vsLastMonth')}</p>
                 </div>
@@ -196,7 +196,7 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
                     }`}
                   >
                     {isCashFlowPositive ? '+' : ''}
-                    {formatCurrency(kpis.netSavings)}
+                    {formatCents(kpis.netSavings)}
                   </p>
                   <p className="text-xs text-muted-foreground">{t('dashboard.thisMonth')}</p>
                 </div>
@@ -234,10 +234,8 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
             <span className="text-xs font-bold text-foreground">{kpis.budgetPercentUsed.toFixed(0)}%</span>
           </div>
           <p className="text-foreground text-2xl font-bold tracking-tight mb-2">
-            {formatCurrency(kpis.budgetSpent)}
-            <span className="text-xs font-normal text-muted-foreground ml-1.5">
-              / {formatCurrency(kpis.budgetBase)}
-            </span>
+            {formatCents(kpis.budgetSpent)}
+            <span className="text-xs font-normal text-muted-foreground ml-1.5">/ {formatCents(kpis.budgetBase)}</span>
           </p>
           <ProgressBar
             value={Math.min(kpis.budgetPercentUsed, 100)}

@@ -18,7 +18,7 @@ interface ActivityAndObligationsProps {
 export function ActivityAndObligations({ transactions, today }: ActivityAndObligationsProps) {
   const { findType, settings } = useSettings();
   const { statements, recurringRules } = useFinance();
-  const { t, formatShort, formatCurrency, currency, locale } = useI18n();
+  const { t, formatShort, formatCents, locale } = useI18n();
   const navigate = useNavigate();
 
   // Recent 6 transactions up to today
@@ -118,7 +118,7 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
                           tx.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
                         }`}
                       >
-                        {formatSignedValue(tx, currency, locale)}
+                        {formatSignedValue(tx, locale)}
                       </TableCell>
                     </TableRow>
                   );
@@ -163,7 +163,7 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0 text-right">
-                      <span className="font-bold text-foreground">{formatCurrency(ob.amount)}</span>
+                      <span className="font-bold text-foreground">{formatCents(ob.amount, ob.currency)}</span>
                       {renderDueBadge(ob.daysRemaining)}
                     </div>
                   </div>

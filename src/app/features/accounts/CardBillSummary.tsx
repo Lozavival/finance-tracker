@@ -14,7 +14,7 @@ type CardBillSummaryProps = {
 
 export function CardBillSummary({ accountId, account: propAccount, statements }: CardBillSummaryProps) {
   const { settings, findAccount } = useSettings();
-  const { t, formatCurrency, formatCents, locale } = useI18n();
+  const { t, formatCents, locale } = useI18n();
   const account = propAccount ?? findAccount(accountId);
   if (!account?.card) return null; // No card
 
@@ -34,7 +34,7 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <div className="text-foreground font-medium">{formatCurrency(0)}</div>
+            <div className="text-foreground font-medium">{formatCents(0)}</div>
             <div className="text-xs text-muted-foreground">{t('accounts.noOpenBill')}</div>
           </div>
           <div className="w-16">
@@ -59,7 +59,7 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
           <div className="text-foreground font-medium flex items-center gap-2">
             {formatCents(stmt.total)}
             {stmt.status === 'open' && (
-              <span className="text-[10px] px-1 bg-cyan-500/20 text-theme-cyan rounded">{t('accounts.est')}</span>
+              <span className="text-[10px] px-1 bg-theme-cyan/20 text-theme-cyan rounded">{t('accounts.est')}</span>
             )}
           </div>
           <div className="text-xs text-muted-foreground">

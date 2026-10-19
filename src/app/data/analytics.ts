@@ -9,24 +9,24 @@ import { convertCents } from './currency';
 import { type SupportedCurrency } from '@/i18n/types';
 
 export type DashboardKpis = {
-  totalBalance: number; // in dollars / preferred currency units
+  totalBalance: number; // integer cents in preferred currency
   totalBalanceCents: number | null; // converted cents in preferred currency, or null if no rate and multi-currency
-  balancesByCurrency: Record<SupportedCurrency, number>; // in cents
+  balancesByCurrency: Record<SupportedCurrency, number>; // integer cents
   hasMultipleCurrencies: boolean;
   hasRate: boolean;
   balanceChangePercentage: number;
-  monthlyInflow: number;
+  monthlyInflow: number; // integer cents
   monthlyInflowCents: number | null;
-  inflowByCurrency: Record<SupportedCurrency, number>; // in cents
-  monthlyOutflow: number;
+  inflowByCurrency: Record<SupportedCurrency, number>; // integer cents
+  monthlyOutflow: number; // integer cents
   monthlyOutflowCents: number | null;
-  outflowByCurrency: Record<SupportedCurrency, number>; // in cents
-  netSavings: number;
+  outflowByCurrency: Record<SupportedCurrency, number>; // integer cents
+  netSavings: number; // integer cents
   netSavingsCents: number | null;
   hasMultiCurrencyCashFlow: boolean;
   savingsRate: number; // 0..100
-  budgetBase: number;
-  budgetSpent: number;
+  budgetBase: number; // integer cents
+  budgetSpent: number; // integer cents
   budgetPercentUsed: number;
   monthProgressPercent: number; // 0..100
   dayOfMonth: number;
@@ -39,23 +39,23 @@ export type MonthlyCashFlowPoint = {
   year: number;
   month: number;
   label: string;
-  income: number;
-  expenses: number;
-  netSavings: number;
+  income: number; // integer cents
+  expenses: number; // integer cents
+  netSavings: number; // integer cents
   savingsRate: number;
 };
 
 export type CumulativePacePoint = {
   day: number;
-  currentMonthSpent?: number;
-  previousMonthSpent?: number;
-  targetPace?: number;
+  currentMonthSpent?: number; // integer cents
+  previousMonthSpent?: number; // integer cents
+  targetPace?: number; // integer cents
 };
 
 export type CategoryBreakdownItem = {
   id: string;
   name: string;
-  value: number;
+  value: number; // integer cents
   percentage: number;
   color: string;
   trendPercentage?: number; // vs previous period
@@ -75,7 +75,8 @@ export type UpcomingObligation = {
   id: string;
   title: string;
   date: Date;
-  amount: number;
+  amount: number; // integer cents
+  currency: SupportedCurrency;
   kind: 'card-bill' | 'recurring' | 'installment';
   accountName?: string;
   daysRemaining: number;
@@ -149,11 +150,9 @@ export function calculateDashboardKpis(
   }
 
   const totalBalance =
-    convertedBalanceCents !== null ? convertedBalanceCents / 100 : (balancesByCurrency[preferredCurrency] ?? 0) / 100;
+    convertedBalanceCents !== null ? convertedBalanceCents : (balancesByCurrency[preferredCurrency] ?? 0);
   const prevMonthBalance =
-    prevConvertedBalanceCents !== null
-      ? prevConvertedBalanceCents / 100
-      : (prevBalancesByCurrency[preferredCurrency] ?? 0) / 100;
+    prevConvertedBalanceCents !== null ? prevConvertedBalanceCents : (prevBalancesByCurrency[preferredCurrency] ?? 0);
   const balanceChangePercentage =
     prevMonthBalance !== 0 ? ((totalBalance - prevMonthBalance) / Math.abs(prevMonthBalance)) * 100 : 0;
 
@@ -164,12 +163,10 @@ export function calculateDashboardKpis(
   for (const t of transactions) {
     if (t.transferId) continue;
     if (t.date.getFullYear() === y && t.date.getMonth() === m) {
-      const curr = t.currency ?? 'USD';
-      const valCents = Math.round(t.value * 100);
       if (t.direction === 'income') {
-        inflowByCurrency[curr] += valCents;
+        inflowByCurrency[t.currency] += t.value;
       } else if (t.direction === 'expense') {
-        outflowByCurrency[curr] += valCents;
+        outflowByCurrency[t.currency] += t.value;
       }
     }
   }
@@ -198,19 +195,18 @@ export function calculateDashboardKpis(
   }
 
   const monthlyInflow =
-    convertedInflowCents !== null ? convertedInflowCents / 100 : (inflowByCurrency[preferredCurrency] ?? 0) / 100;
+    convertedInflowCents !== null ? convertedInflowCents : (inflowByCurrency[preferredCurrency] ?? 0);
   const monthlyOutflow =
-    convertedOutflowCents !== null ? convertedOutflowCents / 100 : (outflowByCurrency[preferredCurrency] ?? 0) / 100;
+    convertedOutflowCents !== null ? convertedOutflowCents : (outflowByCurrency[preferredCurrency] ?? 0);
   const convertedNetSavingsCents =
     convertedInflowCents !== null && convertedOutflowCents !== null
       ? convertedInflowCents - convertedOutflowCents
       : null;
-  const netSavings =
-    convertedNetSavingsCents !== null ? convertedNetSavingsCents / 100 : monthlyInflow - monthlyOutflow;
+  const netSavings = convertedNetSavingsCents !== null ? convertedNetSavingsCents : monthlyInflow - monthlyOutflow;
   const savingsRate = monthlyInflow > 0 ? (netSavings / monthlyInflow) * 100 : 0;
 
   // 3. Budget pacing
-  const budgetSummary = calculateMonthlyBudget(transactions, goalsConfig, today);
+  const budgetSummary = calculateMonthlyBudget(transactions, goalsConfig, today, preferredCurrency, rate ?? null);
   const budgetBase = budgetSummary.budgetBase;
   const budgetSpent = budgetSummary.totalExpenses;
   const budgetPercentUsed = budgetBase > 0 ? (budgetSpent / budgetBase) * 100 : 0;
@@ -271,16 +267,16 @@ export function calculateMonthlyCashFlowHistory(
     for (const t of transactions) {
       if (t.transferId) continue;
       if (t.date.getFullYear() === targetYear && t.date.getMonth() === targetMonth) {
-        const curr = t.currency ?? 'USD';
+        const curr = t.currency;
         let val = t.value;
 
         if (currencyScope !== 'all') {
           if (curr !== currencyScope) continue;
         } else if (curr !== preferredCurrency) {
           if (rate && rate > 0) {
-            const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+            const converted = convertCents(val, curr, preferredCurrency, rate);
             if (converted !== null) {
-              val = converted / 100;
+              val = converted;
             }
           } else {
             // Unconvertible cross-currency: do not sum 1:1
@@ -306,9 +302,9 @@ export function calculateMonthlyCashFlowHistory(
       year: targetYear,
       month: targetMonth,
       label,
-      income: Math.round(income * 100) / 100,
-      expenses: Math.round(expenses * 100) / 100,
-      netSavings: Math.round(netSavings * 100) / 100,
+      income: Math.round(income),
+      expenses: Math.round(expenses),
+      netSavings: Math.round(netSavings),
       savingsRate: Math.round(savingsRate * 10) / 10,
     });
   }
@@ -339,7 +335,7 @@ export function calculateCumulativeSpendingPace(
 
   const maxDays = Math.max(daysInCurrentMonth, daysInPrevMonth);
 
-  // Group daily expenses
+  // Group daily expenses (in cents)
   const currentMonthDaily = new Array<number>(maxDays + 1).fill(0);
   const prevMonthDaily = new Array<number>(maxDays + 1).fill(0);
 
@@ -349,16 +345,16 @@ export function calculateCumulativeSpendingPace(
     const tMonth = t.date.getMonth();
     const tDay = t.date.getDate();
 
-    const curr = t.currency ?? 'USD';
+    const curr = t.currency;
     let val = t.value;
 
     if (currencyScope !== 'all') {
       if (curr !== currencyScope) continue;
     } else if (curr !== preferredCurrency) {
       if (rate && rate > 0) {
-        const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+        const converted = convertCents(val, curr, preferredCurrency, rate);
         if (converted !== null) {
-          val = converted / 100;
+          val = converted;
         }
       } else {
         // Unconvertible cross-currency: do not sum 1:1
@@ -386,13 +382,13 @@ export function calculateCumulativeSpendingPace(
 
     const point: CumulativePacePoint = {
       day,
-      previousMonthSpent: Math.round(prevCum * 100) / 100,
-      targetPace: dailyTarget > 0 ? Math.round(dailyTarget * day * 100) / 100 : undefined,
+      previousMonthSpent: Math.round(prevCum),
+      targetPace: dailyTarget > 0 ? Math.round(dailyTarget * day) : undefined,
     };
 
     if (day <= todayDay) {
       currentCum += currentMonthDaily[day] ?? 0;
-      point.currentMonthSpent = Math.round(currentCum * 100) / 100;
+      point.currentMonthSpent = Math.round(currentCum);
     }
 
     points.push(point);
@@ -456,16 +452,16 @@ export function calculateCategoryBreakdown(
       catId = goalsConfig.typeMappings[t.typeId] || t.typeId;
     }
 
-    const curr = t.currency ?? 'USD';
+    const curr = t.currency;
     let val = t.value;
 
     if (currencyScope !== 'all') {
       if (curr !== currencyScope) continue;
     } else if (curr !== preferredCurrency) {
       if (rate && rate > 0) {
-        const converted = convertCents(Math.round(val * 100), curr, preferredCurrency, rate);
+        const converted = convertCents(val, curr, preferredCurrency, rate);
         if (converted !== null) {
-          val = converted / 100;
+          val = converted;
         }
       } else {
         // Unconvertible cross-currency: do not sum 1:1
@@ -496,7 +492,7 @@ export function calculateCategoryBreakdown(
       items.push({
         id: typeCfg.id,
         name: typeCfg.name,
-        value: Math.round(value * 100) / 100,
+        value: Math.round(value),
         percentage: totalSpend > 0 ? Math.round((value / totalSpend) * 1000) / 10 : 0,
         color: `var(--accent-${typeCfg.color}-dot)`,
         trendPercentage: trendPercentage !== undefined ? Math.round(trendPercentage * 10) / 10 : undefined,
@@ -514,7 +510,7 @@ export function calculateCategoryBreakdown(
       items.push({
         id: goalCat.id,
         name: goalCat.name,
-        value: Math.round(value * 100) / 100,
+        value: Math.round(value),
         percentage: totalSpend > 0 ? Math.round((value / totalSpend) * 1000) / 10 : 0,
         color: `var(--accent-${goalCat.color}-dot)`,
         trendPercentage: trendPercentage !== undefined ? Math.round(trendPercentage * 10) / 10 : undefined,
@@ -525,7 +521,7 @@ export function calculateCategoryBreakdown(
   // Sort descending by value
   items.sort((a, b) => b.value - a.value);
 
-  return { items, totalSpend: Math.round(totalSpend * 100) / 100 };
+  return { items, totalSpend: Math.round(totalSpend) };
 }
 
 /**
@@ -589,7 +585,7 @@ export function generateSmartFinancialSignals(
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
 
-  // Aggregate current month per category
+  // Aggregate current month per category (in cents)
   const currentCatTotals = new Map<string, number>();
   for (const t of transactions) {
     if (t.direction !== 'expense' || t.transferId) continue;
@@ -598,7 +594,7 @@ export function generateSmartFinancialSignals(
     }
   }
 
-  // Aggregate 3 past months per category
+  // Aggregate 3 past months per category (in cents)
   const historicalTotals = new Map<string, number>();
   for (const t of transactions) {
     if (t.direction !== 'expense' || t.transferId) continue;
@@ -614,8 +610,8 @@ export function generateSmartFinancialSignals(
     const histTotal = historicalTotals.get(typeId) ?? 0;
     const rollingAvg = histTotal / 3;
 
-    // Trigger if spent is at least $50 and exceeds 1.35x baseline
-    if (rollingAvg >= 40 && currentSpent >= 1.35 * rollingAvg) {
+    // Trigger if spent is at least $40 (4000 cents) and exceeds 1.35x baseline
+    if (rollingAvg >= 4000 && currentSpent >= 1.35 * rollingAvg) {
       const typeCfg = settings.transactionTypes.find(t => t.id === typeId);
       const catName = typeCfg?.name ?? typeId;
       const spikePercent = Math.round(((currentSpent - rollingAvg) / rollingAvg) * 100);
@@ -681,7 +677,7 @@ export function generateSmartFinancialSignals(
         titleKey: 'dashboard.signals.deficitWarningTitle',
         descriptionKey: 'dashboard.signals.deficitWarningDesc',
         params: {
-          amount: Math.abs(currentKpis.netSavings).toFixed(2),
+          amount: (Math.abs(currentKpis.netSavings) / 100).toFixed(2),
         },
       });
     }
@@ -716,7 +712,8 @@ export function getUpcomingObligations(
         id: `stmt-${stmt.id}`,
         title: `${stmt.cardName} Bill`,
         date: stmt.dueDate,
-        amount: stmt.total / 100,
+        amount: stmt.total,
+        currency: stmt.currency,
         kind: 'card-bill',
         daysRemaining,
       });
@@ -736,6 +733,7 @@ export function getUpcomingObligations(
           title: t.description,
           date: t.date,
           amount: t.value,
+          currency: t.currency,
           kind: t.installment ? 'installment' : 'recurring',
           accountName: acc?.name,
           daysRemaining,
