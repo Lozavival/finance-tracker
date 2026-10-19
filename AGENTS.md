@@ -39,7 +39,7 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 
 ## Architecture & Code Structure
 
-The application is structured into domain-driven modules inside `src/app/`:
+The application is structured into domain-driven modules inside `src/`:
 
 ```
 src/
@@ -50,34 +50,48 @@ src/
 │   ├── palette.css               # Neon accents, badges, dots, and glow shadows
 │   ├── tailwind-theme.css        # @custom-variant & @theme inline variable mappings
 │   └── base.css                  # @layer base reset and default typography
+├── db/                           # SQLite database schema and persistence (Drizzle ORM)
+│   ├── schema.ts                 # Drizzle schema (accounts, transactions, rules, settings)
+│   ├── client.ts                 # better-sqlite3 database connection and migrations
+│   └── seedDatabase.ts           # Production / initial database population engine
+├── server/                       # Server plugins and repository adapters
+│   ├── apiPlugin.ts              # Vite dev server middleware API routes (/api/finance/*)
+│   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
     ├── layout/                   # App shell components (TopNavigation, Sidebar)
     ├── features/                 # Domain feature modules
-    │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsChart, RecentTransactionsTable
+    │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard
     │   ├── accounts/             # Account lists, balance projections & statement views
-    │   ├── transactions/         # Transaction tables, filters, CRUD actions
-    │   │   └── dialogs/          # TransactionFormDialog, DeleteTransactionDialog, composer
+    │   ├── transactions/         # TransactionsPage, filters, RecurringRulesDialog
     │   ├── goals/                # BudgetOverview, category targets, and goals panels
     │   └── settings/             # Workspace preferences, payment methods, transaction types
     ├── components/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
-    │   └── shared/               # Reusable domain components (CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker)
+    │   └── shared/               # Reusable domain components (CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
     ├── lib/
     │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
+    │   ├── analytics.ts          # Financial KPI calculations and spending analysis
     │   ├── cardStatements.ts     # Billing cycle calculation & statement closing engine
+    │   ├── currency.ts           # Multi-currency conversions, rates & cent/dollar utilities
     │   ├── dates.ts              # Date clamping and calendar formatting utilities
+    │   ├── defaults/             # Minimal production defaults (defaultSettings, defaultTypes, defaultGoals)
+    │   ├── fixtures/             # Demo / mock fixtures (mockAccounts, mockRules, mockTransactions, devSettings)
+    │   ├── goals.ts              # Budget goals, target rules, and progress calculations
     │   ├── icons.ts              # Lucide icon mapping registry
     │   ├── installments.ts       # Cent-exact multi-month installment division logic
     │   ├── ledger.ts             # Cash movement models and daily forecasting series
-    │   ├── seed.ts               # Demo data seeds
-    │   ├── settings.ts           # Category and payment method default definitions
+    │   ├── recurring.ts          # Recurring rule projection and scheduling engine
+    │   ├── repository/           # FinanceRepository interface, HTTP & in-memory implementations
+    │   ├── settings.ts           # Workspace setting interfaces and helper methods
     │   └── transactions.ts       # Transaction entities, types, and helper methods
-    ├── i18n/                     # Localization context, strings, and formatters
+    ├── i18n/                     # Localization context, bilingual strings (en, pt), formatters
     └── state/
+        ├── FinanceContext.tsx    # Core finance entity cache & repository synchronization
         ├── SettingsContext.tsx   # Workspace settings React context
-        └── settingsReducer.ts    # Reducer actions for category & preference updates
+        ├── settingsReducer.ts    # Reducer actions for category & preference updates
+        └── useTransactionActions.ts # Transaction mutation hooks
 ```
 
 ---
@@ -85,8 +99,9 @@ src/
 ## Engineering & Design System Guidelines
 
 ### 1. Domain Logic & Calculations (`src/app/data/`)
-- Keep domain engines (installments, credit card statement closing cycles, daily balance forecasting) **pure and decoupled from React components**.
-- Implement exact mathematical operations (e.g., cent-exact split where remainder cents are allocated to the first installment; clamping payment due dates to the end of shorter months).
+- Keep domain engines (installments, credit card statement closing cycles, daily balance forecasting, recurring rules, analytics) **pure and decoupled from React components**.
+- Implement exact mathematical operations using **integer cents** throughout domain models (e.g., cent-exact split where remainder cents are allocated to the first installment; clamping payment due dates to the end of shorter months).
+- Keep production defaults (`src/app/data/defaults/`) clean and decoupled from demo/test data (`src/app/data/fixtures/`). Production default goals start empty (`EMPTY_GOALS_CONFIG`).
 
 ### 2. Design System & Aesthetics
 - **Theme**: Dark-mode-first futuristic fintech / cyberpunk aesthetic with neon accents (cyan, violet, emerald, amber).
@@ -101,6 +116,7 @@ src/
 
 ### 3. Component Standards & Architecture
 - **Dependency Rule**: `features/*` may import from `components/`, `layout/`, `lib/`, `data/`, `state/`, and `i18n/`. `components/*` must never import from `features/*`. Cross-feature reusable widgets belong in `components/shared/`.
+- **Repository Pattern**: State contexts communicate with `FinanceRepository` (`httpRepository` in browser via Vite API middleware backed by SQLite, or `inMemoryRepository`).
 - **Modularity & Sizing**: Decompose monolithic components or dialogs exceeding ~300 lines into focused subcomponents (e.g. separating chart visualizers, sliders, or selector rows).
 - **Pragmatic DRY**: Keep distinct domain dialogs separate when validation or business constraints differ (e.g., `DeleteTypeDialog` vs. `DeleteMethodDialog`); avoid leaky generic wrappers.
 - **System Entity Protection**: Never render destructive actions for system records (`transfer`, `cash`, `credit-card`). Require reassigning transactions before completing deletion of in-use entities.
@@ -109,7 +125,7 @@ src/
 ### 4. TypeScript, i18n & Code Quality
 - **Strict Typing**: Strict TypeScript mode is enabled. Never use `any`—define explicit interfaces or types for all entity models, props, and function parameters.
 - **Type-Safe Navigation**: Always use the `PageId` union in `src/app/layout/navigation.ts` for view switching.
-- **Internationalization (i18n)**: No hardcoded user-facing strings in UI components. Add all strings symmetrically to `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/pt.ts`.
+- **Internationalization (i18n)**: No hardcoded user-facing strings in UI components. Add all strings symmetrically to `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/pt.ts`. Entities such as transaction types and payment methods are user-editable data with canonical names, not dynamically localized keys.
 - **Verification Rule**: Always run `npm run lint` and `npm run build` after editing TypeScript or CSS files to catch syntax, type, and lint errors immediately.
 - **Color Audit Check**: Before finishing or committing UI modifications, verify that no default Tailwind palette scales were introduced:
   ```bash
