@@ -33,7 +33,7 @@ export const SUPPORTED_CURRENCIES: CurrencyOption[] = [
 ];
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en-US';
-export const DEFAULT_CURRENCY: SupportedCurrency = 'USD';
+export const DEFAULT_CURRENCY: SupportedCurrency = 'BRL';
 
 export type TranslationParams = Record<string, string | number>;
 

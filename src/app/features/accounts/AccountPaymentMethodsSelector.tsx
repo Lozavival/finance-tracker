@@ -23,7 +23,7 @@ export function AccountPaymentMethodsSelector({
   methodError,
   methodWarning,
 }: AccountPaymentMethodsSelectorProps) {
-  const { t, getTranslatedMethodName } = useI18n();
+  const { t } = useI18n();
 
   if (kind === 'Cash') {
     const CashIcon = getIcon('Banknote');
@@ -34,7 +34,7 @@ export function AccountPaymentMethodsSelector({
           <div className="text-xs text-muted-foreground mt-0.5">{t('accounts.dialog.cashDesc')}</div>
         </div>
         <div className="flex items-center gap-2 pt-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1.5 font-medium">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-theme-green/30 bg-theme-green/10 text-theme-green text-xs px-3 py-1.5 font-medium">
             <CashIcon className="w-3.5 h-3.5" />
             <span>{t('accounts.dialog.cashDedicated')}</span>
           </div>
@@ -61,15 +61,15 @@ export function AccountPaymentMethodsSelector({
                 pressed={isSelected}
                 onPressedChange={() => onToggleMethod(m.id)}
                 variant="outline"
-                className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan text-xs px-3 py-1.5 flex items-center gap-1.5 h-auto transition-all cursor-pointer"
+                className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-theme-cyan/40 data-[state=on]:bg-theme-cyan/10 data-[state=on]:text-theme-cyan text-xs px-3 py-1.5 flex items-center gap-1.5 h-auto transition-all cursor-pointer"
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{getTranslatedMethodName(m.id, m.name)}</span>
+                <span>{m.name}</span>
               </Toggle>
             );
           })}
       </div>
-      {methodError && <div className="text-xs text-red-400">{methodError}</div>}
+      {methodError && <div className="text-xs text-destructive">{methodError}</div>}
       {methodWarning && <InlineAlert variant="destructive">{methodWarning}</InlineAlert>}
     </div>
   );

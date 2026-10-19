@@ -4,7 +4,8 @@ import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ArrowLeft, Info, Percent, DollarSign } from 'lucide-react';
-import { type GoalsConfig, type GoalCategory, DEFAULT_GOAL_CATEGORIES } from '@/data/goals';
+import { type GoalsConfig, type GoalCategory } from '@/data/goals';
+import { DEFAULT_GOAL_CATEGORIES } from '@/data/defaults';
 import { GoalCategoryDialog } from './GoalCategoryDialog';
 import { DeleteCategoryDialog } from './DeleteCategoryDialog';
 import { GoalAllocationsDonut } from './GoalAllocationsDonut';
@@ -304,7 +305,9 @@ export function GoalsConfigPanel({
             </div>
 
             {/* Allocation Alert Banner if not exactly 100% */}
-            {!isExactly100 && (
+            {localCategories.length === 0 ? (
+              <InlineAlert variant="info">{t('goals.emptyAllocationNotice')}</InlineAlert>
+            ) : !isExactly100 ? (
               <InlineAlert variant="destructive">
                 {t('goals.allocationWarning', {
                   current: totalAllocated.toFixed(1),
@@ -314,7 +317,7 @@ export function GoalsConfigPanel({
                       : `${(totalAllocated - 100).toFixed(1)}% ${t('goals.over')}`,
                 })}
               </InlineAlert>
-            )}
+            ) : null}
 
             {/* Save Goals Button */}
             <Button

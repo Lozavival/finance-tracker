@@ -65,7 +65,7 @@ export function AccountDetailPage({
   const accountId = propAccountId || routeAccountId || '';
 
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
-  const { t, formatCents, getTranslatedMethodName } = useI18n();
+  const { t, formatCents } = useI18n();
   const details = findAccount(accountId);
 
   const currencies = useMemo<SupportedCurrency[]>(() => {
@@ -315,7 +315,7 @@ export function AccountDetailPage({
                           className="inline-flex items-center gap-1 rounded-full bg-foreground/5 border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
                         >
                           <Icon className="w-3 h-3 text-theme-cyan" />
-                          <span>{getTranslatedMethodName(m.id, m.name)}</span>
+                          <span>{m.name}</span>
                         </span>
                       );
                     })}

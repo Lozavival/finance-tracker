@@ -617,6 +617,14 @@ export const pt: Translations = {
     allocationOverview: 'Visão geral da alocação',
     allocationOverviewDesc: 'Distribuição visual do seu orçamento entre as categorias ativas',
     total: 'Total',
+    noGoalsConfigured: 'Nenhuma meta financeira configurada ainda',
+    noGoalsConfiguredDesc:
+      'Crie categorias personalizadas para distribuir seu orçamento mensal entre economias, gastos essenciais e investimentos.',
+    setupGoals: 'Configurar Metas',
+    noCategoriesYet: 'Nenhuma categoria de meta definida ainda.',
+    loadPresets: 'Carregar Modelos Recomendados',
+    emptyAllocationNotice:
+      'Adicione categorias e defina porcentagens até atingir 100%, ou carregue os modelos recomendados.',
   },
   settings: {
     title: 'Configurações',
@@ -727,28 +735,6 @@ export const pt: Translations = {
     },
   },
   defaults: {
-    types: {
-      income: 'Receita',
-      refund: 'Reembolso',
-      shopping: 'Compras',
-      foodDining: 'Alimentação e Restaurantes',
-      transportation: 'Transporte',
-      entertainment: 'Entretenimento',
-      bills: 'Contas e Boletos',
-      transfer: 'Transferência',
-    },
-    methods: {
-      creditCard: 'Cartão de crédito',
-      debitCard: 'Cartão de débito',
-      cash: 'Dinheiro',
-      pix: 'PIX',
-      bankTransfer: 'Transferência bancária',
-    },
-    accountKinds: {
-      checking: 'Conta corrente',
-      savings: 'Poupança',
-      cash: 'Dinheiro',
-    },
     colors: {
       cyan: 'Ciano',
       blue: 'Azul',

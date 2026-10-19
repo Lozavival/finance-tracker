@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import { DollarSign, Receipt, PiggyBank, ListOrdered, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { type Transaction } from '@/data/transactions';
 import {
@@ -144,125 +145,141 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {budget.categories.map(summary => {
-            const { category, budgeted, spent, remaining, percentageUsed, txCount, transactions: catTxs } = summary;
-            const colorConfig = COLOR_CONFIG[category.color] ?? COLOR_CONFIG.blue;
-            const isOverBudget = remaining < 0;
-            const hasNoExpenses = spent === 0;
+        {budget.categories.length === 0 ? (
+          <Card className="p-8 text-center bg-foreground/5 backdrop-blur-xl border border-dashed border-border/80 rounded-2xl flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-theme-cyan/10 border border-theme-cyan/20 flex items-center justify-center text-theme-cyan mb-3">
+              <PiggyBank className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1">{t('goals.noGoalsConfigured')}</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-4">{t('goals.noGoalsConfiguredDesc')}</p>
+            <Button
+              onClick={onAdjustGoals}
+              className="bg-theme-cyan text-primary-foreground hover:bg-theme-cyan-btn-hover font-medium h-9 px-4 rounded-xl text-sm transition-colors cursor-pointer"
+            >
+              {t('goals.setupGoals')}
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {budget.categories.map(summary => {
+              const { category, budgeted, spent, remaining, percentageUsed, txCount, transactions: catTxs } = summary;
+              const colorConfig = COLOR_CONFIG[category.color] ?? COLOR_CONFIG.blue;
+              const isOverBudget = remaining < 0;
+              const hasNoExpenses = spent === 0;
 
-            // Clamped progress bar width (0% to 100%)
-            const progressWidth = Math.min(Math.max(percentageUsed, 0), 100);
+              // Clamped progress bar width (0% to 100%)
+              const progressWidth = Math.min(Math.max(percentageUsed, 0), 100);
 
-            const linkedTypes = settings.transactionTypes.filter(
-              t => t.direction === 'expense' && !t.system && goalsConfig.typeMappings[t.id] === category.id,
-            );
+              const linkedTypes = settings.transactionTypes.filter(
+                t => t.direction === 'expense' && !t.system && goalsConfig.typeMappings[t.id] === category.id,
+              );
 
-            return (
-              <Card
-                key={category.id}
-                className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Category Card Header */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <span
-                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm mt-1"
-                        style={{ backgroundColor: colorConfig.dotColor }}
-                      />
-                      <div className="min-w-0">
-                        <span className="font-semibold text-foreground text-sm truncate block">{category.name}</span>
-                        <div className="flex flex-wrap items-center gap-1 mt-1">
-                          {linkedTypes.length > 0 ? (
-                            linkedTypes.map(lt => <CategoryChip key={lt.id} typeConfig={lt} size="sm" />)
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground/60 italic">
-                              {t('goals.noTypesLinked')}
-                            </span>
-                          )}
+              return (
+                <Card
+                  key={category.id}
+                  className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group"
+                >
+                  <div>
+                    {/* Category Card Header */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <span
+                          className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm mt-1"
+                          style={{ backgroundColor: colorConfig.dotColor }}
+                        />
+                        <div className="min-w-0">
+                          <span className="font-semibold text-foreground text-sm truncate block">{category.name}</span>
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {linkedTypes.length > 0 ? (
+                              linkedTypes.map(lt => <CategoryChip key={lt.id} typeConfig={lt} size="sm" />)
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/60 italic">
+                                {t('goals.noTypesLinked')}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                      </div>
+
+                      <div className="flex-shrink-0">
+                        {hasNoExpenses ? (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-foreground/5 text-muted-foreground border border-border/60">
+                            {t('goals.noExpenses')}
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                              isOverBudget
+                                ? 'bg-destructive/10 text-destructive border-destructive/30'
+                                : 'bg-foreground/5 text-foreground border-border/60'
+                            }`}
+                          >
+                            {formatPercent(percentageUsed)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0">
-                      {hasNoExpenses ? (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-foreground/5 text-muted-foreground border border-border/60">
-                          {t('goals.noExpenses')}
+                    {/* Progress Bar */}
+                    <ProgressBar value={progressWidth} color={colorConfig.dotColor} className="mb-4" />
+
+                    {/* Dual Info Boxes: Spent vs Budgeted */}
+                    <div className="grid grid-cols-2 rounded-xl bg-foreground/[0.03] dark:bg-foreground/[0.05] border border-border/60 p-3 divide-x divide-border/60 mb-4">
+                      <div className="pr-3">
+                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
+                          {t('goals.spent')}
+                        </div>
+                        <div className="text-base font-bold text-foreground mt-0.5">{formatCents(spent)}</div>
+                      </div>
+                      <div className="pl-3">
+                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
+                          {t('goals.budgeted')}
+                        </div>
+                        <div className="text-base font-bold text-foreground mt-0.5">{formatCents(budgeted)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Row */}
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40">
+                    <div className="flex items-center gap-1 font-medium">
+                      {isOverBudget ? (
+                        <span className="text-destructive flex items-center gap-1">
+                          <TrendingDown className="w-3.5 h-3.5" />
+                          {t('goals.overBudgetAmount', { amount: formatCents(Math.abs(remaining)) })}
                         </span>
                       ) : (
-                        <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
-                            isOverBudget
-                              ? 'bg-destructive/10 text-destructive border-destructive/30'
-                              : 'bg-foreground/5 text-foreground border-border/60'
-                          }`}
-                        >
-                          {formatPercent(percentageUsed)}
+                        <span className="text-theme-green flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          {t('goals.remainingAmount', { amount: formatCents(remaining) })}
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Progress Bar */}
-                  <ProgressBar value={progressWidth} color={colorConfig.dotColor} className="mb-4" />
-
-                  {/* Dual Info Boxes: Spent vs Budgeted */}
-                  <div className="grid grid-cols-2 rounded-xl bg-foreground/[0.03] dark:bg-foreground/[0.05] border border-border/60 p-3 divide-x divide-border/60 mb-4">
-                    <div className="pr-3">
-                      <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
-                        {t('goals.spent')}
-                      </div>
-                      <div className="text-base font-bold text-foreground mt-0.5">{formatCents(spent)}</div>
-                    </div>
-                    <div className="pl-3">
-                      <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
-                        {t('goals.budgeted')}
-                      </div>
-                      <div className="text-base font-bold text-foreground mt-0.5">{formatCents(budgeted)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Row */}
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40">
-                  <div className="flex items-center gap-1 font-medium">
-                    {isOverBudget ? (
-                      <span className="text-destructive flex items-center gap-1">
-                        <TrendingDown className="w-3.5 h-3.5" />
-                        {t('goals.overBudgetAmount', { amount: formatCents(Math.abs(remaining)) })}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDialogState({
+                          open: true,
+                          category,
+                          transactions: catTxs,
+                        })
+                      }
+                      className="flex items-center gap-1.5 text-muted-foreground group-hover:text-theme-cyan hover:text-theme-cyan transition-colors cursor-pointer"
+                    >
+                      <ListOrdered className="w-3.5 h-3.5" />
+                      <span>
+                        {txCount === 1
+                          ? t('common.singleTransaction')
+                          : t('common.transactionsCount', { count: String(txCount) })}
                       </span>
-                    ) : (
-                      <span className="text-theme-green flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        {t('goals.remainingAmount', { amount: formatCents(remaining) })}
-                      </span>
-                    )}
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDialogState({
-                        open: true,
-                        category,
-                        transactions: catTxs,
-                      })
-                    }
-                    className="flex items-center gap-1.5 text-muted-foreground group-hover:text-theme-cyan hover:text-theme-cyan transition-colors cursor-pointer"
-                  >
-                    <ListOrdered className="w-3.5 h-3.5" />
-                    <span>
-                      {txCount === 1
-                        ? t('common.singleTransaction')
-                        : t('common.transactionsCount', { count: String(txCount) })}
-                    </span>
-                  </button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Category Transactions Dialog */}

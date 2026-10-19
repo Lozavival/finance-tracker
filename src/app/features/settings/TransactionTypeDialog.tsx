@@ -91,7 +91,7 @@ export function TransactionTypeDialog({
     } else {
       // Check for duplicate name in the same direction
       const duplicate = settings.transactionTypes.some(
-        t => t.direction === direction && t.name.toLowerCase() === trimmedName.toLowerCase() && t.id !== typeConfig?.id,
+        t => t.id !== typeConfig?.id && t.direction === direction && t.name.toLowerCase() === trimmedName.toLowerCase(),
       );
       if (duplicate) {
         nextErrors.name = t('settings.types.errors.duplicateName', {
@@ -159,7 +159,7 @@ export function TransactionTypeDialog({
                 aria-invalid={Boolean(errors.name)}
                 className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
               />
-              {errors.name && <div className="text-xs text-red-400">{errors.name}</div>}
+              {errors.name && <div className="text-xs text-destructive">{errors.name}</div>}
             </div>
 
             <div className="space-y-2">

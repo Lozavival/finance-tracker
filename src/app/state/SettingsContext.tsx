@@ -5,13 +5,13 @@ import {
   type PaymentMethodConfig,
   type AccountConfig,
   type Direction,
-  DEFAULT_SETTINGS,
   findAccount as lookupAccount,
   findType as lookupType,
   findMethod as lookupMethod,
   isCreditCard as checkIsCreditCard,
   getAllowedPaymentMethodIds as lookupAllowedPaymentMethods,
 } from '@/data/settings';
+import { DEV_DEFAULT_SETTINGS } from '@/data/fixtures';
 import { getFinanceRepository } from '@/data/repository';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
 
@@ -35,7 +35,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({
   children,
-  initialSettings = DEFAULT_SETTINGS,
+  initialSettings = DEV_DEFAULT_SETTINGS,
 }: {
   children: React.ReactNode;
   initialSettings?: Settings;

@@ -1,50 +1,14 @@
-import { type Transaction } from './transactions';
-import { getToday, addDays, addMonthsClamped } from './dates';
-import { type RecurringRule, buildRecurringTransactions } from './recurring';
-
-export function daysFromToday(days: number): Date {
-  return addDays(getToday(), days);
-}
+import type { Transaction } from '../transactions';
+import { getToday, addMonthsClamped } from '../dates';
+import { buildRecurringTransactions } from '../recurring';
+import type { SupportedCurrency } from '../../i18n/types';
+import { dollarsToCents } from '../currency';
+import { daysFromToday, SEEDED_RECURRING_RULES } from './mockRules';
 
 let seedIdCounter = 1;
 function nextId() {
   return `seed-${seedIdCounter++}`;
 }
-
-export const SEEDED_RECURRING_RULES: RecurringRule[] = [
-  {
-    id: 'rule-salary',
-    description: 'Salary Deposit',
-    typeId: 'income',
-    direction: 'income',
-    value: 520000,
-    currency: 'USD',
-    accountId: 'boa',
-    startDate: daysFromToday(-70),
-    frequency: 'monthly',
-    limit: { kind: 'infinite' },
-    status: 'active',
-    createdAt: daysFromToday(-70),
-  },
-  {
-    id: 'rule-rent',
-    description: 'Rent',
-    typeId: 'bills',
-    direction: 'expense',
-    value: 180000,
-    currency: 'USD',
-    accountId: 'boa',
-    paymentMethodId: 'bank-transfer',
-    startDate: daysFromToday(-72),
-    frequency: 'monthly',
-    limit: { kind: 'infinite' },
-    status: 'active',
-    createdAt: daysFromToday(-72),
-  },
-];
-
-import { type SupportedCurrency } from '../i18n/types';
-import { dollarsToCents } from './currency';
 
 export const SEEDED_TRANSACTIONS: Transaction[] = [];
 

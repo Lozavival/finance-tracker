@@ -26,7 +26,7 @@ type DeleteMethodDialogProps = {
 
 export function DeleteMethodDialog({ method, onClose, transactions, onTransactionsChange }: DeleteMethodDialogProps) {
   const { settings, dispatch } = useSettings();
-  const { t, getTranslatedMethodName } = useI18n();
+  const { t } = useI18n();
   const [replacementMethodId, setReplacementMethodId] = useState<string>('');
 
   const open = Boolean(method);
@@ -51,16 +51,16 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
       const Icon = getIcon(m.icon);
       return {
         value: m.id,
-        label: getTranslatedMethodName(m.id, m.name),
+        label: m.name,
         customContent: (
           <div className="flex items-center gap-2">
             <Icon className="w-3.5 h-3.5 text-theme-cyan" />
-            <span>{getTranslatedMethodName(m.id, m.name)}</span>
+            <span>{m.name}</span>
           </div>
         ),
       };
     });
-  }, [availableReplacements, getTranslatedMethodName]);
+  }, [availableReplacements]);
 
   if (!method) return null;
 
@@ -98,7 +98,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
     handleClose();
   }
 
-  const methodName = getTranslatedMethodName(method.id, method.name);
+  const methodName = method.name;
 
   return (
     <AlertDialog open={open} onOpenChange={isOpen => !isOpen && handleClose()}>
@@ -107,7 +107,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
           <AlertDialogTitle>{t('settings.methods.deleteTitle', { name: methodName })}</AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground space-y-3">
             {isSystemMethod ? (
-              <span className="block text-red-400">{t('settings.methods.deleteSystemWarning')}</span>
+              <span className="block text-destructive">{t('settings.methods.deleteSystemWarning')}</span>
             ) : hasTransactions ? (
               <>
                 <span className="block">

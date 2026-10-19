@@ -1,5 +1,4 @@
 import { type IconKey } from './icons';
-import { parseLocalDate } from './dates';
 
 export type Direction = 'income' | 'expense';
 
@@ -150,7 +149,7 @@ export type PaymentMethodConfig = {
 };
 
 import { type SupportedCurrency } from '@/i18n/types';
-import { type ExchangeRateState, INITIAL_EXCHANGE_RATE_STATE } from './currency';
+import { type ExchangeRateState } from './currency';
 
 export type CreditCardConfig = {
   name: string;
@@ -187,7 +186,7 @@ export function getAccountOpeningBalance(account: AccountConfig, currency: Suppo
   return account.openingBalances?.[currency] ?? 0;
 }
 
-import { type GoalsConfig, DEFAULT_GOALS_CONFIG } from './goals';
+import { type GoalsConfig } from './goals';
 
 export type Settings = {
   transactionTypes: TransactionTypeConfig[];
@@ -199,188 +198,6 @@ export type Settings = {
 
 export const TRANSFER_TYPE_ID = 'transfer';
 export const CREDIT_CARD_METHOD_ID = 'credit-card';
-
-export const DEFAULT_SETTINGS: Settings = {
-  transactionTypes: [
-    {
-      id: 'income',
-      name: 'Income',
-      direction: 'income',
-      color: 'emerald',
-      icon: 'Banknote',
-    },
-    {
-      id: 'refund',
-      name: 'Refund',
-      direction: 'income',
-      color: 'teal',
-      icon: 'Receipt',
-    },
-    {
-      id: 'shopping',
-      name: 'Shopping',
-      direction: 'expense',
-      color: 'cyan',
-      icon: 'ShoppingBag',
-    },
-    {
-      id: 'food-dining',
-      name: 'Food & Dining',
-      direction: 'expense',
-      color: 'blue',
-      icon: 'Utensils',
-    },
-    {
-      id: 'transportation',
-      name: 'Transportation',
-      direction: 'expense',
-      color: 'violet',
-      icon: 'Car',
-    },
-    {
-      id: 'entertainment',
-      name: 'Entertainment',
-      direction: 'expense',
-      color: 'pink',
-      icon: 'Film',
-    },
-    {
-      id: 'bills',
-      name: 'Bills',
-      direction: 'expense',
-      color: 'amber',
-      icon: 'Receipt',
-    },
-    {
-      id: TRANSFER_TYPE_ID,
-      name: 'Transfer',
-      direction: 'expense',
-      color: 'indigo',
-      icon: 'ArrowLeftRight',
-      system: 'transfer',
-    },
-  ],
-  paymentMethods: [
-    {
-      id: CREDIT_CARD_METHOD_ID,
-      name: 'Credit card',
-      icon: 'CreditCard',
-      behavior: 'credit-card',
-    },
-    {
-      id: 'debit-card',
-      name: 'Debit card',
-      icon: 'CreditCard',
-      behavior: 'standard',
-    },
-    {
-      id: 'cash',
-      name: 'Cash',
-      icon: 'Banknote',
-      behavior: 'standard',
-    },
-    {
-      id: 'pix',
-      name: 'PIX',
-      icon: 'QrCode',
-      behavior: 'standard',
-    },
-    {
-      id: 'bank-transfer',
-      name: 'Bank transfer',
-      icon: 'Landmark',
-      behavior: 'standard',
-    },
-  ],
-  accounts: [
-    {
-      id: 'boa',
-      name: 'Bank of America',
-      kind: 'Checking',
-      currencies: ['USD'],
-      openingBalances: { USD: 320000 }, // $3,200.00
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'BA',
-      color: 'blue',
-      allowedPaymentMethods: ['credit-card', 'debit-card', 'pix', 'bank-transfer'],
-      card: {
-        name: 'BoA Visa',
-        closingDay: 25,
-        dueDay: 5,
-        limit: 800000, // $8000
-      },
-    },
-    {
-      id: 'nubank',
-      name: 'Nubank',
-      kind: 'Checking',
-      currencies: ['BRL'],
-      openingBalances: { BRL: 450000 }, // R$ 4,500.00
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'NU',
-      color: 'violet',
-      allowedPaymentMethods: ['pix', 'debit-card', 'bank-transfer'],
-    },
-    {
-      id: 'wise',
-      name: 'Wise',
-      kind: 'Checking',
-      currencies: ['BRL', 'USD'],
-      openingBalances: { BRL: 250000, USD: 80000 }, // R$ 2,500.00 & $800.00
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'WS',
-      color: 'emerald',
-      allowedPaymentMethods: ['pix', 'debit-card', 'bank-transfer'],
-    },
-    {
-      id: 'citi',
-      name: 'Citigroup',
-      kind: 'Checking',
-      currencies: ['USD'],
-      openingBalances: { USD: 120000 }, // $1,200.00
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'CI',
-      color: 'cyan',
-      allowedPaymentMethods: ['credit-card', 'debit-card', 'pix', 'bank-transfer'],
-      card: {
-        name: 'Citi Mastercard',
-        closingDay: 1,
-        dueDay: 10,
-        limit: 300000, // $3000
-      },
-    },
-    {
-      id: 'cash-wallet',
-      name: 'Cash / Wallet',
-      kind: 'Cash',
-      currencies: ['BRL'],
-      openingBalances: { BRL: 20000 }, // R$ 200.00
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'CW',
-      color: 'teal',
-      allowedPaymentMethods: ['cash'],
-    },
-  ],
-  goals: DEFAULT_GOALS_CONFIG,
-  exchangeRate: INITIAL_EXCHANGE_RATE_STATE,
-};
-
-export const PRODUCTION_DEFAULT_SETTINGS: Settings = {
-  ...DEFAULT_SETTINGS,
-  accounts: [
-    {
-      id: 'cash-wallet',
-      name: 'Cash / Wallet',
-      kind: 'Cash',
-      currencies: ['BRL', 'USD'],
-      openingBalances: { BRL: 0, USD: 0 },
-      openingDate: parseLocalDate('2025-01-01'),
-      initials: 'CW',
-      color: 'teal',
-      allowedPaymentMethods: ['cash'],
-    },
-  ],
-};
 
 export function findType(settings: Settings, id: string): TransactionTypeConfig | undefined {
   return settings.transactionTypes.find(t => t.id === id);

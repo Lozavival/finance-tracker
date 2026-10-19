@@ -7,7 +7,7 @@ import {
   buildTransferLegs,
   createTransactionId,
 } from '@/data/transactions';
-import { SEEDED_TRANSACTIONS, SEEDED_RECURRING_RULES } from '@/data/seed';
+import { SEEDED_TRANSACTIONS, SEEDED_RECURRING_RULES } from '@/data/fixtures';
 import { getToday } from '@/data/dates';
 import { type CardStatement, buildStatements } from '@/data/cardStatements';
 import { type CashMovement, type AccountLedger, buildCashMovements, buildLedgers } from '@/data/ledger';

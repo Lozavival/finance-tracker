@@ -607,6 +607,13 @@ export const en = {
     allocationOverview: 'Allocation Overview',
     allocationOverviewDesc: 'Visual distribution of your budget across active categories',
     total: 'Total',
+    noGoalsConfigured: 'No financial goals configured yet',
+    noGoalsConfiguredDesc:
+      'Create custom categories to distribute your monthly budget across savings, essentials, and investments.',
+    setupGoals: 'Configure Goals',
+    noCategoriesYet: 'No goal categories defined yet.',
+    loadPresets: 'Load Recommended Presets',
+    emptyAllocationNotice: 'Add categories and allocate percentages to reach 100%, or load recommended presets.',
   },
   settings: {
     title: 'Settings',
@@ -714,28 +721,6 @@ export const en = {
     },
   },
   defaults: {
-    types: {
-      income: 'Income',
-      refund: 'Refund',
-      shopping: 'Shopping',
-      foodDining: 'Food & Dining',
-      transportation: 'Transportation',
-      entertainment: 'Entertainment',
-      bills: 'Bills',
-      transfer: 'Transfer',
-    },
-    methods: {
-      creditCard: 'Credit card',
-      debitCard: 'Debit card',
-      cash: 'Cash',
-      pix: 'PIX',
-      bankTransfer: 'Bank transfer',
-    },
-    accountKinds: {
-      checking: 'Checking',
-      savings: 'Savings',
-      cash: 'Cash',
-    },
     colors: {
       cyan: 'Cyan',
       blue: 'Blue',

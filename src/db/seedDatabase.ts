@@ -1,15 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { type DatabaseConnection } from './client';
 import * as schema from './schema';
-import {
-  DEFAULT_SETTINGS,
-  PRODUCTION_DEFAULT_SETTINGS,
-  getAccountCurrencies,
-  getAccountOpeningBalance,
-  getAllowedPaymentMethodIds,
-} from '../app/data/settings';
+import { PRODUCTION_DEFAULT_SETTINGS } from '../app/data/defaults';
+import { DEV_DEFAULT_SETTINGS, SEEDED_RECURRING_RULES, SEEDED_TRANSACTIONS } from '../app/data/fixtures';
+import { getAccountCurrencies, getAccountOpeningBalance, getAllowedPaymentMethodIds } from '../app/data/settings';
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from '../app/i18n/types';
-import { SEEDED_RECURRING_RULES, SEEDED_TRANSACTIONS } from '../app/data/seed';
 import { toLocalDateString } from '../app/data/dates';
 
 export type SeedMode = 'production' | 'development';
@@ -44,7 +39,7 @@ export function resetAndSeedWorkspace(
   mode: SeedMode = resolveDefaultSeedMode(),
   workspaceId: string = DEFAULT_WORKSPACE_ID,
 ): void {
-  const baseSettings = mode === 'production' ? PRODUCTION_DEFAULT_SETTINGS : DEFAULT_SETTINGS;
+  const baseSettings = mode === 'production' ? PRODUCTION_DEFAULT_SETTINGS : DEV_DEFAULT_SETTINGS;
   const nowIso = new Date().toISOString();
 
   const runSeed = conn.sqlite.transaction(() => {

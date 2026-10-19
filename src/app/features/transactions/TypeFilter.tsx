@@ -54,7 +54,7 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
           }
         }}
         variant="outline"
-        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-cyan-500/40 data-[state=on]:bg-cyan-500/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-cyan-500/20 text-xs px-3 py-1 flex items-center gap-1.5"
+        className="rounded-full border-border bg-foreground/5 hover:bg-foreground/10 data-[state=on]:border-theme-cyan/40 data-[state=on]:bg-theme-cyan/10 data-[state=on]:text-theme-cyan data-[state=on]:hover:bg-theme-cyan/20 text-xs px-3 py-1 flex items-center gap-1.5"
       >
         <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: colorMeta.dotColor }} />
         <Icon className="w-3.5 h-3.5" />

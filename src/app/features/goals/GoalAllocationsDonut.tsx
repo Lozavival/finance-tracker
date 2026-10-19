@@ -22,7 +22,7 @@ export function GoalAllocationsDonut({ categories, totalAllocated, onResetDefaul
   }));
 
   return (
-    <Card className="lg:col-span-5 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-cyan-500/30 transition-all rounded-2xl shadow-sm flex flex-col justify-between">
+    <Card className="lg:col-span-5 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all rounded-2xl shadow-sm flex flex-col justify-between">
       <div>
         <h3 className="text-base font-semibold text-foreground">{t('goals.allocationOverview')}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{t('goals.allocationOverviewDesc')}</p>
@@ -82,7 +82,7 @@ export function GoalAllocationsDonut({ categories, totalAllocated, onResetDefaul
           type="button"
           variant="outline"
           onClick={onResetDefaults}
-          className="w-full justify-center gap-2 h-11 border-border bg-foreground/[0.02] text-foreground hover:border-cyan-400/50 hover:text-theme-cyan hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] rounded-xl transition-all"
+          className="w-full justify-center gap-2 h-11 border-border bg-foreground/[0.02] text-foreground hover:border-theme-cyan/50 hover:text-theme-cyan hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] rounded-xl transition-all cursor-pointer"
         >
           <RotateCcw className="w-4 h-4 text-muted-foreground" />
           <span>{t('goals.resetDefaults')}</span>

@@ -18,7 +18,7 @@ type PaymentMethodsPanelProps = {
 
 export function PaymentMethodsPanel({ transactions, onTransactionsChange }: PaymentMethodsPanelProps) {
   const { settings, dispatch } = useSettings();
-  const { t, getTranslatedMethodName } = useI18n();
+  const { t } = useI18n();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -108,12 +108,10 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium text-foreground truncate">
-                        {getTranslatedMethodName(m.id, m.name)}
-                      </span>
+                      <span className="font-medium text-foreground truncate">{m.name}</span>
 
                       {isCard && (
-                        <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-theme-cyan border border-cyan-500/30">
+                        <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-theme-cyan/20 text-theme-cyan border border-theme-cyan/30">
                           {t('settings.methods.creditCardBilling')}
                         </span>
                       )}

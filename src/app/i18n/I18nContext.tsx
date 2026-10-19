@@ -33,8 +33,6 @@ export interface I18nContextValue {
   formatRowDate: (date: Date) => string;
   formatMonthYear: (date: Date) => string;
   formatFull: (date: Date) => string;
-  getTranslatedTypeName: (typeId: string, fallbackName: string) => string;
-  getTranslatedMethodName: (methodId: string, fallbackName: string) => string;
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -198,45 +196,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     [formatDate],
   );
 
-  const getTranslatedTypeName = useCallback(
-    (typeId: string, fallbackName: string): string => {
-      const keyMap: Record<string, TranslationKey> = {
-        income: 'defaults.types.income',
-        refund: 'defaults.types.refund',
-        shopping: 'defaults.types.shopping',
-        'food-dining': 'defaults.types.foodDining',
-        transportation: 'defaults.types.transportation',
-        entertainment: 'defaults.types.entertainment',
-        bills: 'defaults.types.bills',
-        transfer: 'defaults.types.transfer',
-      };
-      const key = keyMap[typeId];
-      if (key) {
-        return t(key);
-      }
-      return fallbackName;
-    },
-    [t],
-  );
-
-  const getTranslatedMethodName = useCallback(
-    (methodId: string, fallbackName: string): string => {
-      const keyMap: Record<string, TranslationKey> = {
-        'credit-card': 'defaults.methods.creditCard',
-        'debit-card': 'defaults.methods.debitCard',
-        cash: 'defaults.methods.cash',
-        pix: 'defaults.methods.pix',
-        'bank-transfer': 'defaults.methods.bankTransfer',
-      };
-      const key = keyMap[methodId];
-      if (key) {
-        return t(key);
-      }
-      return fallbackName;
-    },
-    [t],
-  );
-
   const contextValue = useMemo<I18nContextValue>(
     () => ({
       locale,
@@ -255,8 +214,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       formatRowDate,
       formatMonthYear,
       formatFull,
-      getTranslatedTypeName,
-      getTranslatedMethodName,
     }),
     [
       locale,
@@ -272,8 +229,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       formatRowDate,
       formatMonthYear,
       formatFull,
-      getTranslatedTypeName,
-      getTranslatedMethodName,
     ],
   );
 

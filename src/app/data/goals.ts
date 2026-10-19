@@ -12,76 +12,10 @@ export type GoalCategory = {
 };
 
 export type GoalsConfig = {
-  referenceMonthlyIncome: number; // e.g. 1000000 ($1,000,000.00)
+  referenceMonthlyIncome: number;
   mode: 'percentage' | 'currency';
   categories: GoalCategory[];
   typeMappings: Record<string, string>; // transaction typeId -> goalCategoryId
-};
-
-export const DEFAULT_GOAL_CATEGORIES: GoalCategory[] = [
-  {
-    id: 'fixed-costs',
-    name: 'Fixed Costs',
-    percentage: 30,
-    color: 'blue',
-    icon: 'Home',
-    description: 'Housing, bills, utilities, essential healthcare and groceries',
-  },
-  {
-    id: 'comfort',
-    name: 'Comfort',
-    percentage: 15,
-    color: 'pink',
-    icon: 'Coffee',
-    description: 'Dining out, lifestyle conveniences, subscriptions, personal care',
-  },
-  {
-    id: 'goals',
-    name: 'Goals',
-    percentage: 15,
-    color: 'violet',
-    icon: 'Target',
-    description: 'Targeted savings, emergency cushion, medium-term projects',
-  },
-  {
-    id: 'pleasures',
-    name: 'Pleasures',
-    percentage: 10,
-    color: 'orange',
-    icon: 'Sparkles',
-    description: 'Leisure, entertainment, travel, hobbies and fun activities',
-  },
-  {
-    id: 'knowledge',
-    name: 'Knowledge',
-    percentage: 5,
-    color: 'amber',
-    icon: 'BookOpen',
-    description: 'Books, courses, workshops, training and personal development',
-  },
-  {
-    id: 'financial-freedom',
-    name: 'Financial Freedom',
-    percentage: 25,
-    color: 'indigo',
-    icon: 'TrendingUp',
-    description: 'Long-term investment portfolio, equity, retirement planning',
-  },
-];
-
-export const DEFAULT_TYPE_MAPPINGS: Record<string, string> = {
-  bills: 'fixed-costs',
-  transportation: 'fixed-costs',
-  'food-dining': 'comfort',
-  shopping: 'goals',
-  entertainment: 'pleasures',
-};
-
-export const DEFAULT_GOALS_CONFIG: GoalsConfig = {
-  referenceMonthlyIncome: 100000000, // $1,000,000.00 in cents
-  mode: 'percentage',
-  categories: DEFAULT_GOAL_CATEGORIES,
-  typeMappings: DEFAULT_TYPE_MAPPINGS,
 };
 
 export type CategoryBudgetSummary = {

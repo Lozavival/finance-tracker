@@ -54,7 +54,7 @@ export function PaymentMethodDialog({ open, onOpenChange, method, onSave }: Paym
       nextErrors.name = t('settings.methods.errors.enterName');
     } else {
       const duplicate = settings.paymentMethods.some(
-        m => m.name.toLowerCase() === trimmedName.toLowerCase() && m.id !== method?.id,
+        m => m.id !== method?.id && m.name.toLowerCase() === trimmedName.toLowerCase(),
       );
       if (duplicate) {
         nextErrors.name = t('settings.methods.errors.duplicateName', { name: trimmedName });
@@ -109,13 +109,13 @@ export function PaymentMethodDialog({ open, onOpenChange, method, onSave }: Paym
                 aria-invalid={Boolean(errors.name)}
                 className="h-11 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
               />
-              {errors.name && <div className="text-xs text-red-400">{errors.name}</div>}
+              {errors.name && <div className="text-xs text-destructive">{errors.name}</div>}
             </div>
 
             <IconPicker value={icon} onChange={setIcon} label={t('common.icon')} />
 
             {method?.behavior === 'credit-card' && (
-              <div className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 p-3 text-xs text-cyan-300">
+              <div className="rounded-lg bg-theme-cyan/10 border border-theme-cyan/30 p-3 text-xs text-theme-cyan">
                 {t('settings.methods.creditCardNotice')}
               </div>
             )}

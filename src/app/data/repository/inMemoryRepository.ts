@@ -2,14 +2,13 @@ import { addDays, getToday } from '@/data/dates';
 import type { GoalCategory } from '@/data/goals';
 import { buildInstallments } from '@/data/installments';
 import { type RecurringRule, buildRecurringTransactions } from '@/data/recurring';
-import { SEEDED_RECURRING_RULES, SEEDED_TRANSACTIONS } from '@/data/seed';
+import { PRODUCTION_DEFAULT_SETTINGS } from '@/data/defaults';
+import { DEV_DEFAULT_SETTINGS, SEEDED_RECURRING_RULES, SEEDED_TRANSACTIONS } from '@/data/fixtures';
 import {
   type AccountConfig,
   type PaymentMethodConfig,
   type Settings,
   type TransactionTypeConfig,
-  DEFAULT_SETTINGS,
-  PRODUCTION_DEFAULT_SETTINGS,
   findAccount,
   isCreditCard,
 } from '@/data/settings';
@@ -34,7 +33,7 @@ export class InMemoryFinanceRepository implements FinanceRepository {
       this.transactions = [];
       this.recurringRules = [];
     } else {
-      this.settings = structuredClone(DEFAULT_SETTINGS);
+      this.settings = structuredClone(DEV_DEFAULT_SETTINGS);
       this.transactions = [...SEEDED_TRANSACTIONS];
       this.recurringRules = [...SEEDED_RECURRING_RULES];
     }
@@ -422,7 +421,7 @@ export class InMemoryFinanceRepository implements FinanceRepository {
       this.transactions = [];
       this.recurringRules = [];
     } else {
-      this.settings = structuredClone(DEFAULT_SETTINGS);
+      this.settings = structuredClone(DEV_DEFAULT_SETTINGS);
       this.transactions = [...SEEDED_TRANSACTIONS];
       this.recurringRules = [...SEEDED_RECURRING_RULES];
     }

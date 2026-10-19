@@ -4,7 +4,8 @@ import {
   type PaymentMethodConfig,
   type AccountConfig,
 } from '@/data/settings';
-import { type GoalCategory, DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '@/data/goals';
+import { type GoalCategory } from '@/data/goals';
+import { DEFAULT_GOAL_CATEGORIES, DEFAULT_TYPE_MAPPINGS } from '@/data/defaults';
 
 import { type ExchangeRateState } from '@/data/currency';
 

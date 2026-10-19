@@ -98,9 +98,9 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
           <AlertDialogTitle>{t('settings.types.deleteTitle', { name: typeConfig.name })}</AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground space-y-3">
             {typeConfig.system ? (
-              <span className="block text-red-400">{t('settings.types.deleteSystemWarning')}</span>
+              <span className="block text-destructive">{t('settings.types.deleteSystemWarning')}</span>
             ) : isOnlyTypeInDirection ? (
-              <span className="block text-red-400">
+              <span className="block text-destructive">
                 {t('settings.types.deleteLastTypeWarning', { direction: typeConfig.direction })}
               </span>
             ) : hasTransactions ? (
