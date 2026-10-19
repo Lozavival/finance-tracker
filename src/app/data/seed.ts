@@ -43,8 +43,8 @@ export const SEEDED_RECURRING_RULES: RecurringRule[] = [
   },
 ];
 
-import { type SupportedCurrency } from '@/i18n/types';
-import { dollarsToCents } from '@/data/currency';
+import { type SupportedCurrency } from '../i18n/types';
+import { dollarsToCents } from './currency';
 
 export const SEEDED_TRANSACTIONS: Transaction[] = [];
 
@@ -346,7 +346,7 @@ addTx({
   typeId: 'income',
   direction: 'income',
   value: 7314.72,
-  accountId: 'gs',
+  accountId: 'citi',
 });
 
 // Fixed Costs ($6,460.38 across 12 transactions)
