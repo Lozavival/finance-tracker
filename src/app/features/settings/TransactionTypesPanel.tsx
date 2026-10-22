@@ -9,6 +9,7 @@ import { CategoryChip } from '@/components/shared/CategoryChip';
 import { SortableRow, useReorder } from './SortableList';
 import { TransactionTypeDialog } from './TransactionTypeDialog';
 import { DeleteTypeDialog } from './DeleteTypeDialog';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type TransactionTypesPanelProps = {
@@ -19,6 +20,7 @@ type TransactionTypesPanelProps = {
 export function TransactionTypesPanel({ transactions, onTransactionsChange }: TransactionTypesPanelProps) {
   const { settings, dispatch, incomeTypes, expenseTypes } = useSettings();
   const { t: translate } = useI18n();
+  const notify = useNotify();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -56,8 +58,16 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
           },
         },
       });
+      notify.success('notifications.ops.typeUpdated', {
+        id: `type-save-${saved.id}`,
+        params: { name: saved.name },
+      });
     } else {
       dispatch({ type: 'type/add', payload: saved });
+      notify.success('notifications.ops.typeAdded', {
+        id: `type-save-${saved.id}`,
+        params: { name: saved.name },
+      });
     }
 
     // Update goals typeMappings if direction is expense

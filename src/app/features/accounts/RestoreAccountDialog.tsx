@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/primitives/button';
 import { type AccountConfig, getAccountColor } from '@/data/settings';
 import { useSettings } from '@/state/SettingsContext';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 import { ArchiveRestore } from 'lucide-react';
 
@@ -23,12 +24,17 @@ export type RestoreAccountDialogProps = {
 export function RestoreAccountDialog({ account, open, onClose, onRestored }: RestoreAccountDialogProps) {
   const { dispatch } = useSettings();
   const { t } = useI18n();
+  const notify = useNotify();
 
   if (!account) return null;
 
   function handleRestore() {
     if (!account) return;
     dispatch({ type: 'account/unarchive', payload: { id: account.id } });
+    notify.success('notifications.ops.accountRestored', {
+      id: `account-restore-${account.id}`,
+      params: { name: account.name },
+    });
     onRestored?.();
     onClose();
   }

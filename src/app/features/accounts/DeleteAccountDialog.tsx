@@ -13,6 +13,7 @@ import { type AccountConfig, getAccountColor } from '@/data/settings';
 import { type Transaction } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
 import { useFinance } from '@/state/FinanceContext';
+import { useNotify } from '@/state/NotificationsContext';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { Archive, Trash2 } from 'lucide-react';
@@ -37,6 +38,7 @@ export function DeleteAccountDialog({
   const { settings, dispatch } = useSettings();
   const { cancelRecurringRulesForAccount, deleteRecurringRulesForAccount } = useFinance();
   const { t } = useI18n();
+  const notify = useNotify();
 
   const matchingTransactions = useMemo(() => {
     if (!account) return [];
@@ -56,8 +58,17 @@ export function DeleteAccountDialog({
 
   function handleDelete() {
     if (hasTransactions || isLastActiveAccount || !account) return;
-    deleteRecurringRulesForAccount(account.id);
-    dispatch({ type: 'account/remove', payload: { id: account.id } });
+    const targetAccount = { ...account };
+    deleteRecurringRulesForAccount(targetAccount.id);
+    dispatch({ type: 'account/remove', payload: { id: targetAccount.id } });
+    notify.undoable({
+      id: `undo-account-delete-${targetAccount.id}`,
+      messageKey: 'notifications.ops.accountDeleted',
+      params: { name: targetAccount.name },
+      onUndo: () => {
+        dispatch({ type: 'account/add', payload: targetAccount });
+      },
+    });
     onDeleted?.();
     onClose();
   }

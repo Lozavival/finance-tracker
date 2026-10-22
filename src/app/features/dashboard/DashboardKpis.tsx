@@ -13,21 +13,22 @@ import { Card } from '@/components/primitives/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/primitives/popover';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { useI18n } from '@/i18n';
-import { type DashboardKpis, type SmartFinancialSignal } from '@/data/analytics';
+import { type DashboardKpis } from '@/data/analytics';
+import { type FinancialAlert } from '@/data/notifications';
+import { useNotifications } from '@/state/NotificationsContext';
 import { SmartInsightsContent } from './SmartInsightsContent';
 
 interface DashboardKpisProps {
   kpis: DashboardKpis;
-  signals: SmartFinancialSignal[];
+  alerts: FinancialAlert[];
 }
 
-export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
+export function DashboardKpisSection({ kpis, alerts }: DashboardKpisProps) {
   const { t, formatCents, currency } = useI18n();
+  const { dismissAlert } = useNotifications();
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  const activeSignals = signals.filter(s => !dismissedIds.has(s.id));
-  const activeCount = activeSignals.length;
+  const activeCount = alerts.length;
 
   const isBalanceUp = kpis.balanceChangePercentage >= 0;
   const isCashFlowPositive = kpis.netSavingsCents !== null ? kpis.netSavingsCents >= 0 : kpis.netSavings >= 0;
@@ -40,8 +41,8 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
   const hasMultiCurrencyCashFlow = hasBrlCashFlow && hasUsdCashFlow;
   const hasForeignCashFlowWithoutRate = !kpis.hasRate && (currency === 'BRL' ? hasUsdCashFlow : hasBrlCashFlow);
 
-  function handleDismiss(id: string) {
-    setDismissedIds(prev => new Set(prev).add(id));
+  function handleDismiss(key: string) {
+    dismissAlert(key);
   }
 
   return (
@@ -300,11 +301,7 @@ export function DashboardKpisSection({ kpis, signals }: DashboardKpisProps) {
           sideOffset={8}
           className="w-[calc(100vw-2rem)] sm:w-[440px] max-h-[500px] overflow-y-auto p-4 bg-popover/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl space-y-3 z-50"
         >
-          <SmartInsightsContent
-            signals={activeSignals}
-            onDismiss={handleDismiss}
-            onClose={() => setPopoverOpen(false)}
-          />
+          <SmartInsightsContent alerts={alerts} onDismiss={handleDismiss} onClose={() => setPopoverOpen(false)} />
         </PopoverContent>
       </Popover>
     </div>

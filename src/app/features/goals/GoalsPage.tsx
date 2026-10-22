@@ -49,6 +49,10 @@ export function GoalsPage({ transactions: propTransactions }: GoalsPageProps) {
     dispatch({ type: 'goals/updateTypeMappings', payload: { mappings } });
   }
 
+  function handleRestoreGoals(snapshot: { categories: GoalCategory[]; typeMappings: Record<string, string> }) {
+    dispatch({ type: 'goals/restore', payload: snapshot });
+  }
+
   return (
     <div>
       {view === 'overview' ? (
@@ -68,6 +72,7 @@ export function GoalsPage({ transactions: propTransactions }: GoalsPageProps) {
           onDeleteCategory={handleDeleteCategory}
           onResetDefaults={handleResetDefaults}
           onUpdateTypeMappings={handleUpdateTypeMappings}
+          onRestoreGoals={handleRestoreGoals}
           onBackToBudget={() => setView('overview')}
         />
       )}

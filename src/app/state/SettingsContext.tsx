@@ -14,6 +14,7 @@ import {
 import { DEV_DEFAULT_SETTINGS } from '@/data/fixtures';
 import { getFinanceRepository } from '@/data/repository';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
+import { useNotifications } from './NotificationsContext';
 
 export type SettingsContextValue = {
   settings: Settings;
@@ -40,83 +41,96 @@ export function SettingsProvider({
   children: React.ReactNode;
   initialSettings?: Settings;
 }) {
+  const { reportSyncError } = useNotifications();
+  const reportSyncErrorRef = useRef(reportSyncError);
+  reportSyncErrorRef.current = reportSyncError;
+  const onPersistError = useCallback((err: unknown) => reportSyncErrorRef.current(err), []);
+
   const [settings, rawDispatch] = useReducer(settingsReducer, initialSettings);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  const dispatch = useCallback<React.Dispatch<SettingsAction>>(action => {
-    const prevState = settingsRef.current;
-    const nextState = settingsReducer(prevState, action);
-    settingsRef.current = nextState;
-    rawDispatch(action);
+  const dispatch = useCallback<React.Dispatch<SettingsAction>>(
+    action => {
+      const prevState = settingsRef.current;
+      const nextState = settingsReducer(prevState, action);
+      settingsRef.current = nextState;
+      rawDispatch(action);
 
-    const repo = getFinanceRepository();
-    switch (action.type) {
-      case 'settings/hydrate':
-        break;
-      case 'type/add':
-        void repo.createTransactionType(action.payload).catch(() => {});
-        break;
-      case 'type/update':
-        void repo.updateTransactionType(action.payload.id, action.payload.changes).catch(() => {});
-        break;
-      case 'type/remove':
-        void repo.reassignAndDeleteTransactionType(action.payload.id, action.payload.replacementId).catch(() => {});
-        break;
-      case 'type/reorder':
-        void repo
-          .reorderTransactionTypes(
-            'expense',
-            action.payload.types.map(t => t.id),
-          )
-          .catch(() => {});
-        break;
-      case 'method/add':
-        void repo.createPaymentMethod(action.payload).catch(() => {});
-        break;
-      case 'method/update':
-        void repo.updatePaymentMethod(action.payload.id, action.payload.changes).catch(() => {});
-        break;
-      case 'method/remove':
-        void repo.reassignAndDeletePaymentMethod(action.payload.id, action.payload.replacementId).catch(() => {});
-        break;
-      case 'method/reorder':
-        void repo.reorderPaymentMethods(action.payload.methods.map(m => m.id)).catch(() => {});
-        break;
-      case 'account/add':
-        void repo.createAccount(action.payload).catch(() => {});
-        break;
-      case 'account/update':
-        void repo.updateAccount(action.payload.id, action.payload.changes).catch(() => {});
-        break;
-      case 'account/remove':
-        void repo.deleteAccount(action.payload.id).catch(() => {});
-        break;
-      case 'account/archive':
-        void repo.archiveAccount(action.payload.id, true).catch(() => {});
-        break;
-      case 'account/unarchive':
-        void repo.restoreAccount(action.payload.id).catch(() => {});
-        break;
-      case 'goals/updateReferenceIncome':
-        void repo.updateReferenceIncome(action.payload.income).catch(() => {});
-        break;
-      case 'goals/updateMode':
-        void repo.updateGoalsMode(action.payload.mode).catch(() => {});
-        break;
-      case 'goals/updateAllocations':
-      case 'goals/addCategory':
-      case 'goals/updateCategory':
-      case 'goals/deleteCategory':
-      case 'goals/resetAllocations':
-      case 'goals/updateTypeMappings':
-        void repo.saveGoalCategories(nextState.goals.categories, nextState.goals.typeMappings).catch(() => {});
-        break;
-      case 'settings/updateExchangeRate':
-        void repo.updatePreferences({ exchangeRate: action.payload }).catch(() => {});
-        break;
-    }
-  }, []);
+      const repo = getFinanceRepository();
+      switch (action.type) {
+        case 'settings/hydrate':
+          break;
+        case 'type/add':
+          void repo.createTransactionType(action.payload).catch(onPersistError);
+          break;
+        case 'type/update':
+          void repo.updateTransactionType(action.payload.id, action.payload.changes).catch(onPersistError);
+          break;
+        case 'type/remove':
+          void repo
+            .reassignAndDeleteTransactionType(action.payload.id, action.payload.replacementId)
+            .catch(onPersistError);
+          break;
+        case 'type/reorder':
+          void repo
+            .reorderTransactionTypes(
+              'expense',
+              action.payload.types.map(t => t.id),
+            )
+            .catch(onPersistError);
+          break;
+        case 'method/add':
+          void repo.createPaymentMethod(action.payload).catch(onPersistError);
+          break;
+        case 'method/update':
+          void repo.updatePaymentMethod(action.payload.id, action.payload.changes).catch(onPersistError);
+          break;
+        case 'method/remove':
+          void repo
+            .reassignAndDeletePaymentMethod(action.payload.id, action.payload.replacementId)
+            .catch(onPersistError);
+          break;
+        case 'method/reorder':
+          void repo.reorderPaymentMethods(action.payload.methods.map(m => m.id)).catch(onPersistError);
+          break;
+        case 'account/add':
+          void repo.createAccount(action.payload).catch(onPersistError);
+          break;
+        case 'account/update':
+          void repo.updateAccount(action.payload.id, action.payload.changes).catch(onPersistError);
+          break;
+        case 'account/remove':
+          void repo.deleteAccount(action.payload.id).catch(onPersistError);
+          break;
+        case 'account/archive':
+          void repo.archiveAccount(action.payload.id, true).catch(onPersistError);
+          break;
+        case 'account/unarchive':
+          void repo.restoreAccount(action.payload.id).catch(onPersistError);
+          break;
+        case 'goals/updateReferenceIncome':
+          void repo.updateReferenceIncome(action.payload.income).catch(onPersistError);
+          break;
+        case 'goals/updateMode':
+          void repo.updateGoalsMode(action.payload.mode).catch(onPersistError);
+          break;
+        case 'goals/updateAllocations':
+        case 'goals/addCategory':
+        case 'goals/updateCategory':
+        case 'goals/deleteCategory':
+        case 'goals/resetAllocations':
+        case 'goals/updateTypeMappings':
+        case 'goals/restore':
+          void repo.saveGoalCategories(nextState.goals.categories, nextState.goals.typeMappings).catch(onPersistError);
+          break;
+        case 'settings/updateExchangeRate':
+          void repo.updatePreferences({ exchangeRate: action.payload }).catch(onPersistError);
+          break;
+      }
+    },
+    [onPersistError],
+  );
 
   const value = useMemo<SettingsContextValue>(() => {
     const incomeTypes = settings.transactionTypes.filter(t => t.direction === 'income');

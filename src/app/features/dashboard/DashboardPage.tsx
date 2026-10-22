@@ -4,7 +4,8 @@ import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from '@/data/transactions';
 import { useFinance } from '@/state/FinanceContext';
 import { useSettings } from '@/state/SettingsContext';
-import { calculateDashboardKpis, generateSmartFinancialSignals } from '@/data/analytics';
+import { useFinancialAlerts } from '@/state/useFinancialAlerts';
+import { calculateDashboardKpis } from '@/data/analytics';
 import { Button } from '@/components/primitives/button';
 import { DashboardKpisSection } from './DashboardKpis';
 import { AnalyticsVisualizer } from './AnalyticsVisualizer';
@@ -21,25 +22,13 @@ export function DashboardPage({ transactions: propTransactions }: DashboardPageP
   const transactions = propTransactions ?? finance.transactions;
   const { t, formatFull, currency } = useI18n();
   const today = finance.today;
+  const { alerts } = useFinancialAlerts();
 
   const rate = settings.exchangeRate?.rate;
   const hasRate = rate !== null && rate !== undefined && rate > 0;
   const [currencyScope, setCurrencyScope] = useState<'all' | SupportedCurrency>(hasRate ? 'all' : currency);
 
-  // 1. Generate smart heuristic signals
-  const signals = useMemo(() => {
-    return generateSmartFinancialSignals(
-      transactions,
-      settings,
-      settings.goals,
-      finance.statements,
-      finance.recurringRules,
-      finance.ledgers,
-      today,
-    );
-  }, [transactions, settings, finance.statements, finance.recurringRules, finance.ledgers, today]);
-
-  // 2. Compute dynamic KPIs
+  // Dynamic KPIs (KPI Card 4 uses alerts.length)
   const kpis = useMemo(() => {
     return calculateDashboardKpis(
       transactions,
@@ -47,10 +36,10 @@ export function DashboardPage({ transactions: propTransactions }: DashboardPageP
       settings,
       settings.goals,
       today,
-      signals.length,
+      alerts.length,
       currency,
     );
-  }, [transactions, finance.ledgers, settings, today, signals.length, currency]);
+  }, [transactions, finance.ledgers, settings, today, alerts.length, currency]);
 
   // If exchange rate is not available, 'all' cannot be calculated; fallback to preferred currency
   const effectiveScope: 'all' | SupportedCurrency = !kpis.hasRate && currencyScope === 'all' ? currency : currencyScope;
@@ -70,7 +59,7 @@ export function DashboardPage({ transactions: propTransactions }: DashboardPageP
       </div>
 
       {/* 1. Dynamic Personal Finance KPIs (Card 4 triggers Smart Insights Popover) */}
-      <DashboardKpisSection kpis={kpis} signals={signals} />
+      <DashboardKpisSection kpis={kpis} alerts={alerts} />
 
       {/* 2. Balanced Core Visual Analytics (50/50 Grid with spacious Donut & Cash Flow) */}
       <div className="space-y-4">

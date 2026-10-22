@@ -15,6 +15,7 @@ import { useSettings } from '@/state/SettingsContext';
 import { OptionSelect } from '@/components/shared/OptionSelect';
 import { getIcon } from '@/data/icons';
 import { InlineAlert } from '@/components/shared/InlineAlert';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type DeleteMethodDialogProps = {
@@ -27,6 +28,7 @@ type DeleteMethodDialogProps = {
 export function DeleteMethodDialog({ method, onClose, transactions, onTransactionsChange }: DeleteMethodDialogProps) {
   const { settings, dispatch } = useSettings();
   const { t } = useI18n();
+  const notify = useNotify();
   const [replacementMethodId, setReplacementMethodId] = useState<string>('');
 
   const open = Boolean(method);
@@ -88,6 +90,9 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
       onTransactionsChange(nextTxs);
     }
 
+    const deletedName = method.name;
+    const targetMethod = availableReplacements.find(r => r.id === effectiveReplacementId);
+
     dispatch({
       type: 'method/remove',
       payload: {
@@ -95,6 +100,15 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
         replacementId: hasTransactions && effectiveReplacementId ? effectiveReplacementId : undefined,
       },
     });
+
+    notify.success('notifications.ops.methodDeleted', {
+      id: `method-delete-${method.id}`,
+      params: {
+        name: deletedName,
+        target: targetMethod ? targetMethod.name : '',
+      },
+    });
+
     handleClose();
   }
 

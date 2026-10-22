@@ -1,13 +1,13 @@
-import { Search, Bell, Sun, Moon } from 'lucide-react';
+import { Search, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useI18n } from '@/i18n';
+import { NotificationCenter } from './NotificationCenter';
 
 export function TopNavigation() {
   const { setTheme, resolvedTheme } = useTheme();
   const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
-  const hasNotification = true;
 
   useEffect(() => {
     setMounted(true);
@@ -34,16 +34,7 @@ export function TopNavigation() {
         {/* Right Section */}
         <div className="flex items-center gap-3">
           {/* Notification Bell */}
-          <button
-            type="button"
-            title={t('nav.notifications')}
-            className="relative p-2 rounded-lg bg-foreground/5 border border-border hover:border-cyan-400/50 hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] transition-all duration-300"
-          >
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            {hasNotification && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_var(--shadow-glow-cyan-intense)]" />
-            )}
-          </button>
+          <NotificationCenter />
 
           {/* Theme Toggle */}
           <button

@@ -15,6 +15,7 @@ import { Button } from '@/components/primitives/button';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { useFinance } from '@/state/FinanceContext';
 import { useSettings } from '@/state/SettingsContext';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 import type { RecurringRule } from '@/data/recurring';
 
@@ -26,6 +27,7 @@ export type RecurringRulesDialogProps = {
 
 export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: RecurringRulesDialogProps) {
   const { recurringRules, cancelRecurringRule, deleteRecurringRule } = useFinance();
+  const notify = useNotify();
   const { findAccount, findType } = useSettings();
   const { t, formatCents, formatDate } = useI18n();
   const [ruleToCancel, setRuleToCancel] = useState<RecurringRule | null>(null);
@@ -194,7 +196,13 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
             <AlertDialogAction
               onClick={() => {
                 if (ruleToCancel) {
-                  cancelRecurringRule(ruleToCancel.id);
+                  const target = ruleToCancel;
+                  const { undo } = cancelRecurringRule(target.id);
+                  notify.undoable({
+                    id: `undo-rule-cancel-${target.id}`,
+                    messageKey: 'notifications.ops.ruleCanceled',
+                    onUndo: undo,
+                  });
                   setRuleToCancel(null);
                 }
               }}
@@ -221,7 +229,13 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
             <AlertDialogAction
               onClick={() => {
                 if (ruleToDelete) {
-                  deleteRecurringRule(ruleToDelete.id);
+                  const target = ruleToDelete;
+                  const { undo } = deleteRecurringRule(target.id);
+                  notify.undoable({
+                    id: `undo-rule-delete-${target.id}`,
+                    messageKey: 'notifications.ops.ruleDeleted',
+                    onUndo: undo,
+                  });
                   setRuleToDelete(null);
                 }
               }}

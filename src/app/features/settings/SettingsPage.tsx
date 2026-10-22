@@ -3,9 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { TransactionTypesPanel } from './TransactionTypesPanel';
 import { PaymentMethodsPanel } from './PaymentMethodsPanel';
 import { PreferencesPanel } from './PreferencesPanel';
+import { NotificationsPanel } from './NotificationsPanel';
 import { type Transaction } from '@/data/transactions';
 import { useFinance } from '@/state/FinanceContext';
-import { Tags, CreditCard, SlidersHorizontal } from 'lucide-react';
+import { Tags, CreditCard, SlidersHorizontal, Bell } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
 type SettingsPageProps = {
@@ -21,7 +22,7 @@ export function SettingsPage({
   const transactions = propTransactions ?? finance.transactions;
   const onTransactionsChange = propOnTransactionsChange ?? ((txs: Transaction[]) => finance.setTransactions(txs));
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'preferences' | 'types' | 'methods'>('preferences');
+  const [activeTab, setActiveTab] = useState<'preferences' | 'types' | 'methods' | 'notifications'>('preferences');
 
   return (
     <div className="space-y-8">
@@ -32,28 +33,38 @@ export function SettingsPage({
         <div className="text-muted-foreground">{t('settings.subtitle')}</div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'preferences' | 'types' | 'methods')}>
+      <Tabs
+        value={activeTab}
+        onValueChange={val => setActiveTab(val as 'preferences' | 'types' | 'methods' | 'notifications')}
+      >
         <TabsList className="bg-foreground/5 border border-border p-1 h-auto rounded-lg">
           <TabsTrigger
             value="preferences"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-theme-cyan"
+            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {t('settings.tabPreferences')}
           </TabsTrigger>
           <TabsTrigger
             value="types"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-theme-cyan"
+            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
           >
             <Tags className="w-4 h-4" />
             {t('settings.tabTypes')}
           </TabsTrigger>
           <TabsTrigger
             value="methods"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-theme-cyan"
+            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
           >
             <CreditCard className="w-4 h-4" />
             {t('settings.tabMethods')}
+          </TabsTrigger>
+          <TabsTrigger
+            value="notifications"
+            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
+          >
+            <Bell className="w-4 h-4" />
+            {t('settings.tabNotifications')}
           </TabsTrigger>
         </TabsList>
 
@@ -68,6 +79,10 @@ export function SettingsPage({
 
           <TabsContent value="methods" className="m-0 focus-visible:outline-none">
             <PaymentMethodsPanel transactions={transactions} onTransactionsChange={onTransactionsChange} />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="m-0 focus-visible:outline-none">
+            <NotificationsPanel />
           </TabsContent>
         </div>
       </Tabs>

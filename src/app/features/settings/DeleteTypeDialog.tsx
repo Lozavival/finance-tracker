@@ -15,6 +15,7 @@ import { useSettings } from '@/state/SettingsContext';
 import { OptionSelect } from '@/components/shared/OptionSelect';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { InlineAlert } from '@/components/shared/InlineAlert';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type DeleteTypeDialogProps = {
@@ -27,6 +28,7 @@ type DeleteTypeDialogProps = {
 export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransactionsChange }: DeleteTypeDialogProps) {
   const { settings, dispatch } = useSettings();
   const { t } = useI18n();
+  const notify = useNotify();
   const [replacementTypeId, setReplacementTypeId] = useState<string>('');
 
   const open = Boolean(typeConfig);
@@ -81,6 +83,9 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
       onTransactionsChange(nextTxs);
     }
 
+    const deletedName = typeConfig.name;
+    const targetType = availableReplacements.find(r => r.id === effectiveReplacementId);
+
     dispatch({
       type: 'type/remove',
       payload: {
@@ -88,6 +93,15 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
         replacementId: hasTransactions && effectiveReplacementId ? effectiveReplacementId : undefined,
       },
     });
+
+    notify.success('notifications.ops.typeDeleted', {
+      id: `type-delete-${typeConfig.id}`,
+      params: {
+        name: deletedName,
+        target: targetType ? targetType.name : '',
+      },
+    });
+
     handleClose();
   }
 

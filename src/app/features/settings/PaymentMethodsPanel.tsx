@@ -9,6 +9,7 @@ import { getIcon } from '@/data/icons';
 import { SortableRow, useReorder } from './SortableList';
 import { PaymentMethodDialog } from './PaymentMethodDialog';
 import { DeleteMethodDialog } from './DeleteMethodDialog';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type PaymentMethodsPanelProps = {
@@ -19,6 +20,7 @@ type PaymentMethodsPanelProps = {
 export function PaymentMethodsPanel({ transactions, onTransactionsChange }: PaymentMethodsPanelProps) {
   const { settings, dispatch } = useSettings();
   const { t } = useI18n();
+  const notify = useNotify();
 
   const [dialogState, setDialogState] = useState<{
     open: boolean;
@@ -54,8 +56,16 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
           },
         },
       });
+      notify.success('notifications.ops.methodUpdated', {
+        id: `method-save-${saved.id}`,
+        params: { name: saved.name },
+      });
     } else {
       dispatch({ type: 'method/add', payload: saved });
+      notify.success('notifications.ops.methodAdded', {
+        id: `method-save-${saved.id}`,
+        params: { name: saved.name },
+      });
     }
   }
 

@@ -14,6 +14,7 @@ import { type Transaction } from '@/data/transactions';
 import { type RecurringRule } from '@/data/recurring';
 import { useSettings } from '@/state/SettingsContext';
 import { useFinance } from '@/state/FinanceContext';
+import { useNotify } from '@/state/NotificationsContext';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { Archive } from 'lucide-react';
@@ -42,6 +43,7 @@ export function ArchiveAccountDialog({
     cancelRecurringRulesForAccount,
   } = useFinance();
   const { t } = useI18n();
+  const notify = useNotify();
 
   const transactions = propTransactions ?? contextTransactions;
   const recurringRules = propRecurringRules ?? contextRules;
@@ -69,6 +71,10 @@ export function ArchiveAccountDialog({
     if (isLastActiveAccount || !account) return;
     cancelRecurringRulesForAccount(account.id);
     dispatch({ type: 'account/archive', payload: { id: account.id } });
+    notify.success('notifications.ops.accountArchived', {
+      id: `account-archive-${account.id}`,
+      params: { name: account.name },
+    });
     onArchived?.();
     onClose();
   }

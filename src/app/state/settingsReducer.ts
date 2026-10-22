@@ -38,6 +38,7 @@ export type SettingsAction =
   | { type: 'goals/deleteCategory'; payload: { id: string } }
   | { type: 'goals/resetAllocations' }
   | { type: 'goals/updateTypeMappings'; payload: { mappings: Record<string, string> } }
+  | { type: 'goals/restore'; payload: { categories: GoalCategory[]; typeMappings: Record<string, string> } }
   | { type: 'settings/updateExchangeRate'; payload: Partial<ExchangeRateState> };
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
@@ -283,6 +284,17 @@ export function settingsReducer(state: Settings, action: SettingsAction): Settin
         goals: {
           ...state.goals,
           typeMappings: action.payload.mappings,
+        },
+      };
+    }
+
+    case 'goals/restore': {
+      return {
+        ...state,
+        goals: {
+          ...state.goals,
+          categories: action.payload.categories,
+          typeMappings: action.payload.typeMappings,
         },
       };
     }

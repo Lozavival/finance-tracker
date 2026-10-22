@@ -68,6 +68,8 @@ export type SmartFinancialSignal = {
   titleKey: string;
   descriptionKey: string;
   params: Record<string, string | number>;
+  amountCents?: number;
+  currency?: SupportedCurrency;
   actionPage?: 'goals' | 'transactions' | 'accounts';
 };
 
@@ -536,6 +538,7 @@ export function generateSmartFinancialSignals(
   _recurringRules: RecurringRule[],
   ledgers: Record<string, AccountLedger>,
   today: Date,
+  preferredCurrency: SupportedCurrency = 'USD',
 ): SmartFinancialSignal[] {
   const signals: SmartFinancialSignal[] = [];
 
@@ -644,6 +647,8 @@ export function generateSmartFinancialSignals(
           severity: daysRemaining <= 3 ? 'critical' : 'warning',
           titleKey: 'dashboard.signals.upcomingBillTitle',
           descriptionKey: 'dashboard.signals.upcomingBillDesc',
+          amountCents: stmt.total,
+          currency: stmt.currency,
           params: {
             title: stmt.cardName,
             amount: (stmt.total / 100).toFixed(2),
@@ -676,6 +681,8 @@ export function generateSmartFinancialSignals(
         severity: 'critical',
         titleKey: 'dashboard.signals.deficitWarningTitle',
         descriptionKey: 'dashboard.signals.deficitWarningDesc',
+        amountCents: Math.abs(currentKpis.netSavingsCents ?? 0),
+        currency: preferredCurrency,
         params: {
           amount: (Math.abs(currentKpis.netSavings) / 100).toFixed(2),
         },

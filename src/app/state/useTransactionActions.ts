@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { type Transaction, type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useFinance, findTransferLegs, findInstallmentSeries, findRecurringSeries } from './FinanceContext';
+import { useNotify } from './NotificationsContext';
+
+function describeDraft(draft: TransactionDraft): string {
+  if (draft.kind === 'transfer') {
+    return 'Transfer';
+  }
+  return draft.transaction.description || 'Transaction';
+}
 
 export function useTransactionActions() {
   const { transactions, saveTransactionDraft, deleteTransactionTarget } = useFinance();
+  const notify = useNotify();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
@@ -33,7 +42,37 @@ export function useTransactionActions() {
   }
 
   function saveTransaction(draft: TransactionDraft) {
+    const isEdit = editingTarget !== null;
     saveTransactionDraft(draft, editingTarget);
+
+    const desc = describeDraft(draft);
+    if (isEdit) {
+      notify.success('notifications.ops.txUpdated', {
+        id: 'tx-saved',
+        params: { description: desc },
+      });
+    } else if (draft.kind === 'transfer') {
+      notify.success('notifications.ops.transferAdded', {
+        id: 'tx-saved',
+        params: { description: desc },
+      });
+    } else if (draft.kind === 'installments') {
+      notify.success('notifications.ops.installmentsAdded', {
+        id: 'tx-saved',
+        params: { count: draft.count, description: desc },
+      });
+    } else if (draft.kind === 'recurring') {
+      notify.success('notifications.ops.recurringAdded', {
+        id: 'tx-saved',
+        params: { description: desc },
+      });
+    } else {
+      notify.success('notifications.ops.txAdded', {
+        id: 'tx-saved',
+        params: { description: desc },
+      });
+    }
+
     setDialogOpen(false);
     setEditingTarget(null);
     setInitialRecurring(false);
@@ -41,7 +80,14 @@ export function useTransactionActions() {
 
   function deleteTransaction(scope: 'only-this' | 'this-and-future' | 'all' = 'only-this') {
     if (deleteTarget) {
-      deleteTransactionTarget(deleteTarget, scope);
+      const target = deleteTarget;
+      const { undo, removedCount } = deleteTransactionTarget(target, scope);
+      notify.undoable({
+        id: `undo-tx-${target.id}`,
+        messageKey: removedCount > 1 ? 'notifications.ops.txSeriesDeleted' : 'notifications.ops.txDeleted',
+        params: { count: removedCount },
+        onUndo: undo,
+      });
       setDeleteTarget(null);
     }
   }

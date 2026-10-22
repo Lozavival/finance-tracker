@@ -22,6 +22,7 @@ import { useFinance } from '@/state/FinanceContext';
 import { getAccountColor, getAccountCurrencies, type AccountConfig } from '@/data/settings';
 import { convertCents } from '@/data/currency';
 import { type SupportedCurrency } from '@/i18n/types';
+import { useNotify } from '@/state/NotificationsContext';
 import { AccountFormDialog } from './AccountFormDialog';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ArchiveAccountDialog } from './ArchiveAccountDialog';
@@ -49,6 +50,7 @@ export function AccountsPage({
   const transactions = propTransactions ?? financeContext.transactions;
   const { settings, dispatch } = useSettings();
   const { t, formatCents, locale, currency } = useI18n();
+  const notify = useNotify();
   const [upcomingPeriod, setUpcomingPeriod] = useState<UpcomingPeriodType>({ kind: 'end-of-month' });
   const [currencyFilter, setCurrencyFilter] = useState<'all' | SupportedCurrency>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -397,9 +399,17 @@ export function AccountsPage({
           },
         },
       });
+      notify.success('notifications.ops.accountUpdated', {
+        id: `account-saved-${account.id}`,
+        params: { name: account.name },
+      });
       setEditingAccount(null);
     } else {
       dispatch({ type: 'account/add', payload: account });
+      notify.success('notifications.ops.accountCreated', {
+        id: `account-saved-${account.id}`,
+        params: { name: account.name },
+      });
     }
   }
 

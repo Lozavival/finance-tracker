@@ -37,6 +37,7 @@ import { AccountFormDialog } from './AccountFormDialog';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { ArchiveAccountDialog } from './ArchiveAccountDialog';
 import { RestoreAccountDialog } from './RestoreAccountDialog';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type AccountDetailPageProps = {
@@ -66,6 +67,7 @@ export function AccountDetailPage({
 
   const { findAccount, dispatch, settings, getAllowedPaymentMethodIds } = useSettings();
   const { t, formatCents } = useI18n();
+  const notify = useNotify();
   const details = findAccount(accountId);
 
   const currencies = useMemo<SupportedCurrency[]>(() => {
@@ -199,6 +201,10 @@ export function AccountDetailPage({
           allowedPaymentMethods: updated.allowedPaymentMethods,
         },
       },
+    });
+    notify.success('notifications.ops.accountUpdated', {
+      id: `account-saved-${updated.id}`,
+      params: { name: updated.name },
     });
   }
 

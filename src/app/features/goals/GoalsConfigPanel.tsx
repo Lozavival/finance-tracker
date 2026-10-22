@@ -13,7 +13,7 @@ import { GoalCategoryAllocationSliders } from './GoalCategoryAllocationSliders';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useSettings } from '@/state/SettingsContext';
 import { centsToDollars, dollarsToCents } from '@/data/currency';
-import { toast } from 'sonner';
+import { useNotify } from '@/state/NotificationsContext';
 import { useI18n } from '@/i18n';
 
 type GoalsConfigPanelProps = {
@@ -26,6 +26,7 @@ type GoalsConfigPanelProps = {
   onDeleteCategory: (id: string) => void;
   onResetDefaults?: () => void;
   onUpdateTypeMappings: (mappings: Record<string, string>) => void;
+  onRestoreGoals?: (snapshot: { categories: GoalCategory[]; typeMappings: Record<string, string> }) => void;
   onBackToBudget: () => void;
 };
 
@@ -39,9 +40,11 @@ export function GoalsConfigPanel({
   onDeleteCategory,
   onResetDefaults: _onResetDefaults,
   onUpdateTypeMappings,
+  onRestoreGoals,
   onBackToBudget,
 }: GoalsConfigPanelProps) {
   const { settings, expenseTypes } = useSettings();
+  const notify = useNotify();
   const { t, formatCurrency, currency, supportedCurrencies } = useI18n();
   const currencySymbol = supportedCurrencies.find(c => c.code === currency)?.symbol || '$';
   const [referenceIncomeInput, setReferenceIncomeInput] = useState<string>(() =>
@@ -94,7 +97,7 @@ export function GoalsConfigPanel({
 
   function handleSaveIncome() {
     onUpdateReferenceIncome(dollarsToCents(numericReferenceIncome));
-    toast.success(t('goals.toasts.incomeUpdated'));
+    notify.success('goals.toasts.incomeUpdated', { id: 'goals-income-updated' });
   }
 
   function handleCategorySliderChange(categoryId: string, newPercentage: number) {
@@ -122,11 +125,12 @@ export function GoalsConfigPanel({
 
   function handleSaveAllGoals() {
     if (!isExactly100) {
-      toast.error(
-        t('goals.toasts.allocationMustEqual100', {
+      notify.validation('goals.toasts.allocationMustEqual100', {
+        id: 'goals-allocation-error',
+        params: {
           current: totalAllocated.toFixed(1),
-        }),
-      );
+        },
+      });
       return;
     }
     const incomeCents = dollarsToCents(numericReferenceIncome);
@@ -134,12 +138,12 @@ export function GoalsConfigPanel({
       onUpdateReferenceIncome(incomeCents);
     }
     onUpdateAllocations(localCategories);
-    toast.success(t('goals.toasts.goalsSaved'));
+    notify.success('goals.toasts.goalsSaved', { id: 'goals-saved' });
   }
 
   function handleResetAllocations() {
     setLocalCategories(DEFAULT_GOAL_CATEGORIES);
-    toast.info(t('goals.toasts.allocationsReset'));
+    notify.info('goals.toasts.allocationsReset', { id: 'goals-reset' });
   }
 
   return (
@@ -354,11 +358,17 @@ export function GoalsConfigPanel({
             });
             // Also update localCategories immediately
             setLocalCategories(prev => prev.map(c => (c.id === saved.id ? saved : c)));
-            toast.success(t('goals.toasts.categoryUpdated', { name: saved.name }));
+            notify.success('goals.toasts.categoryUpdated', {
+              id: `goal-category-${saved.id}`,
+              params: { name: saved.name },
+            });
           } else {
             onAddCategory(saved);
             setLocalCategories(prev => [...prev, saved]);
-            toast.success(t('goals.toasts.categoryAdded', { name: saved.name }));
+            notify.success('goals.toasts.categoryAdded', {
+              id: `goal-category-${saved.id}`,
+              params: { name: saved.name },
+            });
           }
 
           // Update type mappings
@@ -383,9 +393,25 @@ export function GoalsConfigPanel({
         onOpenChange={open => setDeleteModal(prev => ({ ...prev, open }))}
         category={deleteModal.category}
         onConfirm={catId => {
+          const snapshotCategories = [...goalsConfig.categories];
+          const snapshotTypeMappings = { ...goalsConfig.typeMappings };
+
           onDeleteCategory(catId);
           setLocalCategories(prev => prev.filter(c => c.id !== catId));
-          toast.info(t('goals.toasts.categoryDeleted'));
+
+          notify.undoable({
+            id: `undo-goal-category-${catId}`,
+            messageKey: 'goals.toasts.categoryDeleted',
+            onUndo: () => {
+              if (onRestoreGoals) {
+                onRestoreGoals({
+                  categories: snapshotCategories,
+                  typeMappings: snapshotTypeMappings,
+                });
+              }
+              setLocalCategories(snapshotCategories);
+            },
+          });
         }}
       />
     </div>
