@@ -83,6 +83,15 @@ export function GoalCategoryAllocationSliders({
               trType => trType.direction === 'expense' && !trType.system && typeMappings[trType.id] === cat.id,
             );
 
+            const sliderColor = c?.dotColor ?? 'var(--accent-cyan-dot)';
+            const maxCurrency = Math.max(numericReferenceIncome, 1);
+            const currentCurrency = Math.round(monthlyEquivalent);
+            const fillPercent = isCurrencyMode
+              ? Math.min(Math.max((currentCurrency / maxCurrency) * 100, 0), 100)
+              : Math.min(Math.max(cat.percentage || 0, 0), 100);
+
+            const sliderBackground = `linear-gradient(to right, ${sliderColor} 0%, ${sliderColor} ${fillPercent}%, color-mix(in oklab, var(--foreground) 10%, transparent) ${fillPercent}%, color-mix(in oklab, var(--foreground) 10%, transparent) 100%)`;
+
             return (
               <div key={cat.id} className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
@@ -90,7 +99,7 @@ export function GoalCategoryAllocationSliders({
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: c?.dotColor || '#3b82f6' }}
+                      style={{ backgroundColor: c?.dotColor ?? 'var(--accent-blue-dot)' }}
                     />
                     <span className="font-semibold text-sm text-foreground truncate">{cat.name}</span>
 
@@ -123,7 +132,7 @@ export function GoalCategoryAllocationSliders({
                         min={0}
                         max={numericReferenceIncome}
                         step={100}
-                        value={Math.round(monthlyEquivalent)}
+                        value={currentCurrency}
                         onChange={e => onCategoryDollarInputChange(cat.id, e.target.value)}
                         className="w-24 h-8 text-right text-sm font-semibold border-border bg-foreground/5 text-foreground rounded-lg p-1.5 outline-none focus:border-theme-cyan"
                       />
@@ -150,14 +159,17 @@ export function GoalCategoryAllocationSliders({
                     <input
                       type="range"
                       min={0}
-                      max={Math.max(numericReferenceIncome, 1)}
+                      max={maxCurrency}
                       step={Math.max(50, Math.round(numericReferenceIncome / 200))}
-                      value={Math.round(monthlyEquivalent)}
+                      value={currentCurrency}
                       onChange={e => onCategoryDollarChange(cat.id, Number(e.target.value))}
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-foreground/10"
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer [&::-moz-range-thumb]:size-3.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--slider-color)]"
                       style={{
-                        accentColor: c?.dotColor || '#06b6d4',
+                        background: sliderBackground,
+                        accentColor: sliderColor,
+                        ...({ '--slider-color': sliderColor } as React.CSSProperties),
                       }}
+                      aria-label={cat.name}
                     />
                   ) : (
                     <input
@@ -167,10 +179,13 @@ export function GoalCategoryAllocationSliders({
                       step={0.5}
                       value={cat.percentage}
                       onChange={e => onCategoryPercentChange(cat.id, Number(e.target.value))}
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-foreground/10"
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer [&::-moz-range-thumb]:size-3.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[var(--slider-color)]"
                       style={{
-                        accentColor: c?.dotColor || '#06b6d4',
+                        background: sliderBackground,
+                        accentColor: sliderColor,
+                        ...({ '--slider-color': sliderColor } as React.CSSProperties),
                       }}
+                      aria-label={cat.name}
                     />
                   )}
                 </div>
