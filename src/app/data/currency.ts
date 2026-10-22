@@ -65,18 +65,111 @@ export function convertCents(
   return converted !== null ? Math.round(converted) : null;
 }
 
-export async function fetchLiveExchangeRate(): Promise<{ rate: number; timestamp: string }> {
-  const res = await fetch('https://open.er-api.com/v6/latest/USD');
-  if (!res.ok) {
-    throw new Error(`Failed to fetch exchange rate (${res.status})`);
+export type ExchangeRateErrorCode = 'OFFLINE' | 'TIMEOUT' | 'HTTP_ERROR' | 'INVALID_RATE' | 'UNKNOWN';
+
+export class ExchangeRateFetchError extends Error {
+  readonly code: ExchangeRateErrorCode;
+
+  constructor(code: ExchangeRateErrorCode, message: string) {
+    super(message);
+    this.name = 'ExchangeRateFetchError';
+    this.code = code;
   }
-  const data = (await res.json()) as { rates?: Record<string, number> };
-  const brlRate = data.rates?.BRL;
-  if (typeof brlRate !== 'number' || brlRate <= 0) {
-    throw new Error('Invalid BRL rate received');
+}
+
+export async function fetchLiveExchangeRate(options?: {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}): Promise<{ rate: number; timestamp: string }> {
+  const timeoutMs = options?.timeoutMs ?? 5000;
+
+  // Immediate offline check for browsers with navigator.onLine
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    throw new ExchangeRateFetchError('OFFLINE', 'Connection offline');
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(new ExchangeRateFetchError('TIMEOUT', 'Request timed out'));
+  }, timeoutMs);
+
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => {
+      controller.abort(options.signal?.reason);
+    });
+  }
+
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD', {
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new ExchangeRateFetchError('HTTP_ERROR', `Failed to fetch exchange rate (${res.status})`);
+    }
+    const data = (await res.json()) as { rates?: Record<string, number> };
+    const brlRate = data.rates?.BRL;
+    if (typeof brlRate !== 'number' || brlRate <= 0) {
+      throw new ExchangeRateFetchError('INVALID_RATE', 'Invalid BRL rate received');
+    }
+    return {
+      rate: Number(brlRate.toFixed(4)),
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    if (err instanceof ExchangeRateFetchError) {
+      throw err;
+    }
+
+    if (controller.signal.aborted) {
+      const reason = controller.signal.reason;
+      if (reason instanceof ExchangeRateFetchError) {
+        throw reason;
+      }
+      throw new ExchangeRateFetchError('TIMEOUT', 'Request timed out');
+    }
+
+    if (
+      (typeof navigator !== 'undefined' && navigator.onLine === false) ||
+      (err instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(err.message))
+    ) {
+      throw new ExchangeRateFetchError('OFFLINE', 'Connection offline');
+    }
+
+    throw new ExchangeRateFetchError('UNKNOWN', err instanceof Error ? err.message : 'Unknown network error');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function getExchangeRateErrorCode(err: unknown): ExchangeRateErrorCode {
+  if (err instanceof ExchangeRateFetchError) {
+    return err.code;
+  }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return 'OFFLINE';
+  }
+  if (err instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(err.message)) {
+    return 'OFFLINE';
+  }
+  return 'UNKNOWN';
+}
+
+export type ExchangeRateErrorKey =
+  'settings.rateOfflineError' | 'settings.rateTimeoutError' | 'settings.rateFetchFailed';
+
+export function getExchangeRateErrorDetails(err: unknown): {
+  key: ExchangeRateErrorKey;
+  params?: { error: string };
+} {
+  const code = getExchangeRateErrorCode(err);
+  if (code === 'OFFLINE') {
+    return { key: 'settings.rateOfflineError' };
+  }
+  if (code === 'TIMEOUT') {
+    return { key: 'settings.rateTimeoutError' };
   }
   return {
-    rate: Number(brlRate.toFixed(4)),
-    timestamp: new Date().toISOString(),
+    key: 'settings.rateFetchFailed',
+    params: { error: err instanceof Error ? err.message : 'Unknown error' },
   };
 }

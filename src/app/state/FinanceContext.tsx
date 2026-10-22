@@ -16,6 +16,8 @@ import { type RecurringRule, buildRecurringTransactions, findRecurringSeries } f
 import { getFinanceRepository } from '@/data/repository';
 import { useSettings } from './SettingsContext';
 import { useNotifications } from './NotificationsContext';
+import { useI18n } from '@/i18n';
+import { fetchLiveExchangeRate, getExchangeRateErrorDetails } from '@/data/currency';
 
 export type DeleteTransactionResult = {
   undo: () => void;
@@ -56,6 +58,7 @@ const FinanceContext = createContext<FinanceContextValue | null>(null);
 const UNDO_WINDOW_MS = 6000;
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const { settings, dispatch, isCreditCard, findAccount } = useSettings();
   const { reportSyncError, registerResync, notify } = useNotifications();
   const reportSyncErrorRef = useRef(reportSyncError);
@@ -121,11 +124,46 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setHistoricalRollups(snapshot.historicalRollups);
       setLoadedFromDate(snapshot.loadedFromDate);
       setSyncStatus('online');
+
+      // Fetch live exchange rate by default when the workspace is loaded (unless manual override is set)
+      const currentRateState = snapshot.settings.exchangeRate;
+      if (currentRateState?.source !== 'manual' || currentRateState?.rate === null) {
+        void fetchLiveExchangeRate()
+          .then(result => {
+            dispatch({
+              type: 'settings/updateExchangeRate',
+              payload: {
+                rate: result.rate,
+                lastUpdated: result.timestamp,
+                source: 'api',
+                error: null,
+                isLoading: false,
+              },
+            });
+          })
+          .catch(err => {
+            const { key, params } = getExchangeRateErrorDetails(err);
+            const errorMsg = t(key, params);
+
+            dispatch({
+              type: 'settings/updateExchangeRate',
+              payload: {
+                error: errorMsg,
+                isLoading: false,
+              },
+            });
+
+            notify.error(key, {
+              id: 'rate-fetch-status',
+              params,
+            });
+          });
+      }
     } catch (err) {
       setSyncStatus('offline');
       throw err;
     }
-  }, [dispatch, filterPendingTxIds]);
+  }, [dispatch, filterPendingTxIds, notify, t]);
 
   // Register reloadWorkspace as resync handler
   useEffect(() => {

@@ -3,11 +3,13 @@ import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Toggle } from '@/components/primitives/toggle';
+import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { useSettings } from '@/state/SettingsContext';
+import { useNotifications } from '@/state/NotificationsContext';
 import { Globe, DollarSign, Sparkles, ArrowLeftRight, RefreshCw, Check, X } from 'lucide-react';
 import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';
-import { fetchLiveExchangeRate } from '@/data/currency';
+import { fetchLiveExchangeRate, getExchangeRateErrorDetails } from '@/data/currency';
 
 export function PreferencesPanel() {
   const {
@@ -25,6 +27,7 @@ export function PreferencesPanel() {
   } = useI18n();
 
   const { settings, dispatch } = useSettings();
+  const { notify } = useNotifications();
 
   const [manualRateInput, setManualRateInput] = useState(
     settings.exchangeRate?.rate ? String(settings.exchangeRate.rate) : '',
@@ -49,20 +52,44 @@ export function PreferencesPanel() {
             rate: result.rate,
             lastUpdated: nowIso,
             source: 'api',
+            error: null,
+            isLoading: false,
           },
         });
         setManualRateInput(String(result.rate));
-        setFetchSuccess(
-          t('settings.rateUpdated', {
+        const formattedTime = new Date().toLocaleTimeString();
+        const successMsg = t('settings.rateUpdated', {
+          rate: result.rate.toFixed(4),
+          time: formattedTime,
+        });
+        setFetchSuccess(successMsg);
+        notify.success('settings.rateUpdated', {
+          id: 'rate-fetch-status',
+          params: {
             rate: result.rate.toFixed(4),
-            time: new Date().toLocaleTimeString(),
-          }),
-        );
+            time: formattedTime,
+          },
+        });
       } else {
-        setFetchError(t('settings.rateFetchFailed', { error: 'Service unavailable' }));
+        throw new Error('Service unavailable');
       }
     } catch (err) {
-      setFetchError(t('settings.rateFetchFailed', { error: err instanceof Error ? err.message : 'Unknown' }));
+      const { key, params } = getExchangeRateErrorDetails(err);
+      const errorMsg = t(key, params);
+
+      setFetchError(errorMsg);
+      setFetchSuccess(null);
+      dispatch({
+        type: 'settings/updateExchangeRate',
+        payload: {
+          error: errorMsg,
+          isLoading: false,
+        },
+      });
+      notify.error(key, {
+        id: 'rate-fetch-status',
+        params,
+      });
     } finally {
       setIsFetchingRate(false);
     }
@@ -77,6 +104,7 @@ export function PreferencesPanel() {
         rate: parsed,
         lastUpdated: new Date().toISOString(),
         source: 'manual',
+        error: null,
       },
     });
     setFetchSuccess(
@@ -94,7 +122,8 @@ export function PreferencesPanel() {
       payload: {
         rate: null,
         lastUpdated: null,
-        source: 'manual',
+        source: 'none',
+        error: null,
       },
     });
     setManualRateInput('');
@@ -259,16 +288,20 @@ export function PreferencesPanel() {
                   </span>
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
-                        ? 'bg-theme-cyan/15 text-theme-cyan border border-theme-cyan/30'
-                        : 'bg-foreground/10 text-muted-foreground border border-border'
+                      settings.exchangeRate?.error
+                        ? 'bg-destructive/15 text-destructive border border-destructive/30'
+                        : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
+                          ? 'bg-theme-cyan/15 text-theme-cyan border border-theme-cyan/30'
+                          : 'bg-foreground/10 text-muted-foreground border border-border'
                     }`}
                   >
-                    {settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
-                      ? settings.exchangeRate.source === 'api'
-                        ? t('settings.rateStatusLive')
-                        : t('settings.rateStatusManual')
-                      : t('settings.rateStatusNone')}
+                    {settings.exchangeRate?.error
+                      ? t('settings.rateStatusError')
+                      : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
+                        ? settings.exchangeRate.source === 'api'
+                          ? t('settings.rateStatusLive')
+                          : t('settings.rateStatusManual')
+                        : t('settings.rateStatusNone')}
                   </span>
                 </div>
                 {settings.exchangeRate?.lastUpdated && (
@@ -277,7 +310,11 @@ export function PreferencesPanel() {
                   </div>
                 )}
                 {fetchSuccess && <div className="text-xs text-theme-green">{fetchSuccess}</div>}
-                {fetchError && <div className="text-xs text-destructive">{fetchError}</div>}
+                {(fetchError || settings.exchangeRate?.error) && (
+                  <InlineAlert variant="destructive" className="mt-2">
+                    {fetchError || settings.exchangeRate?.error}
+                  </InlineAlert>
+                )}
               </div>
             </div>
 
