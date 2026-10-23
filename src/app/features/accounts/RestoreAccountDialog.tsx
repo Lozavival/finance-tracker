@@ -30,8 +30,8 @@ export function RestoreAccountDialog({ account, open, onClose, onRestored }: Res
 
   function handleRestore() {
     if (!account) return;
-    dispatch({ type: 'account/unarchive', payload: { id: account.id } });
-    notify.success('notifications.ops.accountRestored', {
+    const p = dispatch({ type: 'account/unarchive', payload: { id: account.id } });
+    notify.successWhen(p, 'notifications.ops.accountRestored', {
       id: `account-restore-${account.id}`,
       params: { name: account.name },
     });

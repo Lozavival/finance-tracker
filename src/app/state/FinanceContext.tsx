@@ -7,7 +7,6 @@ import {
   buildTransferLegs,
   createTransactionId,
 } from '@/data/transactions';
-import { SEEDED_TRANSACTIONS, SEEDED_RECURRING_RULES } from '@/data/fixtures';
 import { getToday } from '@/data/dates';
 import { type CardStatement, buildStatements } from '@/data/cardStatements';
 import { type CashMovement, type AccountLedger, buildCashMovements, buildLedgers } from '@/data/ledger';
@@ -37,10 +36,11 @@ export type FinanceContextValue = {
   today: Date;
   loadedFromDate: Date | null;
   syncStatus: 'online' | 'offline';
+  loadStatus: 'loading' | 'ready' | 'error';
   reloadWorkspace: () => Promise<void>;
   ensureTransactionsLoaded: (fromDate?: Date | null) => Promise<void>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
-  saveTransactionDraft: (draft: TransactionDraft, editingTarget?: EditingTarget | null) => void;
+  saveTransactionDraft: (draft: TransactionDraft, editingTarget?: EditingTarget | null) => Promise<boolean>;
   deleteTransactionTarget: (
     target: Transaction,
     scope?: 'only-this' | 'this-and-future' | 'all',
@@ -64,11 +64,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const reportSyncErrorRef = useRef(reportSyncError);
   reportSyncErrorRef.current = reportSyncError;
 
-  const [transactions, setTransactions] = useState<Transaction[]>(SEEDED_TRANSACTIONS);
-  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>(SEEDED_RECURRING_RULES);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [historicalRollups, setHistoricalRollups] = useState<Record<string, number>>({});
   const [loadedFromDate, setLoadedFromDate] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<'online' | 'offline'>('online');
+  const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const loadedFromDateRef = useRef<Date | null>(null);
   loadedFromDateRef.current = loadedFromDate;
 
@@ -114,23 +115,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const reloadWorkspace = useCallback(async () => {
-    try {
-      const repo = getFinanceRepository();
-      const snapshot = await repo.loadWorkspace(90);
-      dispatch({ type: 'settings/hydrate', payload: snapshot.settings });
-      setTransactions(filterPendingTxIds(snapshot.transactions));
-      setRecurringRules(snapshot.recurringRules);
-      setHistoricalRollups(snapshot.historicalRollups);
-      setLoadedFromDate(snapshot.loadedFromDate);
-      setSyncStatus('online');
-
-      // Fetch live exchange rate by default when the workspace is loaded (unless manual override is set)
-      const currentRateState = snapshot.settings.exchangeRate;
+  const refreshLiveRate = useCallback(
+    (currentRateState?: { source: string; rate: number | null }) => {
       if (currentRateState?.source !== 'manual' || currentRateState?.rate === null) {
         void fetchLiveExchangeRate()
           .then(result => {
-            dispatch({
+            void dispatch({
               type: 'settings/updateExchangeRate',
               payload: {
                 rate: result.rate,
@@ -145,7 +135,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             const { key, params } = getExchangeRateErrorDetails(err);
             const errorMsg = t(key, params);
 
-            dispatch({
+            void dispatch({
               type: 'settings/updateExchangeRate',
               payload: {
                 error: errorMsg,
@@ -159,28 +149,64 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             });
           });
       }
+    },
+    [dispatch, notify, t],
+  );
+
+  const reloadWorkspace = useCallback(async () => {
+    try {
+      const repo = getFinanceRepository();
+      const snapshot = await repo.loadWorkspace(90);
+      void dispatch({ type: 'settings/hydrate', payload: snapshot.settings });
+      setTransactions(filterPendingTxIds(snapshot.transactions));
+      setRecurringRules(snapshot.recurringRules);
+      setHistoricalRollups(snapshot.historicalRollups);
+      setLoadedFromDate(snapshot.loadedFromDate);
+      setSyncStatus('online');
+      setLoadStatus('ready');
     } catch (err) {
       setSyncStatus('offline');
+      setLoadStatus('error');
       throw err;
     }
-  }, [dispatch, filterPendingTxIds, notify, t]);
+  }, [dispatch, filterPendingTxIds]);
 
   // Register reloadWorkspace as resync handler
   useEffect(() => {
     return registerResync(reloadWorkspace);
   }, [registerResync, reloadWorkspace]);
 
-  // Initial load
+  // Initial load and online listener
   useEffect(() => {
     let cancelled = false;
-    reloadWorkspace().catch(() => {
-      if (cancelled) return;
-      notify.error('notifications.system.offlineDesc', { id: 'initial-offline' });
-    });
+    reloadWorkspace()
+      .then(() => {
+        if (!cancelled) {
+          // Auto-fetch exchange rate only on initial successful workspace load
+          const repo = getFinanceRepository();
+          void repo
+            .loadWorkspace(90)
+            .then(snap => {
+              if (!cancelled) refreshLiveRate(snap.settings.exchangeRate);
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        notify.error('notifications.system.offlineDesc', { id: 'initial-offline' });
+      });
+
+    const handleOnline = () => {
+      void reloadWorkspace().catch(() => {});
+    };
+    window.addEventListener('online', handleOnline);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('online', handleOnline);
     };
-  }, [reloadWorkspace, notify]);
+  }, [reloadWorkspace, refreshLiveRate, notify]);
 
   const ensureTransactionsLoaded = useCallback(
     async (fromDate?: Date | null) => {
@@ -212,7 +238,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const ledgers = useMemo(() => buildLedgers(movements, settings), [movements, settings]);
 
   const saveTransactionDraft = useCallback(
-    (draft: TransactionDraft, editingTarget?: EditingTarget | null) => {
+    async (draft: TransactionDraft, editingTarget?: EditingTarget | null): Promise<boolean> => {
       setTransactions(prev => {
         let nextTransactions = [...prev];
         let existingIds: string[] = [];
@@ -300,15 +326,15 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         return nextTransactions;
       });
 
-      void getFinanceRepository()
-        .saveTransactionDraft(draft, editingTarget)
-        .then(result => {
-          setTransactions(filterPendingTxIds(result.transactions));
-          setRecurringRules(result.recurringRules);
-        })
-        .catch(err => {
-          reportSyncErrorRef.current(err);
-        });
+      try {
+        const result = await getFinanceRepository().saveTransactionDraft(draft, editingTarget);
+        setTransactions(filterPendingTxIds(result.transactions));
+        setRecurringRules(result.recurringRules);
+        return true;
+      } catch (err) {
+        reportSyncErrorRef.current(err);
+        return false;
+      }
     },
     [findAccount, isCreditCard, filterPendingTxIds],
   );
@@ -571,6 +597,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       today,
       loadedFromDate,
       syncStatus,
+      loadStatus,
       reloadWorkspace,
       ensureTransactionsLoaded,
       setTransactions,
@@ -592,6 +619,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       today,
       loadedFromDate,
       syncStatus,
+      loadStatus,
       reloadWorkspace,
       ensureTransactionsLoaded,
       saveTransactionDraft,

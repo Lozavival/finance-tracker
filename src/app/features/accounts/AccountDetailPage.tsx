@@ -185,7 +185,7 @@ export function AccountDetailPage({
   }
 
   function handleSaveAccount(updated: AccountConfig) {
-    dispatch({
+    const p = dispatch({
       type: 'account/update',
       payload: {
         id: updated.id,
@@ -202,7 +202,7 @@ export function AccountDetailPage({
         },
       },
     });
-    notify.success('notifications.ops.accountUpdated', {
+    notify.successWhen(p, 'notifications.ops.accountUpdated', {
       id: `account-saved-${updated.id}`,
       params: { name: updated.name },
     });

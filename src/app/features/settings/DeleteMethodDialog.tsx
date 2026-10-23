@@ -93,7 +93,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
     const deletedName = method.name;
     const targetMethod = availableReplacements.find(r => r.id === effectiveReplacementId);
 
-    dispatch({
+    const p = dispatch({
       type: 'method/remove',
       payload: {
         id: method.id,
@@ -101,7 +101,7 @@ export function DeleteMethodDialog({ method, onClose, transactions, onTransactio
       },
     });
 
-    notify.success('notifications.ops.methodDeleted', {
+    notify.successWhen(p, 'notifications.ops.methodDeleted', {
       id: `method-delete-${method.id}`,
       params: {
         name: deletedName,

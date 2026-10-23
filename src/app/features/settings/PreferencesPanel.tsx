@@ -92,7 +92,7 @@ export function PreferencesPanel() {
       const result = await fetchLiveExchangeRate();
       if (result && result.rate) {
         const nowIso = result.timestamp || new Date().toISOString();
-        dispatch({
+        void dispatch({
           type: 'settings/updateExchangeRate',
           payload: {
             rate: result.rate,
@@ -125,7 +125,7 @@ export function PreferencesPanel() {
 
       setFetchError(errorMsg);
       setFetchSuccess(null);
-      dispatch({
+      void dispatch({
         type: 'settings/updateExchangeRate',
         payload: {
           error: errorMsg,
@@ -143,8 +143,11 @@ export function PreferencesPanel() {
 
   function handleSaveManualRate() {
     const parsed = Number(manualRateInput);
-    if (!Number.isFinite(parsed) || parsed <= 0) return;
-    dispatch({
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      notify.validation('settings.invalidRate', { id: 'manual-rate-validation' });
+      return;
+    }
+    const savePromise = dispatch({
       type: 'settings/updateExchangeRate',
       payload: {
         rate: parsed,
@@ -153,17 +156,25 @@ export function PreferencesPanel() {
         error: null,
       },
     });
+    const formattedTime = new Date().toLocaleTimeString();
     setFetchSuccess(
       t('settings.rateUpdated', {
         rate: parsed.toFixed(4),
-        time: new Date().toLocaleTimeString(),
+        time: formattedTime,
       }),
     );
     setFetchError(null);
+    notify.successWhen(savePromise, 'settings.rateUpdated', {
+      id: 'rate-fetch-status',
+      params: {
+        rate: parsed.toFixed(4),
+        time: formattedTime,
+      },
+    });
   }
 
   function handleClearRate() {
-    dispatch({
+    void dispatch({
       type: 'settings/updateExchangeRate',
       payload: {
         rate: null,

@@ -70,8 +70,8 @@ export function ArchiveAccountDialog({
   function handleArchive() {
     if (isLastActiveAccount || !account) return;
     cancelRecurringRulesForAccount(account.id);
-    dispatch({ type: 'account/archive', payload: { id: account.id } });
-    notify.success('notifications.ops.accountArchived', {
+    const p = dispatch({ type: 'account/archive', payload: { id: account.id } });
+    notify.successWhen(p, 'notifications.ops.accountArchived', {
       id: `account-archive-${account.id}`,
       params: { name: account.name },
     });

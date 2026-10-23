@@ -651,6 +651,7 @@ export const en = {
     rateStatusNone: 'No rate set (Breakdown fallback active)',
     rateStatusLive: 'Live market rate',
     rateStatusManual: 'Manual rate',
+    invalidRate: 'Please enter a valid positive number for the exchange rate.',
     clearRate: 'Clear rate (Use breakdown-only mode)',
     previewTitle: 'Formatting Preview',
     previewDesc: 'Sample representation of currency and date formats based on current settings.',
@@ -819,8 +820,10 @@ export const en = {
       methodUpdated: 'Payment method "{name}" updated',
       methodDeleted: 'Payment method "{name}" deleted and reassigned to "{target}"',
       undone: 'Action undone',
-      syncFailed: 'Changes could not be saved to server. Resynced latest data.',
+      syncFailed: 'Changes could not be saved to server.',
+      resyncFailed: 'Could not sync latest data from server.',
     },
+    retry: 'Retry',
     alerts: {
       budgetWarningTitle: 'Budget Warning',
       budgetWarningDesc: "{category} has reached {percent}% of this month's budget (alert at {threshold}%).",
@@ -830,6 +833,8 @@ export const en = {
     system: {
       offlineTitle: 'Offline Mode Active',
       offlineDesc: 'Using local data. Changes may not be synced to the server.',
+      offlineBanner: 'Can’t reach the server — showing no data. Changes may not be saved.',
+      loading: 'Loading workspace data...',
     },
     preferences: {
       title: 'Notifications',
@@ -853,6 +858,14 @@ export const en = {
       clearHistory: 'Clear Activity History',
       clearHistoryDesc: 'Permanently remove all logged operational events from local history.',
       clearHistoryConfirm: 'Activity history cleared.',
+    },
+  },
+  errors: {
+    boundary: {
+      title: 'Something went wrong',
+      description: 'An unexpected application error occurred while displaying this page.',
+      reload: 'Reload Page',
+      goHome: 'Back to Dashboard',
     },
   },
 };

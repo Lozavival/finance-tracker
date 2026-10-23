@@ -46,7 +46,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
   function handleSaveType(saved: TransactionTypeConfig, linkedGoalId?: string) {
     const isExisting = settings.transactionTypes.some(t => t.id === saved.id);
     if (isExisting) {
-      dispatch({
+      const p = dispatch({
         type: 'type/update',
         payload: {
           id: saved.id,
@@ -58,13 +58,13 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
           },
         },
       });
-      notify.success('notifications.ops.typeUpdated', {
+      notify.successWhen(p, 'notifications.ops.typeUpdated', {
         id: `type-save-${saved.id}`,
         params: { name: saved.name },
       });
     } else {
-      dispatch({ type: 'type/add', payload: saved });
-      notify.success('notifications.ops.typeAdded', {
+      const p = dispatch({ type: 'type/add', payload: saved });
+      notify.successWhen(p, 'notifications.ops.typeAdded', {
         id: `type-save-${saved.id}`,
         params: { name: saved.name },
       });
@@ -78,13 +78,13 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
       } else {
         delete nextMappings[saved.id];
       }
-      dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
+      void dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
     } else {
       // Clear mapping if converted to income
       if (settings.goals.typeMappings[saved.id]) {
         const nextMappings = { ...settings.goals.typeMappings };
         delete nextMappings[saved.id];
-        dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
+        void dispatch({ type: 'goals/updateTypeMappings', payload: { mappings: nextMappings } });
       }
     }
   }
@@ -97,7 +97,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
     } else {
       nextList.push(...incomeTypes, ...reorderedList);
     }
-    dispatch({ type: 'type/reorder', payload: { types: nextList } });
+    void dispatch({ type: 'type/reorder', payload: { types: nextList } });
   }
 
   const incomeReorder = useReorder(incomeTypes, list => handleReorderDirection('income', list));

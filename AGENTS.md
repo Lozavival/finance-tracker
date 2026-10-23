@@ -56,6 +56,7 @@ src/
 │   └── seedDatabase.ts           # Production / initial database population engine
 ├── server/                       # Server plugins and repository adapters
 │   ├── apiPlugin.ts              # Vite dev server middleware API routes (/api/finance/*)
+│   ├── rpcSchemas.ts             # Zod input validation schemas for RPC actions
 │   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
@@ -68,8 +69,9 @@ src/
     │   └── settings/             # Workspace preferences, payment methods, transaction types, NotificationsPanel
     ├── components/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
-    │   └── shared/               # Reusable domain components (CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
+    │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
     ├── lib/
+    │   ├── logger.ts             # Dev environment logger wrapper
     │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
     │   ├── analytics.ts          # Financial KPI calculations and spending analysis
@@ -134,10 +136,15 @@ src/
   - **Activity Log**: Persistent 30-day operation log displayed in the Notification Center's Activity tab with unread tracking.
 - **Anti-Spam Operation Policy**:
   - **Silent**: In-page interactive adjustments (sliders, reordering, view toggles, currency scope filters) must never trigger toasts.
-  - **Success (`notify.success`)**: Confirms entity creation, editing, or state changes where dialogs close or navigation occurs (e.g. saving a transaction, adding an account, modifying categories).
+  - **Success (`notify.success` / `notify.successWhen`)**: Confirms entity creation, editing, or state changes where dialogs close or navigation occurs (e.g. saving a transaction, adding an account, modifying categories). When mutations are asynchronous, use `notify.successWhen(promise, ...)` to ensure confirmation is displayed only upon successful server persistence.
   - **Undoable (`notify.undoable`)**: **MANDATORY for all deletions and exclusions** (deleting a transaction, canceling/deleting recurring rules, deleting an account, deleting a goal category). Provide an explicit `onUndo` callback that restores the removed entity immediately.
   - **Validation (`notify.validation`)**: Ephemeral warning/error toasts for blocked forms or allocation errors. Never logged to the persistent activity log.
-  - **Save & Sync Failures (`reportSyncError`)**: Any repository persistence failure must be reported through `reportSyncError`, triggering debounced error notifications and workspace resynchronization without crashing or silently swallowing errors (`.catch(() => {})` is forbidden).
+  - **Save & Sync Failures (`reportSyncError`)**: Any repository persistence failure must be reported through `reportSyncError`, triggering debounced error notifications and circuit-broken workspace resynchronization without crashing or silently swallowing errors (`.catch(() => {})` is forbidden).
+- **Error Boundaries & Resilient Storage**:
+  - Always guard application rendering at the root and route level using `ErrorBoundary` and `ErrorFallback`.
+  - Always guard browser `localStorage` and `sessionStorage` accesses in `try/catch` blocks to prevent fatal initialization crashes in restricted browser environments.
+  - Production initial client state must start with clean/empty defaults, never with test fixtures (`SEEDED_*` or `DEV_*`).
+  - Validate incoming API payloads via Zod schemas to reject malformed requests with 400 Bad Request instead of internal server errors.
 - **Single Source of Truth for Financial Alerts**: Both the top navigation `NotificationCenter` and the dashboard `DashboardKpisSection` (`SmartInsightsContent`) must derive active alerts exclusively through `useFinancialAlerts()`. Do not decouple dashboard signals from notification center alerts.
 
 ### 5. TypeScript, i18n & Code Quality

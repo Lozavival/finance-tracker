@@ -381,7 +381,7 @@ export function AccountsPage({
 
   function handleSaveAccount(account: AccountConfig) {
     if (editingAccount) {
-      dispatch({
+      const p = dispatch({
         type: 'account/update',
         payload: {
           id: account.id,
@@ -399,14 +399,14 @@ export function AccountsPage({
           },
         },
       });
-      notify.success('notifications.ops.accountUpdated', {
+      notify.successWhen(p, 'notifications.ops.accountUpdated', {
         id: `account-saved-${account.id}`,
         params: { name: account.name },
       });
       setEditingAccount(null);
     } else {
-      dispatch({ type: 'account/add', payload: account });
-      notify.success('notifications.ops.accountCreated', {
+      const p = dispatch({ type: 'account/add', payload: account });
+      notify.successWhen(p, 'notifications.ops.accountCreated', {
         id: `account-saved-${account.id}`,
         params: { name: account.name },
       });

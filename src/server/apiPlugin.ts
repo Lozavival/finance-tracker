@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { Plugin } from 'vite';
+import type { Plugin, ViteDevServer } from 'vite';
 import { createDatabaseConnection } from '../db/client';
 import { SqliteRepository } from './sqliteRepository';
 import {
@@ -19,19 +19,48 @@ import { parseLocalDate } from '../app/data/dates';
 import type { AccountConfig, PaymentMethodConfig, Settings, TransactionTypeConfig } from '../app/data/settings';
 import type { GoalCategory } from '../app/data/goals';
 import type { SupportedCurrency, SupportedLocale } from '../app/i18n/types';
+import { rpcRequestSchema } from './rpcSchemas';
 
-function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+const MAX_BODY_BYTES = 1024 * 1024; // 1 MB limit
+
+class BodyTooLargeError extends Error {
+  constructor() {
+    super('Payload too large');
+    this.name = 'BodyTooLargeError';
+  }
+}
+
+class MalformedJsonError extends Error {
+  constructor(message = 'Malformed JSON body') {
+    super(message);
+    this.name = 'MalformedJsonError';
+  }
+}
+
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
+    let receivedBytes = 0;
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    req.on('data', (chunk: Buffer) => {
+      receivedBytes += chunk.length;
+      if (receivedBytes > MAX_BODY_BYTES) {
+        req.destroy();
+        reject(new BodyTooLargeError());
+        return;
+      }
+      chunks.push(chunk);
+    });
+
     req.on('end', () => {
       try {
         const raw = Buffer.concat(chunks).toString('utf-8');
-        resolve(raw ? (JSON.parse(raw) as Record<string, unknown>) : {});
+        resolve(raw ? JSON.parse(raw) : {});
       } catch (err) {
-        reject(err);
+        reject(new MalformedJsonError(err instanceof Error ? err.message : undefined));
       }
     });
+
     req.on('error', reject);
   });
 }
@@ -42,7 +71,7 @@ function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
-export function createFinanceApiMiddleware(dbPath?: string) {
+export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteDevServer['config']['logger']) {
   let repo: SqliteRepository | null = null;
 
   const getRepo = (): SqliteRepository => {
@@ -76,9 +105,19 @@ export function createFinanceApiMiddleware(dbPath?: string) {
         const toDateStr = url.searchParams.get('toDate');
         const accountId = url.searchParams.get('accountId') ?? undefined;
 
+        let fromDate: Date | undefined;
+        let toDate: Date | undefined;
+        try {
+          if (fromDateStr) fromDate = parseLocalDate(fromDateStr);
+          if (toDateStr) toDate = parseLocalDate(toDateStr);
+        } catch {
+          sendJson(res, 400, { error: 'Invalid date query format. Expected YYYY-MM-DD.' });
+          return;
+        }
+
         const txs = await repository.fetchTransactions({
-          fromDate: fromDateStr ? parseLocalDate(fromDateStr) : undefined,
-          toDate: toDateStr ? parseLocalDate(toDateStr) : undefined,
+          fromDate,
+          toDate,
           accountId,
         });
         sendJson(res, 200, { transactions: txs.map(serializeTransaction) });
@@ -86,15 +125,36 @@ export function createFinanceApiMiddleware(dbPath?: string) {
       }
 
       if (req.method === 'POST' && url.pathname === '/api/rpc') {
-        const body = await readJsonBody(req);
-        const action = body.action as string;
-        const payload = (body.payload ?? {}) as Record<string, unknown>;
+        let rawBody: unknown;
+        try {
+          rawBody = await readJsonBody(req);
+        } catch (err) {
+          if (err instanceof BodyTooLargeError) {
+            sendJson(res, 413, { error: 'Payload too large (limit is 1MB)' });
+            return;
+          }
+          if (err instanceof MalformedJsonError) {
+            sendJson(res, 400, { error: 'Malformed JSON payload' });
+            return;
+          }
+          throw err;
+        }
 
-        switch (action) {
+        const parseResult = rpcRequestSchema.safeParse(rawBody);
+        if (!parseResult.success) {
+          sendJson(res, 400, {
+            error: 'Invalid RPC request payload',
+            issues: parseResult.error.issues,
+          });
+          return;
+        }
+
+        const request = parseResult.data;
+        switch (request.action) {
           case 'saveTransactionDraft': {
-            const draft = deserializeDraft(payload.draft as SerializedTransactionDraft);
+            const draft = deserializeDraft(request.payload.draft as SerializedTransactionDraft);
             const editingTarget = deserializeEditingTarget(
-              payload.editingTarget as SerializedEditingTarget | null | undefined,
+              request.payload.editingTarget as SerializedEditingTarget | null | undefined,
             );
             const result = await repository.saveTransactionDraft(draft, editingTarget);
             sendJson(res, 200, {
@@ -105,8 +165,8 @@ export function createFinanceApiMiddleware(dbPath?: string) {
           }
 
           case 'deleteTransactionTarget': {
-            const target = deserializeTransaction(payload.target as SerializedTransaction);
-            const scope = payload.scope as 'only-this' | 'this-and-future' | 'all' | undefined;
+            const target = deserializeTransaction(request.payload.target as SerializedTransaction);
+            const scope = request.payload.scope as 'only-this' | 'this-and-future' | 'all' | undefined;
             const result = await repository.deleteTransactionTarget(target, scope);
             sendJson(res, 200, {
               transactions: result.transactions.map(serializeTransaction),
@@ -116,8 +176,8 @@ export function createFinanceApiMiddleware(dbPath?: string) {
           }
 
           case 'cancelRecurringRule': {
-            const ruleId = payload.ruleId as string;
-            const effectiveDate = parseLocalDate(payload.effectiveDate as string);
+            const ruleId = request.payload.ruleId;
+            const effectiveDate = parseLocalDate(request.payload.effectiveDate);
             const result = await repository.cancelRecurringRule(ruleId, effectiveDate);
             sendJson(res, 200, {
               transactions: result.transactions.map(serializeTransaction),
@@ -127,7 +187,7 @@ export function createFinanceApiMiddleware(dbPath?: string) {
           }
 
           case 'deleteRecurringRule': {
-            const ruleId = payload.ruleId as string;
+            const ruleId = request.payload.ruleId;
             const result = await repository.deleteRecurringRule(ruleId);
             sendJson(res, 200, {
               transactions: result.transactions.map(serializeTransaction),
@@ -137,15 +197,15 @@ export function createFinanceApiMiddleware(dbPath?: string) {
           }
 
           case 'createAccount': {
-            const account = deserializeAccount(payload.account as SerializedAccountConfig);
+            const account = deserializeAccount(request.payload.account as SerializedAccountConfig);
             await repository.createAccount(account);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'updateAccount': {
-            const id = payload.id as string;
-            const { openingDate: rawOpeningDate, ...restChanges } = payload.changes as Partial<
+            const id = request.payload.id;
+            const { openingDate: rawOpeningDate, ...restChanges } = request.payload.changes as Partial<
               Omit<SerializedAccountConfig, 'id'>
             >;
             const changes: Partial<Omit<AccountConfig, 'id'>> = {
@@ -158,38 +218,40 @@ export function createFinanceApiMiddleware(dbPath?: string) {
           }
 
           case 'archiveAccount': {
-            const id = payload.id as string;
-            const cancelRecurrences = Boolean(payload.cancelRecurrences);
-            const effectiveDate = payload.effectiveDate ? parseLocalDate(payload.effectiveDate as string) : undefined;
+            const id = request.payload.id;
+            const cancelRecurrences = Boolean(request.payload.cancelRecurrences);
+            const effectiveDate = request.payload.effectiveDate
+              ? parseLocalDate(request.payload.effectiveDate)
+              : undefined;
             await repository.archiveAccount(id, cancelRecurrences, effectiveDate);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'restoreAccount': {
-            const id = payload.id as string;
+            const id = request.payload.id;
             await repository.restoreAccount(id);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'deleteAccount': {
-            const id = payload.id as string;
+            const id = request.payload.id;
             await repository.deleteAccount(id);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'createTransactionType': {
-            await repository.createTransactionType(payload.type as TransactionTypeConfig);
+            await repository.createTransactionType(request.payload.type as TransactionTypeConfig);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'updateTransactionType': {
             await repository.updateTransactionType(
-              payload.id as string,
-              payload.changes as Partial<Omit<TransactionTypeConfig, 'id'>>,
+              request.payload.id,
+              request.payload.changes as Partial<Omit<TransactionTypeConfig, 'id'>>,
             );
             sendJson(res, 200, { ok: true });
             return;
@@ -197,68 +259,62 @@ export function createFinanceApiMiddleware(dbPath?: string) {
 
           case 'reorderTransactionTypes': {
             await repository.reorderTransactionTypes(
-              payload.direction as 'income' | 'expense',
-              payload.orderedIds as string[],
+              request.payload.direction as 'income' | 'expense',
+              request.payload.orderedIds,
             );
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'reassignAndDeleteTransactionType': {
-            await repository.reassignAndDeleteTransactionType(
-              payload.fromTypeId as string,
-              payload.toTypeId as string | undefined,
-            );
+            await repository.reassignAndDeleteTransactionType(request.payload.fromTypeId, request.payload.toTypeId);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'createPaymentMethod': {
-            await repository.createPaymentMethod(payload.method as PaymentMethodConfig);
+            await repository.createPaymentMethod(request.payload.method as PaymentMethodConfig);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'updatePaymentMethod': {
             await repository.updatePaymentMethod(
-              payload.id as string,
-              payload.changes as Partial<Omit<PaymentMethodConfig, 'id'>>,
+              request.payload.id,
+              request.payload.changes as Partial<Omit<PaymentMethodConfig, 'id'>>,
             );
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'reorderPaymentMethods': {
-            await repository.reorderPaymentMethods(payload.orderedIds as string[]);
+            await repository.reorderPaymentMethods(request.payload.orderedIds);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'reassignAndDeletePaymentMethod': {
-            await repository.reassignAndDeletePaymentMethod(
-              payload.fromMethodId as string,
-              payload.toMethodId as string | undefined,
-            );
+            await repository.reassignAndDeletePaymentMethod(request.payload.fromMethodId, request.payload.toMethodId);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'updateReferenceIncome': {
-            await repository.updateReferenceIncome(payload.incomeCents as number);
+            await repository.updateReferenceIncome(request.payload.incomeCents);
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'updateGoalsMode': {
-            await repository.updateGoalsMode(payload.mode as 'percentage' | 'currency');
+            await repository.updateGoalsMode(request.payload.mode as 'percentage' | 'currency');
             sendJson(res, 200, { ok: true });
             return;
           }
 
           case 'saveGoalCategories': {
             await repository.saveGoalCategories(
-              payload.categories as GoalCategory[],
-              payload.typeMappings as Record<string, string>,
+              request.payload.categories as GoalCategory[],
+              request.payload.typeMappings,
             );
             sendJson(res, 200, { ok: true });
             return;
@@ -266,7 +322,7 @@ export function createFinanceApiMiddleware(dbPath?: string) {
 
           case 'updatePreferences': {
             await repository.updatePreferences(
-              payload.changes as {
+              request.payload.changes as {
                 language?: SupportedLocale;
                 currency?: SupportedCurrency;
                 exchangeRate?: Partial<Settings['exchangeRate']>;
@@ -278,35 +334,35 @@ export function createFinanceApiMiddleware(dbPath?: string) {
 
           case 'resetSettings': {
             const snapshot = await repository.resetSettings(
-              payload.seedMode as 'production' | 'development' | undefined,
+              request.payload.seedMode as 'production' | 'development' | undefined,
             );
             sendJson(res, 200, serializeSnapshot(snapshot));
             return;
           }
-
-          default:
-            sendJson(res, 400, { error: `Unknown action: ${action}` });
-            return;
         }
       }
 
       sendJson(res, 404, { error: 'Not found' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
-      sendJson(res, 500, { error: message });
+      if (serverLogger) {
+        serverLogger.error(error instanceof Error ? error.stack || error.message : String(error));
+      }
+      sendJson(res, 500, { error: 'Internal server error' });
     }
   };
 }
 
 export function financeApiPlugin(dbPath?: string): Plugin {
-  const middleware = createFinanceApiMiddleware(dbPath);
+  let serverLogger: ViteDevServer['config']['logger'] | undefined;
   return {
     name: 'finance-tracker-api',
     configureServer(server) {
-      server.middlewares.use(middleware);
+      serverLogger = server.config.logger;
+      server.middlewares.use(createFinanceApiMiddleware(dbPath, serverLogger));
     },
     configurePreviewServer(server) {
-      server.middlewares.use(middleware);
+      serverLogger = server.config.logger;
+      server.middlewares.use(createFinanceApiMiddleware(dbPath, serverLogger));
     },
   };
 }

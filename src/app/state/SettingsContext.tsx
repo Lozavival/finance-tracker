@@ -11,14 +11,16 @@ import {
   isCreditCard as checkIsCreditCard,
   getAllowedPaymentMethodIds as lookupAllowedPaymentMethods,
 } from '@/data/settings';
-import { DEV_DEFAULT_SETTINGS } from '@/data/fixtures';
+import { PRODUCTION_DEFAULT_SETTINGS } from '@/data/defaults/defaultSettings';
 import { getFinanceRepository } from '@/data/repository';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
 import { useNotifications } from './NotificationsContext';
 
+export type SettingsDispatch = (action: SettingsAction) => Promise<boolean>;
+
 export type SettingsContextValue = {
   settings: Settings;
-  dispatch: React.Dispatch<SettingsAction>;
+  dispatch: SettingsDispatch;
   incomeTypes: TransactionTypeConfig[];
   expenseTypes: TransactionTypeConfig[];
   typesByDirection: Record<Direction, TransactionTypeConfig[]>;
@@ -36,7 +38,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({
   children,
-  initialSettings = DEV_DEFAULT_SETTINGS,
+  initialSettings = PRODUCTION_DEFAULT_SETTINGS,
 }: {
   children: React.ReactNode;
   initialSettings?: Settings;
@@ -50,7 +52,7 @@ export function SettingsProvider({
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  const dispatch = useCallback<React.Dispatch<SettingsAction>>(
+  const dispatch = useCallback<SettingsDispatch>(
     action => {
       const prevState = settingsRef.current;
       const nextState = settingsReducer(prevState, action);
@@ -58,63 +60,54 @@ export function SettingsProvider({
       rawDispatch(action);
 
       const repo = getFinanceRepository();
+
+      const persist = (p: Promise<unknown>): Promise<boolean> =>
+        p.then(
+          () => true,
+          err => {
+            onPersistError(err);
+            return false;
+          },
+        );
+
       switch (action.type) {
         case 'settings/hydrate':
-          break;
+          return Promise.resolve(true);
         case 'type/add':
-          void repo.createTransactionType(action.payload).catch(onPersistError);
-          break;
+          return persist(repo.createTransactionType(action.payload));
         case 'type/update':
-          void repo.updateTransactionType(action.payload.id, action.payload.changes).catch(onPersistError);
-          break;
+          return persist(repo.updateTransactionType(action.payload.id, action.payload.changes));
         case 'type/remove':
-          void repo
-            .reassignAndDeleteTransactionType(action.payload.id, action.payload.replacementId)
-            .catch(onPersistError);
-          break;
+          return persist(repo.reassignAndDeleteTransactionType(action.payload.id, action.payload.replacementId));
         case 'type/reorder':
-          void repo
-            .reorderTransactionTypes(
+          return persist(
+            repo.reorderTransactionTypes(
               'expense',
               action.payload.types.map(t => t.id),
-            )
-            .catch(onPersistError);
-          break;
+            ),
+          );
         case 'method/add':
-          void repo.createPaymentMethod(action.payload).catch(onPersistError);
-          break;
+          return persist(repo.createPaymentMethod(action.payload));
         case 'method/update':
-          void repo.updatePaymentMethod(action.payload.id, action.payload.changes).catch(onPersistError);
-          break;
+          return persist(repo.updatePaymentMethod(action.payload.id, action.payload.changes));
         case 'method/remove':
-          void repo
-            .reassignAndDeletePaymentMethod(action.payload.id, action.payload.replacementId)
-            .catch(onPersistError);
-          break;
+          return persist(repo.reassignAndDeletePaymentMethod(action.payload.id, action.payload.replacementId));
         case 'method/reorder':
-          void repo.reorderPaymentMethods(action.payload.methods.map(m => m.id)).catch(onPersistError);
-          break;
+          return persist(repo.reorderPaymentMethods(action.payload.methods.map(m => m.id)));
         case 'account/add':
-          void repo.createAccount(action.payload).catch(onPersistError);
-          break;
+          return persist(repo.createAccount(action.payload));
         case 'account/update':
-          void repo.updateAccount(action.payload.id, action.payload.changes).catch(onPersistError);
-          break;
+          return persist(repo.updateAccount(action.payload.id, action.payload.changes));
         case 'account/remove':
-          void repo.deleteAccount(action.payload.id).catch(onPersistError);
-          break;
+          return persist(repo.deleteAccount(action.payload.id));
         case 'account/archive':
-          void repo.archiveAccount(action.payload.id, true).catch(onPersistError);
-          break;
+          return persist(repo.archiveAccount(action.payload.id, true));
         case 'account/unarchive':
-          void repo.restoreAccount(action.payload.id).catch(onPersistError);
-          break;
+          return persist(repo.restoreAccount(action.payload.id));
         case 'goals/updateReferenceIncome':
-          void repo.updateReferenceIncome(action.payload.income).catch(onPersistError);
-          break;
+          return persist(repo.updateReferenceIncome(action.payload.income));
         case 'goals/updateMode':
-          void repo.updateGoalsMode(action.payload.mode).catch(onPersistError);
-          break;
+          return persist(repo.updateGoalsMode(action.payload.mode));
         case 'goals/updateAllocations':
         case 'goals/addCategory':
         case 'goals/updateCategory':
@@ -122,11 +115,15 @@ export function SettingsProvider({
         case 'goals/resetAllocations':
         case 'goals/updateTypeMappings':
         case 'goals/restore':
-          void repo.saveGoalCategories(nextState.goals.categories, nextState.goals.typeMappings).catch(onPersistError);
-          break;
-        case 'settings/updateExchangeRate':
-          void repo.updatePreferences({ exchangeRate: action.payload }).catch(onPersistError);
-          break;
+          return persist(repo.saveGoalCategories(nextState.goals.categories, nextState.goals.typeMappings));
+        case 'settings/updateExchangeRate': {
+          const payload = action.payload;
+          // Only persist meaningful rate fields, ignore transient UI error/isLoading states
+          if ('rate' in payload || 'lastUpdated' in payload || 'source' in payload) {
+            return persist(repo.updatePreferences({ exchangeRate: payload }));
+          }
+          return Promise.resolve(true);
+        }
       }
     },
     [onPersistError],

@@ -11,6 +11,7 @@ import React, {
 import { toast } from 'sonner';
 import { useI18n, type TranslationKey } from '@/i18n';
 import { type TranslationParams } from '@/i18n/types';
+import { logger } from '@/lib/logger';
 import {
   type ActivityEntry,
   type AlertState,
@@ -27,10 +28,17 @@ import {
   saveStoredAlertState,
 } from './notificationStorage';
 
+export type NotifyAction = {
+  label: string;
+  onClick: () => void;
+};
+
 export type NotifyOptions = {
   id?: string;
   params?: TranslationParams;
   log?: boolean;
+  durationMs?: number;
+  action?: NotifyAction;
 };
 
 export type UndoableOptions = {
@@ -48,6 +56,7 @@ export type NotificationsContextValue = {
     error: (key: TranslationKey, opts?: NotifyOptions) => void;
     validation: (key: TranslationKey, opts?: NotifyOptions) => void;
     undoable: (opts: UndoableOptions) => void;
+    successWhen: (persisted: Promise<boolean>, key: TranslationKey, opts?: NotifyOptions) => void;
   };
   reportSyncError: (error: unknown) => void;
   registerResync: (fn: () => Promise<void>) => () => void;
@@ -80,6 +89,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const resyncCallbacksRef = useRef<Set<() => Promise<void>>>(new Set());
   const syncDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isResyncingRef = useRef(false);
+  const lastResyncTimestampRef = useRef(0);
 
   useEffect(() => {
     saveStoredPreferences(preferences);
@@ -140,7 +151,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
         toast.error(t(key, opts?.params), {
           id: opts?.id,
-          duration: ERROR_TOAST_DURATION,
+          duration: opts?.durationMs ?? ERROR_TOAST_DURATION,
+          action: opts?.action
+            ? {
+                label: opts.action.label,
+                onClick: opts.action.onClick,
+              }
+            : undefined,
         });
       },
       validation: (key: TranslationKey, opts?: NotifyOptions) => {
@@ -165,25 +182,80 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           },
         });
       },
+      successWhen: (persisted: Promise<boolean>, key: TranslationKey, opts?: NotifyOptions) => {
+        void persisted.then(success => {
+          if (success) {
+            if (opts?.log !== false) {
+              logActivity('success', key, opts?.params);
+            }
+            if (prefsRef.current.successToasts) {
+              toast.success(t(key, opts?.params), {
+                id: opts?.id,
+                duration: opts?.durationMs ?? DEFAULT_TOAST_DURATION,
+                action: opts?.action
+                  ? {
+                      label: opts.action.label,
+                      onClick: opts.action.onClick,
+                    }
+                  : undefined,
+              });
+            }
+          }
+        });
+      },
     }),
     [t, logActivity],
   );
 
   const reportSyncError = useCallback(
-    (_error: unknown) => {
+    (error: unknown) => {
+      logger.error('Sync persistence failed:', error);
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      const sanitizedReason = rawMessage.slice(0, 120);
+
+      logActivity('error', 'notifications.ops.syncFailed', { reason: sanitizedReason });
+
       if (syncDebounceTimerRef.current) {
         clearTimeout(syncDebounceTimerRef.current);
       }
 
-      syncDebounceTimerRef.current = setTimeout(() => {
-        notify.error('notifications.ops.syncFailed', { id: 'sync-error' });
-        // Trigger all registered resync handlers
-        for (const resync of resyncCallbacksRef.current) {
-          void resync().catch(() => {});
+      syncDebounceTimerRef.current = setTimeout(async () => {
+        notify.error('notifications.ops.syncFailed', { id: 'sync-error', log: false });
+
+        const now = Date.now();
+        // Circuit breaker: skip if already resyncing or resynced in last 10 seconds
+        if (isResyncingRef.current || now - lastResyncTimestampRef.current < 10000) {
+          logger.warn('Skipping redundant resync due to circuit breaker');
+          return;
+        }
+
+        isResyncingRef.current = true;
+        lastResyncTimestampRef.current = now;
+
+        try {
+          const promises = Array.from(resyncCallbacksRef.current).map(fn => fn());
+          const results = await Promise.allSettled(promises);
+          const hasFailure = results.some(r => r.status === 'rejected');
+
+          if (hasFailure) {
+            notify.error('notifications.ops.resyncFailed', {
+              id: 'sync-error',
+              durationMs: 15000,
+              action: {
+                label: t('notifications.retry'),
+                onClick: () => {
+                  lastResyncTimestampRef.current = 0;
+                  reportSyncError(new Error('Manual resync triggered'));
+                },
+              },
+            });
+          }
+        } finally {
+          isResyncingRef.current = false;
         }
       }, 800);
     },
-    [notify],
+    [notify, logActivity, t],
   );
 
   const registerResync = useCallback((fn: () => Promise<void>) => {

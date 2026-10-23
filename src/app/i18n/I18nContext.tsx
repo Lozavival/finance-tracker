@@ -12,7 +12,6 @@ import {
   DEFAULT_CURRENCY,
 } from './types';
 import { dictionaries, en, type Translations } from './locales';
-import { getFinanceRepository } from '@/data/repository';
 
 export type TranslationKey = NestedKeyOf<Translations>;
 
@@ -42,18 +41,26 @@ const STORAGE_CURRENCY_KEY = 'finance-tracker_currency';
 
 function getStoredLocale(): SupportedLocale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
-  const stored = localStorage.getItem(STORAGE_LOCALE_KEY);
-  if (stored && SUPPORTED_LOCALES.some(l => l.code === stored)) {
-    return stored as SupportedLocale;
+  try {
+    const stored = localStorage.getItem(STORAGE_LOCALE_KEY);
+    if (stored && SUPPORTED_LOCALES.some(l => l.code === stored)) {
+      return stored as SupportedLocale;
+    }
+  } catch {
+    // Ignore storage errors and fall back to default
   }
   return DEFAULT_LOCALE;
 }
 
 function getStoredCurrency(): SupportedCurrency {
   if (typeof window === 'undefined') return DEFAULT_CURRENCY;
-  const stored = localStorage.getItem(STORAGE_CURRENCY_KEY);
-  if (stored && SUPPORTED_CURRENCIES.some(c => c.code === stored)) {
-    return stored as SupportedCurrency;
+  try {
+    const stored = localStorage.getItem(STORAGE_CURRENCY_KEY);
+    if (stored && SUPPORTED_CURRENCIES.some(c => c.code === stored)) {
+      return stored as SupportedCurrency;
+    }
+  } catch {
+    // Ignore storage errors and fall back to default
   }
   return DEFAULT_CURRENCY;
 }
@@ -85,22 +92,24 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback((newLocale: SupportedLocale) => {
     setLocaleState(newLocale);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_LOCALE_KEY, newLocale);
+      try {
+        localStorage.setItem(STORAGE_LOCALE_KEY, newLocale);
+      } catch {
+        // Storage write failures handled gracefully
+      }
       document.documentElement.lang = newLocale;
     }
-    void getFinanceRepository()
-      .updatePreferences({ language: newLocale })
-      .catch(() => {});
   }, []);
 
   const setCurrency = useCallback((newCurrency: SupportedCurrency) => {
     setCurrencyState(newCurrency);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_CURRENCY_KEY, newCurrency);
+      try {
+        localStorage.setItem(STORAGE_CURRENCY_KEY, newCurrency);
+      } catch {
+        // Storage write failures handled gracefully
+      }
     }
-    void getFinanceRepository()
-      .updatePreferences({ currency: newCurrency })
-      .catch(() => {});
   }, []);
 
   useEffect(() => {

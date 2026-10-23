@@ -18,15 +18,15 @@ import { useI18n } from '@/i18n';
 
 type GoalsConfigPanelProps = {
   goalsConfig: GoalsConfig;
-  onUpdateReferenceIncome: (income: number) => void;
-  onUpdateMode: (mode: 'percentage' | 'currency') => void;
-  onUpdateAllocations: (categories: GoalCategory[]) => void;
-  onAddCategory: (category: GoalCategory) => void;
-  onUpdateCategory: (id: string, changes: Partial<Omit<GoalCategory, 'id'>>) => void;
-  onDeleteCategory: (id: string) => void;
-  onResetDefaults?: () => void;
-  onUpdateTypeMappings: (mappings: Record<string, string>) => void;
-  onRestoreGoals?: (snapshot: { categories: GoalCategory[]; typeMappings: Record<string, string> }) => void;
+  onUpdateReferenceIncome: (income: number) => Promise<boolean>;
+  onUpdateMode: (mode: 'percentage' | 'currency') => Promise<boolean>;
+  onUpdateAllocations: (categories: GoalCategory[]) => Promise<boolean>;
+  onAddCategory: (category: GoalCategory) => Promise<boolean>;
+  onUpdateCategory: (id: string, changes: Partial<Omit<GoalCategory, 'id'>>) => Promise<boolean>;
+  onDeleteCategory: (id: string) => Promise<boolean>;
+  onResetDefaults?: () => Promise<boolean>;
+  onUpdateTypeMappings: (mappings: Record<string, string>) => Promise<boolean>;
+  onRestoreGoals?: (snapshot: { categories: GoalCategory[]; typeMappings: Record<string, string> }) => Promise<boolean>;
   onBackToBudget: () => void;
 };
 
@@ -96,8 +96,8 @@ export function GoalsConfigPanel({
   const isExactly100 = Math.abs(totalAllocated - 100) < 0.05;
 
   function handleSaveIncome() {
-    onUpdateReferenceIncome(dollarsToCents(numericReferenceIncome));
-    notify.success('goals.toasts.incomeUpdated', { id: 'goals-income-updated' });
+    const p = onUpdateReferenceIncome(dollarsToCents(numericReferenceIncome));
+    notify.successWhen(p, 'goals.toasts.incomeUpdated', { id: 'goals-income-updated' });
   }
 
   function handleCategorySliderChange(categoryId: string, newPercentage: number) {
@@ -135,10 +135,10 @@ export function GoalsConfigPanel({
     }
     const incomeCents = dollarsToCents(numericReferenceIncome);
     if (incomeCents !== goalsConfig.referenceMonthlyIncome) {
-      onUpdateReferenceIncome(incomeCents);
+      void onUpdateReferenceIncome(incomeCents);
     }
-    onUpdateAllocations(localCategories);
-    notify.success('goals.toasts.goalsSaved', { id: 'goals-saved' });
+    const p = onUpdateAllocations(localCategories);
+    notify.successWhen(p, 'goals.toasts.goalsSaved', { id: 'goals-saved' });
   }
 
   function handleResetAllocations() {
@@ -349,7 +349,7 @@ export function GoalsConfigPanel({
         allCategories={goalsConfig.categories}
         onSave={(saved, mappedTypeIds) => {
           if (categoryModal.category) {
-            onUpdateCategory(saved.id, {
+            const p = onUpdateCategory(saved.id, {
               name: saved.name,
               percentage: saved.percentage,
               color: saved.color,
@@ -358,14 +358,14 @@ export function GoalsConfigPanel({
             });
             // Also update localCategories immediately
             setLocalCategories(prev => prev.map(c => (c.id === saved.id ? saved : c)));
-            notify.success('goals.toasts.categoryUpdated', {
+            notify.successWhen(p, 'goals.toasts.categoryUpdated', {
               id: `goal-category-${saved.id}`,
               params: { name: saved.name },
             });
           } else {
-            onAddCategory(saved);
+            const p = onAddCategory(saved);
             setLocalCategories(prev => [...prev, saved]);
-            notify.success('goals.toasts.categoryAdded', {
+            notify.successWhen(p, 'goals.toasts.categoryAdded', {
               id: `goal-category-${saved.id}`,
               params: { name: saved.name },
             });
@@ -383,7 +383,7 @@ export function GoalsConfigPanel({
           for (const tId of mappedTypeIds) {
             nextMappings[tId] = saved.id;
           }
-          onUpdateTypeMappings(nextMappings);
+          void onUpdateTypeMappings(nextMappings);
         }}
       />
 
@@ -396,7 +396,7 @@ export function GoalsConfigPanel({
           const snapshotCategories = [...goalsConfig.categories];
           const snapshotTypeMappings = { ...goalsConfig.typeMappings };
 
-          onDeleteCategory(catId);
+          void onDeleteCategory(catId);
           setLocalCategories(prev => prev.filter(c => c.id !== catId));
 
           notify.undoable({
@@ -404,7 +404,7 @@ export function GoalsConfigPanel({
             messageKey: 'goals.toasts.categoryDeleted',
             onUndo: () => {
               if (onRestoreGoals) {
-                onRestoreGoals({
+                void onRestoreGoals({
                   categories: snapshotCategories,
                   typeMappings: snapshotTypeMappings,
                 });

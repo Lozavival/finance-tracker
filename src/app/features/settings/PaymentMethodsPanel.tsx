@@ -46,7 +46,7 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
   function handleSaveMethod(saved: PaymentMethodConfig) {
     const isExisting = settings.paymentMethods.some(m => m.id === saved.id);
     if (isExisting) {
-      dispatch({
+      const p = dispatch({
         type: 'method/update',
         payload: {
           id: saved.id,
@@ -56,13 +56,13 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
           },
         },
       });
-      notify.success('notifications.ops.methodUpdated', {
+      notify.successWhen(p, 'notifications.ops.methodUpdated', {
         id: `method-save-${saved.id}`,
         params: { name: saved.name },
       });
     } else {
-      dispatch({ type: 'method/add', payload: saved });
-      notify.success('notifications.ops.methodAdded', {
+      const p = dispatch({ type: 'method/add', payload: saved });
+      notify.successWhen(p, 'notifications.ops.methodAdded', {
         id: `method-save-${saved.id}`,
         params: { name: saved.name },
       });

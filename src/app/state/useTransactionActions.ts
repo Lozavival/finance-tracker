@@ -43,31 +43,31 @@ export function useTransactionActions() {
 
   function saveTransaction(draft: TransactionDraft) {
     const isEdit = editingTarget !== null;
-    saveTransactionDraft(draft, editingTarget);
+    const savePromise = saveTransactionDraft(draft, editingTarget);
 
     const desc = describeDraft(draft);
     if (isEdit) {
-      notify.success('notifications.ops.txUpdated', {
+      notify.successWhen(savePromise, 'notifications.ops.txUpdated', {
         id: 'tx-saved',
         params: { description: desc },
       });
     } else if (draft.kind === 'transfer') {
-      notify.success('notifications.ops.transferAdded', {
+      notify.successWhen(savePromise, 'notifications.ops.transferAdded', {
         id: 'tx-saved',
         params: { description: desc },
       });
     } else if (draft.kind === 'installments') {
-      notify.success('notifications.ops.installmentsAdded', {
+      notify.successWhen(savePromise, 'notifications.ops.installmentsAdded', {
         id: 'tx-saved',
         params: { count: draft.count, description: desc },
       });
     } else if (draft.kind === 'recurring') {
-      notify.success('notifications.ops.recurringAdded', {
+      notify.successWhen(savePromise, 'notifications.ops.recurringAdded', {
         id: 'tx-saved',
         params: { description: desc },
       });
     } else {
-      notify.success('notifications.ops.txAdded', {
+      notify.successWhen(savePromise, 'notifications.ops.txAdded', {
         id: 'tx-saved',
         params: { description: desc },
       });

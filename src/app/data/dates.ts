@@ -1,6 +1,13 @@
 export function parseLocalDate(dateStr: string): Date {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    throw new RangeError(`Invalid local date string: "${dateStr}". Expected YYYY-MM-DD.`);
+  }
   const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d, 0, 0, 0, 0);
+  const date = new Date(y, m - 1, d, 0, 0, 0, 0);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+    throw new RangeError(`Invalid local date values: "${dateStr}".`);
+  }
+  return date;
 }
 
 export function toLocalDateString(date: Date): string {

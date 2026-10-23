@@ -662,6 +662,7 @@ export const pt: Translations = {
     rateStatusNone: 'Nenhuma taxa definida (Modo detalhamento ativo)',
     rateStatusLive: 'Cotação de mercado ao vivo',
     rateStatusManual: 'Taxa manual',
+    invalidRate: 'Por favor, insira um número positivo válido para a taxa de câmbio.',
     clearRate: 'Limpar taxa (Usar apenas detalhamento)',
     previewTitle: 'Pré-visualização da formatação',
     previewDesc: 'Exemplo de representação de moeda e datas com base nas configurações atuais.',
@@ -833,8 +834,10 @@ export const pt: Translations = {
       methodUpdated: 'Forma de pagamento "{name}" atualizada',
       methodDeleted: 'Forma de pagamento "{name}" excluída e reatribuída para "{target}"',
       undone: 'Ação desfeita',
-      syncFailed: 'Não foi possível salvar alterações no servidor. Dados mais recentes sincronizados.',
+      syncFailed: 'Não foi possível salvar alterações no servidor.',
+      resyncFailed: 'Não foi possível sincronizar os dados mais recentes do servidor.',
     },
+    retry: 'Tentar novamente',
     alerts: {
       budgetWarningTitle: 'Aviso de Orçamento',
       budgetWarningDesc: '{category} atingiu {percent}% do orçamento deste mês (alerta em {threshold}%).',
@@ -844,6 +847,8 @@ export const pt: Translations = {
     system: {
       offlineTitle: 'Modo Offline Ativo',
       offlineDesc: 'Usando dados locais. As alterações podem não estar sincronizadas com o servidor.',
+      offlineBanner: 'Sem conexão com o servidor — exibindo dados vazios. Alterações podem não ser salvas.',
+      loading: 'Carregando dados da área de trabalho...',
     },
     preferences: {
       title: 'Notificações',
@@ -867,6 +872,14 @@ export const pt: Translations = {
       clearHistory: 'Limpar Histórico de Atividades',
       clearHistoryDesc: 'Remove permanentemente todos os eventos operacionais registrados no histórico local.',
       clearHistoryConfirm: 'Histórico de atividades limpo.',
+    },
+  },
+  errors: {
+    boundary: {
+      title: 'Algo deu errado',
+      description: 'Ocorreu um erro inesperado na aplicação ao renderizar esta página.',
+      reload: 'Recarregar Página',
+      goHome: 'Voltar ao Painel',
     },
   },
 };

@@ -86,7 +86,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
     const deletedName = typeConfig.name;
     const targetType = availableReplacements.find(r => r.id === effectiveReplacementId);
 
-    dispatch({
+    const p = dispatch({
       type: 'type/remove',
       payload: {
         id: typeConfig.id,
@@ -94,7 +94,7 @@ export function DeleteTypeDialog({ typeConfig, onClose, transactions, onTransact
       },
     });
 
-    notify.success('notifications.ops.typeDeleted', {
+    notify.successWhen(p, 'notifications.ops.typeDeleted', {
       id: `type-delete-${typeConfig.id}`,
       params: {
         name: deletedName,

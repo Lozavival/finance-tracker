@@ -18,39 +18,39 @@ export function GoalsPage({ transactions: propTransactions }: GoalsPageProps) {
   const [view, setView] = useState<'overview' | 'config'>('overview');
 
   function handleUpdateReferenceIncome(income: number) {
-    dispatch({ type: 'goals/updateReferenceIncome', payload: { income } });
+    return dispatch({ type: 'goals/updateReferenceIncome', payload: { income } });
   }
 
   function handleUpdateMode(mode: 'percentage' | 'currency') {
-    dispatch({ type: 'goals/updateMode', payload: { mode } });
+    return dispatch({ type: 'goals/updateMode', payload: { mode } });
   }
 
   function handleUpdateAllocations(categories: GoalCategory[]) {
-    dispatch({ type: 'goals/updateAllocations', payload: { categories } });
+    return dispatch({ type: 'goals/updateAllocations', payload: { categories } });
   }
 
   function handleAddCategory(category: GoalCategory) {
-    dispatch({ type: 'goals/addCategory', payload: { category } });
+    return dispatch({ type: 'goals/addCategory', payload: { category } });
   }
 
   function handleUpdateCategory(id: string, changes: Partial<Omit<GoalCategory, 'id'>>) {
-    dispatch({ type: 'goals/updateCategory', payload: { id, changes } });
+    return dispatch({ type: 'goals/updateCategory', payload: { id, changes } });
   }
 
   function handleDeleteCategory(id: string) {
-    dispatch({ type: 'goals/deleteCategory', payload: { id } });
+    return dispatch({ type: 'goals/deleteCategory', payload: { id } });
   }
 
   function handleResetDefaults() {
-    dispatch({ type: 'goals/resetAllocations' });
+    return dispatch({ type: 'goals/resetAllocations' });
   }
 
   function handleUpdateTypeMappings(mappings: Record<string, string>) {
-    dispatch({ type: 'goals/updateTypeMappings', payload: { mappings } });
+    return dispatch({ type: 'goals/updateTypeMappings', payload: { mappings } });
   }
 
   function handleRestoreGoals(snapshot: { categories: GoalCategory[]; typeMappings: Record<string, string> }) {
-    dispatch({ type: 'goals/restore', payload: snapshot });
+    return dispatch({ type: 'goals/restore', payload: snapshot });
   }
 
   return (
