@@ -22,6 +22,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 ### UI Review (`ui-code-review` Skill)
 - **Always activate when editing UI**: When designing, implementing, or reviewing UI components, styles, or dialogs, consult and follow the [ui-code-review](.agents/skills/ui-code-review/SKILL.md) skill to audit semantic tokens, theme colors, and component boundaries.
 
+### Server & Model Review (`server-code-review` Skill)
+- **Always activate when editing backend or domain logic**: When designing, implementing, or reviewing database schemas, migrations, API endpoints, repository methods, or domain calculation engines (`src/server/`, `src/db/`, `src/app/data/`), consult and follow the [server-code-review](.agents/skills/server-code-review/SKILL.md) skill to audit schema integrity, transactions, Zod validations, integer cents invariants, and workspace isolation.
+
 ### Commit Messages (`commit-message-generator` Skill)
 - **Always activate the skill**: When preparing or creating git commits, consult and follow the [commit-message-generator](.agents/skills/commit-message-generator/SKILL.md) skill.
 - **Git Hooks Enforced via Husky**:
@@ -174,4 +177,4 @@ An agent must propose or apply updates to `AGENTS.md` whenever:
 - **Keep it Actionable & Concise**: Document strict invariants, operational checklists, and prescriptive dos/don'ts. Avoid narrative bloat or redundant explanations.
 - **Keep the File Tree Accurate**: Whenever new directories or architectural components are introduced (or removed), immediately update the `Architecture & Code Structure` tree in this document.
 - **Preserve Ground Truth**: Rules in `AGENTS.md` take precedence during development. Never weaken architectural constraints (such as strict typing or zero hardcoded colors) without explicit user instruction.
-- **Synchronize with Specialized Skills**: When modifying workflows or verification steps, ensure complementary skills (such as `ui-code-review` and `commit-message-generator`) remain aligned with `AGENTS.md`.
+- **Synchronize with Specialized Skills**: When modifying workflows or verification steps, ensure complementary skills (such as `ui-code-review`, `server-code-review`, and `commit-message-generator`) remain aligned with `AGENTS.md`.
