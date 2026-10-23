@@ -61,11 +61,11 @@ src/
     ├── App.tsx                   # Main layout and top-level view routing
     ├── layout/                   # App shell components (TopNavigation, Sidebar)
     ├── features/                 # Domain feature modules
-    │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard
+    │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard, SmartInsightsContent
     │   ├── accounts/             # Account lists, balance projections & statement views
     │   ├── transactions/         # TransactionsPage, filters, RecurringRulesDialog
     │   ├── goals/                # BudgetOverview, category targets, and goals panels
-    │   └── settings/             # Workspace preferences, payment methods, transaction types
+    │   └── settings/             # Workspace preferences, payment methods, transaction types, NotificationsPanel
     ├── components/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
     │   └── shared/               # Reusable domain components (CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
@@ -82,6 +82,7 @@ src/
     │   ├── icons.ts              # Lucide icon mapping registry
     │   ├── installments.ts       # Cent-exact multi-month installment division logic
     │   ├── ledger.ts             # Cash movement models and daily forecasting series
+    │   ├── notifications.ts      # Financial alerts, alert state pruning, and activity definitions
     │   ├── recurring.ts          # Recurring rule projection and scheduling engine
     │   ├── repository/           # FinanceRepository interface, HTTP & in-memory implementations
     │   ├── settings.ts           # Workspace setting interfaces and helper methods
@@ -89,8 +90,11 @@ src/
     ├── i18n/                     # Localization context, bilingual strings (en, pt), formatters
     └── state/
         ├── FinanceContext.tsx    # Core finance entity cache & repository synchronization
+        ├── NotificationsContext.tsx # Central notification & toast dispatch (notify, activity log, sync error coalescing)
+        ├── notificationStorage.ts # LocalStorage serialization for notification preferences & activity
         ├── SettingsContext.tsx   # Workspace settings React context
         ├── settingsReducer.ts    # Reducer actions for category & preference updates
+        ├── useFinancialAlerts.ts # Unified heuristic signals, budget threshold, and offline alert hook
         └── useTransactionActions.ts # Transaction mutation hooks
 ```
 
@@ -104,7 +108,7 @@ src/
 - Keep production defaults (`src/app/data/defaults/`) clean and decoupled from demo/test data (`src/app/data/fixtures/`). Production default goals start empty (`EMPTY_GOALS_CONFIG`).
 
 ### 2. Design System & Aesthetics
-- **Theme**: Dark-mode-first futuristic fintech / cyberpunk aesthetic with neon accents (cyan, violet, emerald, amber).
+- **Theme**: Dark-mode-first with neon accents (cyan, violet, emerald, amber).
 - **Glassmorphism**: Use semi-transparent backdrops (`bg-foreground/5` or `bg-card/50`), blur filters (`backdrop-blur-xl`), and delicate borders (`border-border/40`).
 - **Layouts**: Responsive flexbox and CSS grid layouts. Avoid arbitrary absolute positioning unless implementing overlays, floating badges, or tooltip anchors.
 - **Icons**: Always import Lucide icons via `src/app/data/icons.ts` or directly from `lucide-react` using consistent sizing (`size-4`, `size-5`).
@@ -122,7 +126,21 @@ src/
 - **System Entity Protection**: Never render destructive actions for system records (`transfer`, `cash`, `credit-card`). Require reassigning transactions before completing deletion of in-use entities.
 - **Primitive UI Components (shadcn/ui & Radix UI)**: Never rebuild standard interactive UI patterns from scratch using raw HTML tags (`<button>`, `<input>`, `<select>`, custom modal overlays, custom checkboxes/switches). Always compose primitives from `src/app/components/primitives/` (`Button`, `Input`, `Dialog`, `AlertDialog`, `Select`, `Switch`, `Tabs`, `Card`, `Tooltip`, etc.) to guarantee accessibility, focus management, keyboard navigation, and design system cohesion.
 
-### 4. TypeScript, i18n & Code Quality
+### 4. Notifications & User Feedback
+- **Unified Notification Architecture**: All user feedback is centralized in `NotificationsContext` and consumed via `useNotify()` or `useNotifications()`. Never invoke third-party toast libraries directly inside components.
+- **Three Core Channels**:
+  - **Toasts (Sonner)**: Immediate, temporary operational feedback (success, error, undo).
+  - **Alerts (Bell & Dashboard Smart Insights)**: Automated financial detection (budget threshold warnings/critical, overspending streaks, spikes, upcoming statement obligations, negative cash flow, offline system state) derived via `useFinancialAlerts()`.
+  - **Activity Log**: Persistent 30-day operation log displayed in the Notification Center's Activity tab with unread tracking.
+- **Anti-Spam Operation Policy**:
+  - **Silent**: In-page interactive adjustments (sliders, reordering, view toggles, currency scope filters) must never trigger toasts.
+  - **Success (`notify.success`)**: Confirms entity creation, editing, or state changes where dialogs close or navigation occurs (e.g. saving a transaction, adding an account, modifying categories).
+  - **Undoable (`notify.undoable`)**: **MANDATORY for all deletions and exclusions** (deleting a transaction, canceling/deleting recurring rules, deleting an account, deleting a goal category). Provide an explicit `onUndo` callback that restores the removed entity immediately.
+  - **Validation (`notify.validation`)**: Ephemeral warning/error toasts for blocked forms or allocation errors. Never logged to the persistent activity log.
+  - **Save & Sync Failures (`reportSyncError`)**: Any repository persistence failure must be reported through `reportSyncError`, triggering debounced error notifications and workspace resynchronization without crashing or silently swallowing errors (`.catch(() => {})` is forbidden).
+- **Single Source of Truth for Financial Alerts**: Both the top navigation `NotificationCenter` and the dashboard `DashboardKpisSection` (`SmartInsightsContent`) must derive active alerts exclusively through `useFinancialAlerts()`. Do not decouple dashboard signals from notification center alerts.
+
+### 5. TypeScript, i18n & Code Quality
 - **Strict Typing**: Strict TypeScript mode is enabled. Never use `any`—define explicit interfaces or types for all entity models, props, and function parameters.
 - **Type-Safe Navigation**: Always use the `PageId` union in `src/app/layout/navigation.ts` for view switching.
 - **Internationalization (i18n)**: No hardcoded user-facing strings in UI components. Add all strings symmetrically to `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/pt.ts`. Entities such as transaction types and payment methods are user-editable data with canonical names, not dynamically localized keys.
@@ -132,3 +150,21 @@ src/
   git diff | grep -E '\b(emerald|cyan|amber|rose|violet|indigo|sky|blue|red|green|yellow|slate|zinc|gray)-[0-9]{2,3}\b'
   ```
 
+---
+
+## Continuous Learning & Self-Improvement Protocol
+
+`AGENTS.md` is a living document. Agents must continuously maintain and evolve this specification to capture hard-won knowledge, user feedback, and architectural invariants.
+
+### 1. Triggers for Updating `AGENTS.md`
+An agent must propose or apply updates to `AGENTS.md` whenever:
+- **User Corrections**: The user corrects a pattern, rejects an implementation choice, clarifies a domain constraint, or establishes a new requirement.
+- **Recurrent Gotchas & Bug Fixes**: A non-obvious bug or edge case is resolved (e.g., Radix `ScrollArea` requiring `overflow-hidden`, state synchronization pitfalls, subtle CSS collision rules in Tailwind v4).
+- **Structural / Architectural Changes**: New modules, directories, domain services, or state contexts are introduced or refactored.
+- **Design System Evolution**: New semantic tokens, component guidelines, or anti-spam notification rules are established.
+
+### 2. Maintenance Rules
+- **Keep it Actionable & Concise**: Document strict invariants, operational checklists, and prescriptive dos/don'ts. Avoid narrative bloat or redundant explanations.
+- **Keep the File Tree Accurate**: Whenever new directories or architectural components are introduced (or removed), immediately update the `Architecture & Code Structure` tree in this document.
+- **Preserve Ground Truth**: Rules in `AGENTS.md` take precedence during development. Never weaken architectural constraints (such as strict typing or zero hardcoded colors) without explicit user instruction.
+- **Synchronize with Specialized Skills**: When modifying workflows or verification steps, ensure complementary skills (such as `ui-code-review` and `commit-message-generator`) remain aligned with `AGENTS.md`.
