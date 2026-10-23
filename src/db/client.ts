@@ -3,6 +3,7 @@ import path from 'path';
 import Database, { type Database as SqliteDatabase } from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
+import { foldText } from '../app/data/search';
 
 export type DrizzleDb = BetterSQLite3Database<typeof schema>;
 
@@ -144,6 +145,23 @@ CREATE INDEX IF NOT EXISTS idx_tx_payment_method ON transactions(payment_method_
 CREATE INDEX IF NOT EXISTS idx_tx_transfer_group ON transactions(transfer_id);
 CREATE INDEX IF NOT EXISTS idx_tx_installment_group ON transactions(installment_group_id);
 CREATE INDEX IF NOT EXISTS idx_tx_recurring_rule ON transactions(recurring_rule_id);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS transactions_fts USING fts5(
+  description,
+  tokenize = 'trigram remove_diacritics 2'
+);
+
+CREATE TRIGGER IF NOT EXISTS trg_tx_fts_insert AFTER INSERT ON transactions BEGIN
+  INSERT INTO transactions_fts(rowid, description) VALUES (new.rowid, new.description);
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_tx_fts_delete AFTER DELETE ON transactions BEGIN
+  DELETE FROM transactions_fts WHERE rowid = old.rowid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_tx_fts_update AFTER UPDATE OF description ON transactions BEGIN
+  UPDATE transactions_fts SET description = new.description WHERE rowid = old.rowid;
+END;
 `;
 
 export function createDatabaseConnection(dbPath?: string): DatabaseConnection {
@@ -162,6 +180,17 @@ export function createDatabaseConnection(dbPath?: string): DatabaseConnection {
   }
   sqlite.pragma('foreign_keys = ON');
   sqlite.exec(SCHEMA_DDL);
+
+  // Register deterministic `fold` function for accent & case insensitive queries on short tokens
+  sqlite.function('fold', { deterministic: true }, (v: unknown) => (typeof v === 'string' ? foldText(v) : v));
+
+  // Backfill for pre-existing databases and sync rowid indexing
+  sqlite.transaction(() => {
+    sqlite.exec(`
+      DELETE FROM transactions_fts;
+      INSERT INTO transactions_fts(rowid, description) SELECT rowid, description FROM transactions;
+    `);
+  })();
 
   const db = drizzle(sqlite, { schema });
   return { sqlite, db };

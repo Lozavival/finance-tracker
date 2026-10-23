@@ -1,4 +1,4 @@
-import { Search, Sun, Moon, Monitor, Check } from 'lucide-react';
+import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useI18n } from '@/i18n';
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { NotificationCenter } from './NotificationCenter';
+import { GlobalSearch } from './GlobalSearch';
 
 export function TopNavigation() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -26,17 +27,7 @@ export function TopNavigation() {
       <div className="relative flex items-center justify-end h-full px-6">
         {/* Search Bar - centered */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl px-4">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-cyan" />
-            <input
-              type="text"
-              placeholder={t('nav.searchPlaceholder')}
-              className="w-full h-10 pl-10 pr-4 bg-foreground/5 border border-theme-cyan/30 rounded-lg
-                       text-foreground placeholder:text-muted-foreground outline-none
-                       focus:border-theme-cyan focus:shadow-[0_0_20px_var(--shadow-glow-cyan)]
-                       transition-all duration-300"
-            />
-          </div>
+          <GlobalSearch />
         </div>
 
         {/* Right Section */}

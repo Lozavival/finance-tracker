@@ -63,19 +63,19 @@ src/
 │   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
-    ├── layout/                   # App shell components (TopNavigation, Sidebar)
+    ├── layout/                   # App shell components (TopNavigation, GlobalSearch, Sidebar)
     ├── features/                 # Domain feature modules
     │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard, SmartInsightsContent
     │   ├── accounts/             # Account lists, balance projections & statement views
-    │   ├── transactions/         # TransactionsPage, filters, RecurringRulesDialog
+    │   ├── transactions/         # TransactionsPage, filters, SearchFilter, RecurringRulesDialog
     │   ├── goals/                # BudgetOverview, category targets, and goals panels
     │   └── settings/             # Workspace preferences, payment methods, transaction types, NotificationsPanel
     ├── components/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
-    │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
+    │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, HighlightedText, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
     ├── lib/
     │   ├── logger.ts             # Dev environment logger wrapper
-    │   └── utils.ts              # Global utility functions (cn class merging)
+    │   └── utils.ts              # Global utils (cn class merging)
     ├── data/
     │   ├── analytics.ts          # Financial KPI calculations and spending analysis
     │   ├── cardStatements.ts     # Billing cycle calculation & statement closing engine
@@ -90,6 +90,7 @@ src/
     │   ├── notifications.ts      # Financial alerts, alert state pruning, and activity definitions
     │   ├── recurring.ts          # Recurring rule projection and scheduling engine
     │   ├── repository/           # FinanceRepository interface, HTTP & in-memory implementations
+    │   ├── search.ts             # Full-history search normalization, tokenization, FTS expressions & result grouping
     │   ├── settings.ts           # Workspace setting interfaces and helper methods
     │   └── transactions.ts       # Transaction entities, types, and helper methods
     ├── i18n/                     # Localization context, bilingual strings (en, pt), formatters
@@ -100,7 +101,8 @@ src/
         ├── SettingsContext.tsx   # Workspace settings React context
         ├── settingsReducer.ts    # Reducer actions for category & preference updates
         ├── useFinancialAlerts.ts # Unified heuristic signals, budget threshold, and offline alert hook
-        └── useTransactionActions.ts # Transaction mutation hooks
+        ├── useTransactionActions.ts # Transaction mutation hooks
+        └── useTransactionSearch.ts # Full-history debounced transaction search hook
 ```
 
 ---
@@ -108,9 +110,10 @@ src/
 ## Engineering & Design System Guidelines
 
 ### 1. Domain Logic & Calculations (`src/app/data/`)
-- Keep domain engines (installments, credit card statement closing cycles, daily balance forecasting, recurring rules, analytics) **pure and decoupled from React components**.
+- Keep domain engines (installments, credit card statement closing cycles, daily balance forecasting, recurring rules, analytics, search) **pure and decoupled from React components**.
 - Implement exact mathematical operations using **integer cents** throughout domain models (e.g., cent-exact split where remainder cents are allocated to the first installment; clamping payment due dates to the end of shorter months).
 - Keep production defaults (`src/app/data/defaults/`) clean and decoupled from demo/test data (`src/app/data/fixtures/`). Production default goals start empty (`EMPTY_GOALS_CONFIG`).
+- **Search Invariant**: Full-text index `transactions_fts` (FTS5 trigram) is maintained strictly via SQLite triggers in `client.ts` across all insert/update/delete operations. Never write directly to `transactions_fts` from application logic. Text normalization is unified under `foldText` in `src/app/data/search.ts` (mirrored in SQLite via custom deterministic `fold` function). Full-history search is read-only and must never alter `loadedFromDateStr` or client window state.
 
 ### 2. Design System & Aesthetics
 - **Theme**: Dark-mode-first with neon accents (cyan, violet, emerald, amber).
