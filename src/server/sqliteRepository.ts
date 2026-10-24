@@ -12,6 +12,8 @@ import type {
   FinanceRepository,
   SaveTransactionResult,
   TransactionQuery,
+  TransactionSearchQuery,
+  TransactionSearchResult,
   WorkspaceSnapshot,
 } from '../app/data/repository/types';
 import {
@@ -41,8 +43,36 @@ import { type RecurringRule, buildRecurringTransactions } from '../app/data/recu
 import { buildStatements } from '../app/data/cardStatements';
 import { type GoalCategory } from '../app/data/goals';
 import { addDays, getToday, parseLocalDate, toLocalDateString } from '../app/data/dates';
+import {
+  SEARCH_MIN_LENGTH,
+  TRIGRAM_MIN_TOKEN,
+  tokenizeSearchQuery,
+  buildFtsMatchExpression,
+  escapeLikePattern,
+} from '../app/data/search';
 import type { IconKey } from '../app/data/icons';
 import type { SupportedCurrency, SupportedLocale } from '../app/i18n/types';
+
+type RawSqliteTransactionRow = {
+  id: string;
+  workspace_id: string;
+  date: string;
+  description: string;
+  type_id: string;
+  direction: string;
+  amount_cents: number;
+  currency: string;
+  account_id: string;
+  payment_method_id: string | null;
+  transfer_id: string | null;
+  installment_group_id: string | null;
+  installment_number: number | null;
+  installment_total: number | null;
+  recurring_rule_id: string | null;
+  recurring_index: number | null;
+  recurring_total: number | null;
+  created_at: string;
+};
 
 function mapRowToTransaction(row: typeof schema.transactions.$inferSelect): Transaction {
   return {
@@ -72,6 +102,40 @@ function mapRowToTransaction(row: typeof schema.transactions.$inferSelect): Tran
             iteration: row.recurringIndex,
             frequency: 'monthly' as const,
             ...(row.recurringTotal !== null ? { total: row.recurringTotal } : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+function mapRawRowToTransaction(row: RawSqliteTransactionRow): Transaction {
+  return {
+    id: row.id,
+    date: parseLocalDate(row.date),
+    description: row.description,
+    typeId: row.type_id,
+    direction: row.direction as Direction,
+    value: row.amount_cents,
+    currency: row.currency as SupportedCurrency,
+    accountId: row.account_id,
+    ...(row.payment_method_id ? { paymentMethodId: row.payment_method_id } : {}),
+    ...(row.transfer_id ? { transferId: row.transfer_id } : {}),
+    ...(row.installment_group_id && row.installment_number !== null && row.installment_total !== null
+      ? {
+          installment: {
+            groupId: row.installment_group_id,
+            number: row.installment_number,
+            total: row.installment_total,
+          },
+        }
+      : {}),
+    ...(row.recurring_rule_id && row.recurring_index !== null
+      ? {
+          recurring: {
+            ruleId: row.recurring_rule_id,
+            iteration: row.recurring_index,
+            frequency: 'monthly' as const,
+            ...(row.recurring_total !== null ? { total: row.recurring_total } : {}),
           },
         }
       : {}),
@@ -427,6 +491,56 @@ export class SqliteRepository implements FinanceRepository {
       .all();
 
     return Promise.resolve(rows.map(mapRowToTransaction));
+  }
+
+  searchTransactions(query: TransactionSearchQuery): Promise<TransactionSearchResult> {
+    const rawText = query.text?.trim() ?? '';
+    const tokens = tokenizeSearchQuery(rawText);
+    if (tokens.length === 0 || rawText.length < SEARCH_MIN_LENGTH) {
+      return Promise.resolve({ transactions: [], totalCount: 0 });
+    }
+
+    const limit = Math.min(Math.max(query.limit ?? 500, 1), 2000);
+    const trigramMatch = buildFtsMatchExpression(tokens.filter(t => t.length >= TRIGRAM_MIN_TOKEN));
+    const shortTokens = tokens.filter(t => t.length < TRIGRAM_MIN_TOKEN);
+    const todayStr = toLocalDateString(getToday());
+
+    // When we have trigram tokens, join with transactions_fts using rowid and MATCH
+    // Also include description parity guard (f.description = t.description)
+    const baseFrom = trigramMatch
+      ? sql`transactions t JOIN transactions_fts f ON f.rowid = t.rowid AND f.description = t.description AND transactions_fts MATCH ${trigramMatch}`
+      : sql`transactions t`;
+
+    const whereClauses = [sql`t.workspace_id = ${this.workspaceId}`];
+    for (const tok of shortTokens) {
+      const pattern = `%${escapeLikePattern(tok)}%`;
+      whereClauses.push(sql`fold(t.description) LIKE ${pattern} ESCAPE '\\'`);
+    }
+
+    const whereSql = sql.join(whereClauses, sql` AND `);
+
+    // Count query for total matching rows
+    const countQuery = sql`SELECT count(*) as count FROM ${baseFrom} WHERE ${whereSql}`;
+    const countRows = this.conn.db.get<{ count: number }>(countQuery);
+    const totalCount = countRows?.count ?? 0;
+
+    // Search results ordered: past/today first (newest first), future next (soonest first)
+    const selectQuery = sql`
+      SELECT t.* FROM ${baseFrom}
+      WHERE ${whereSql}
+      ORDER BY
+        (t.date > ${todayStr}) ASC,
+        CASE WHEN t.date <= ${todayStr} THEN t.date END DESC,
+        t.date ASC,
+        t.id ASC
+      LIMIT ${limit}
+    `;
+
+    const rows = this.conn.db.all<RawSqliteTransactionRow>(selectQuery);
+    return Promise.resolve({
+      transactions: rows.map(mapRawRowToTransaction),
+      totalCount,
+    });
   }
 
   private insertTransactionModel(tx: Transaction, nowIso: string): void {

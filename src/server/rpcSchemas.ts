@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { SEARCH_MIN_LENGTH } from '../app/data/search';
+
+export const transactionSearchQuerySchema = z.object({
+  q: z.string().trim().min(SEARCH_MIN_LENGTH).max(100),
+  limit: z.coerce.number().int().min(1).max(2000).default(500),
+});
 
 export const localDateStringSchema = z
   .string()

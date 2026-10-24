@@ -14,6 +14,7 @@ import { formatRecurringLabel } from '@/data/recurring';
 import { formatRowDate, getToday } from '@/data/dates';
 import { useSettings } from '@/state/SettingsContext';
 import { CategoryChip } from '@/components/shared/CategoryChip';
+import { HighlightedText } from '@/components/shared/HighlightedText';
 import { useI18n } from '@/i18n';
 
 const PAGE_SIZE = 50;
@@ -23,6 +24,7 @@ export type TransactionsMonthTableProps = {
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
   showAccount?: boolean;
+  highlightTokens?: string[];
 };
 
 export function TransactionsMonthTable({
@@ -30,6 +32,7 @@ export function TransactionsMonthTable({
   onEdit,
   onDelete,
   showAccount = true,
+  highlightTokens,
 }: TransactionsMonthTableProps) {
   const { findType, findAccount, findMethod } = useSettings();
   const { t, locale } = useI18n();
@@ -94,7 +97,7 @@ export function TransactionsMonthTable({
                     </TableCell>
                     <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
                       <div className="inline-flex items-center gap-2">
-                        {transaction.description}
+                        <HighlightedText text={transaction.description} tokens={highlightTokens} />
                         {transaction.installment && (
                           <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
                             {formatInstallmentLabel(transaction.installment)}

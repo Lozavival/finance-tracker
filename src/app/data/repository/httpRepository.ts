@@ -15,7 +15,14 @@ import {
   type SerializedTransaction,
   type SerializedWorkspaceSnapshot,
 } from './serialization';
-import type { FinanceRepository, SaveTransactionResult, TransactionQuery, WorkspaceSnapshot } from './types';
+import type {
+  FinanceRepository,
+  SaveTransactionResult,
+  TransactionQuery,
+  TransactionSearchQuery,
+  TransactionSearchResult,
+  WorkspaceSnapshot,
+} from './types';
 
 export class HttpFinanceRepository implements FinanceRepository {
   constructor(private readonly baseUrl = '/api') {}
@@ -58,6 +65,25 @@ export class HttpFinanceRepository implements FinanceRepository {
     }
     const data = (await res.json()) as { transactions: SerializedTransaction[] };
     return data.transactions.map(deserializeTransaction);
+  }
+
+  async searchTransactions(query: TransactionSearchQuery): Promise<TransactionSearchResult> {
+    const params = new URLSearchParams();
+    params.set('q', query.text);
+    if (query.limit) params.set('limit', String(query.limit));
+
+    const qs = params.toString();
+    const res = await fetch(`${this.baseUrl}/transactions/search?${qs}`, {
+      signal: query.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to search transactions (${res.status})`);
+    }
+    const data = (await res.json()) as { transactions: SerializedTransaction[]; totalCount: number };
+    return {
+      transactions: data.transactions.map(deserializeTransaction),
+      totalCount: data.totalCount,
+    };
   }
 
   async saveTransactionDraft(

@@ -20,7 +20,15 @@ import {
   createTransactionId,
 } from '@/data/transactions';
 import type { SupportedCurrency, SupportedLocale } from '@/i18n/types';
-import type { FinanceRepository, SaveTransactionResult, TransactionQuery, WorkspaceSnapshot } from './types';
+import type {
+  FinanceRepository,
+  SaveTransactionResult,
+  TransactionQuery,
+  TransactionSearchQuery,
+  TransactionSearchResult,
+  WorkspaceSnapshot,
+} from './types';
+import { SEARCH_MIN_LENGTH, tokenizeSearchQuery, foldText, compareSearchOrder } from '@/data/search';
 
 export class InMemoryFinanceRepository implements FinanceRepository {
   private settings: Settings;
@@ -85,6 +93,26 @@ export class InMemoryFinanceRepository implements FinanceRepository {
         return true;
       }),
     );
+  }
+
+  searchTransactions(query: TransactionSearchQuery): Promise<TransactionSearchResult> {
+    const rawText = query.text?.trim() ?? '';
+    const tokens = tokenizeSearchQuery(rawText);
+    if (tokens.length === 0 || rawText.length < SEARCH_MIN_LENGTH) {
+      return Promise.resolve({ transactions: [], totalCount: 0 });
+    }
+
+    const limit = Math.min(Math.max(query.limit ?? 500, 1), 2000);
+    const matched = this.transactions.filter(tx => {
+      const foldedDesc = foldText(tx.description);
+      return tokens.every(tok => foldedDesc.includes(tok));
+    });
+
+    const sorted = [...matched].sort(compareSearchOrder(getToday()));
+    return Promise.resolve({
+      transactions: sorted.slice(0, limit),
+      totalCount: matched.length,
+    });
   }
 
   saveTransactionDraft(draft: TransactionDraft, editingTarget?: EditingTarget | null): Promise<SaveTransactionResult> {

@@ -19,7 +19,7 @@ import { parseLocalDate } from '../app/data/dates';
 import type { AccountConfig, PaymentMethodConfig, Settings, TransactionTypeConfig } from '../app/data/settings';
 import type { GoalCategory } from '../app/data/goals';
 import type { SupportedCurrency, SupportedLocale } from '../app/i18n/types';
-import { rpcRequestSchema } from './rpcSchemas';
+import { rpcRequestSchema, transactionSearchQuerySchema } from './rpcSchemas';
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB limit
 
@@ -97,6 +97,25 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
         const windowDays = windowDaysParam !== null ? Number(windowDaysParam) : 90;
         const snapshot = await repository.loadWorkspace(Number.isFinite(windowDays) ? windowDays : 90);
         sendJson(res, 200, serializeSnapshot(snapshot));
+        return;
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/transactions/search') {
+        const parsed = transactionSearchQuerySchema.safeParse(Object.fromEntries(url.searchParams));
+        if (!parsed.success) {
+          sendJson(res, 400, { error: 'Invalid search query', issues: parsed.error.issues });
+          return;
+        }
+
+        const result = await repository.searchTransactions({
+          text: parsed.data.q,
+          limit: parsed.data.limit,
+        });
+
+        sendJson(res, 200, {
+          transactions: result.transactions.map(serializeTransaction),
+          totalCount: result.totalCount,
+        });
         return;
       }
 

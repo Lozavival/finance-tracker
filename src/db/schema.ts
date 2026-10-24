@@ -165,6 +165,9 @@ export const recurringRules = sqliteTable(
   table => [index('idx_recurring_rules_workspace').on(table.workspaceId, table.accountId)],
 );
 
+// Note: transactions_fts (FTS5 trigram virtual table) and its sync triggers
+// (trg_tx_fts_insert, trg_tx_fts_delete, trg_tx_fts_update) are managed directly
+// in src/db/client.ts SCHEMA_DDL because Drizzle ORM does not support SQLite FTS5 definitions.
 export const transactions = sqliteTable(
   'transactions',
   {

@@ -49,9 +49,11 @@ function CommandDialog({
 
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
-  <div data-slot="command-input-wrapper" className="flex h-9 items-center gap-2 border-b px-3">
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
+    wrapperClassName?: string;
+  }
+>(({ className, wrapperClassName, ...props }, ref) => (
+  <div data-slot="command-input-wrapper" className={cn('flex h-9 items-center gap-2 border-b px-3', wrapperClassName)}>
     <SearchIcon className="size-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}

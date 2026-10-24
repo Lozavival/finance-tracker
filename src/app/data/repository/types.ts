@@ -25,6 +25,17 @@ export interface TransactionQuery {
   accountId?: string;
 }
 
+export interface TransactionSearchQuery {
+  text: string;
+  limit?: number;
+  signal?: AbortSignal;
+}
+
+export interface TransactionSearchResult {
+  transactions: Transaction[];
+  totalCount: number;
+}
+
 export interface SaveTransactionResult {
   transactions: Transaction[];
   recurringRules: RecurringRule[];
@@ -43,6 +54,12 @@ export interface FinanceRepository {
    * selects a period older than `loadedFromDate` (e.g., "Up to today" or custom date range).
    */
   fetchTransactions(query: TransactionQuery): Promise<Transaction[]>;
+
+  /**
+   * Full-history, workspace-scoped, accent and case insensitive description search.
+   * Read-only query that does not modify client pagination or loaded window cutoffs.
+   */
+  searchTransactions(query: TransactionSearchQuery): Promise<TransactionSearchResult>;
 
   // Transactions & Recurring Rules
   saveTransactionDraft(draft: TransactionDraft, editingTarget?: EditingTarget | null): Promise<SaveTransactionResult>;
