@@ -1,4 +1,5 @@
 import type { Transaction } from '@/data/transactions';
+import type { AccountConfig } from '@/data/settings';
 
 export const SEARCH_MIN_LENGTH = 2;
 export const SEARCH_MAX_TOKENS = 8;
@@ -225,4 +226,26 @@ export function collapseSearchResults(transactions: Transaction[]): SearchResult
   }
 
   return groups;
+}
+
+export type MatchedAccount = {
+  account: AccountConfig;
+  tokens: string[];
+};
+
+/**
+ * Matches accounts by name, kind, and credit card name using accent-and-case-insensitive tokenization.
+ */
+export function matchAccounts(accounts: AccountConfig[], query: string, limit = 4): MatchedAccount[] {
+  const tokens = tokenizeSearchQuery(query);
+  if (tokens.length === 0) return [];
+
+  const matched = accounts.filter(acc => {
+    if (acc.archived) return false;
+    const cardName = acc.card?.name ?? '';
+    const searchable = foldText(`${acc.name} ${acc.kind} ${cardName} ${acc.initials}`);
+    return tokens.every(tok => searchable.includes(tok));
+  });
+
+  return matched.slice(0, limit).map(account => ({ account, tokens }));
 }

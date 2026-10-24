@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Repeat, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, Repeat, CreditCard, ArrowRight, Loader2, Wallet } from 'lucide-react';
 import {
   Command,
   CommandInput,
@@ -17,14 +17,15 @@ import { HighlightedText } from '@/components/shared/HighlightedText';
 import { useTransactionSearch } from '@/state/useTransactionSearch';
 import { useSettings } from '@/state/SettingsContext';
 import { useI18n } from '@/i18n';
-import { SEARCH_MIN_LENGTH, collapseSearchResults } from '@/data/search';
+import { SEARCH_MIN_LENGTH, collapseSearchResults, matchAccounts } from '@/data/search';
 import { formatRowDate } from '@/data/dates';
 import { formatSignedValue } from '@/data/transactions';
+import { getAccountColor } from '@/data/settings';
 
 export function GlobalSearch() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
-  const { findType, findAccount } = useSettings();
+  const { settings, findType, findAccount } = useSettings();
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -35,8 +36,12 @@ export function GlobalSearch() {
     debounceMs: 180,
   });
 
+  const matchedAccounts = useMemo(() => {
+    return matchAccounts(settings.accounts, query, 4);
+  }, [settings.accounts, query]);
+
   const previewGroups = useMemo(() => {
-    return collapseSearchResults(transactions).slice(0, 6);
+    return collapseSearchResults(transactions).slice(0, 5);
   }, [transactions]);
 
   // Global keyboard shortcuts: ⌘K / Ctrl+K and '/' (when not focused in an input/textarea)
@@ -72,13 +77,21 @@ export function GlobalSearch() {
     void navigate(`/transactions?q=${targetQ}`);
   };
 
+  const handleSelectAccount = (accountId: string) => {
+    setOpen(false);
+    setQuery('');
+    void navigate(`/accounts/${accountId}`);
+  };
+
   const isQueryTooShort = query.trim().length > 0 && query.trim().length < SEARCH_MIN_LENGTH;
+  const hasNoResults =
+    status === 'success' && matchedAccounts.length === 0 && previewGroups.length === 0 && !isQueryTooShort;
 
   return (
-    <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        <div className="relative group w-full">
-          <Command shouldFilter={false} className="overflow-visible bg-transparent border-none rounded-lg">
+    <Command shouldFilter={false} className="overflow-visible bg-transparent border-none rounded-lg">
+      <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
+        <PopoverAnchor asChild>
+          <div className="relative group w-full">
             <div className="relative flex items-center">
               <CommandInput
                 ref={inputRef}
@@ -97,7 +110,12 @@ export function GlobalSearch() {
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleSelectSeeAll();
+                    // If an account is matched as the sole result, navigate to it; otherwise open full search
+                    if (matchedAccounts.length > 0 && previewGroups.length === 0) {
+                      handleSelectAccount(matchedAccounts[0].account.id);
+                    } else {
+                      handleSelectSeeAll();
+                    }
                   } else if (e.key === 'Escape') {
                     setOpen(false);
                   }
@@ -110,25 +128,25 @@ export function GlobalSearch() {
                 {status === 'loading' ? <Loader2 className="w-4 h-4 text-theme-cyan animate-spin" /> : null}
               </div>
             </div>
-          </Command>
-        </div>
-      </PopoverAnchor>
+          </div>
+        </PopoverAnchor>
 
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        onOpenAutoFocus={e => e.preventDefault()}
-        className="w-(--radix-popover-trigger-width) min-w-[320px] max-w-[620px] p-0 bg-popover/95 backdrop-blur-xl border-border/80 shadow-2xl rounded-xl overflow-hidden z-50"
-      >
-        <Command shouldFilter={false} className="bg-transparent">
-          <CommandList className="max-h-[380px] p-1.5 overflow-y-auto">
+        <PopoverContent
+          align="start"
+          sideOffset={6}
+          onOpenAutoFocus={e => e.preventDefault()}
+          onCloseAutoFocus={e => e.preventDefault()}
+          onFocusOutside={e => e.preventDefault()}
+          className="w-(--radix-popover-trigger-width) min-w-[320px] max-w-[620px] p-0 bg-popover/95 backdrop-blur-xl border-border/80 shadow-2xl rounded-xl overflow-hidden z-50"
+        >
+          <CommandList className="max-h-[420px] p-1.5 overflow-y-auto">
             {isQueryTooShort && (
               <div className="p-4 text-center text-xs text-muted-foreground">
                 {t('search.minChars', { count: SEARCH_MIN_LENGTH })}
               </div>
             )}
 
-            {status === 'loading' && previewGroups.length === 0 && (
+            {status === 'loading' && previewGroups.length === 0 && matchedAccounts.length === 0 && (
               <div className="p-2 space-y-2">
                 <Skeleton className="h-12 w-full rounded-lg" />
                 <Skeleton className="h-12 w-full rounded-lg" />
@@ -138,15 +156,63 @@ export function GlobalSearch() {
 
             {status === 'error' && <div className="p-4 text-center text-xs text-destructive">{t('search.error')}</div>}
 
-            {status === 'success' && previewGroups.length === 0 && !isQueryTooShort && (
+            {hasNoResults && (
               <CommandEmpty className="p-6 text-center text-sm text-muted-foreground">
-                {t('search.noResults', { query: query.trim() })}
+                {t('search.noOmniResults', { query: query.trim() })}
               </CommandEmpty>
             )}
 
+            {/* ACCOUNTS GROUP */}
+            {matchedAccounts.length > 0 && (
+              <CommandGroup
+                heading={t('nav.accounts')}
+                className="text-xs font-semibold text-muted-foreground px-2 pt-1 pb-1 uppercase tracking-wider"
+              >
+                {matchedAccounts.map(({ account, tokens: accTokens }) => {
+                  const colorHex = getAccountColor(account.color);
+                  return (
+                    <CommandItem
+                      key={`acc-${account.id}`}
+                      value={`acc-${account.id}`}
+                      onSelect={() => handleSelectAccount(account.id)}
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-theme-cyan/10 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 pr-3">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 text-foreground border border-border"
+                          style={{ backgroundColor: `${colorHex}25`, borderColor: `${colorHex}60` }}
+                        >
+                          {account.initials}
+                        </div>
+                        <div className="min-w-0 flex flex-col">
+                          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:text-theme-cyan transition-colors truncate">
+                            <HighlightedText text={account.name} tokens={accTokens} />
+                            <Badge
+                              variant="outline"
+                              className="border-border bg-foreground/10 text-muted-foreground text-[10px] px-1.5 py-0 h-4"
+                            >
+                              {account.kind}
+                            </Badge>
+                          </div>
+                          {account.card?.name && (
+                            <div className="text-xs text-muted-foreground truncate">{account.card.name}</div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 flex items-center gap-1 text-muted-foreground text-xs">
+                        <Wallet className="w-3.5 h-3.5 text-theme-cyan" />
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+
+            {/* TRANSACTIONS GROUP */}
             {previewGroups.length > 0 && (
               <CommandGroup
-                heading={t('search.group')}
+                heading={t('nav.transactions')}
                 className="text-xs font-semibold text-muted-foreground px-2 pt-1 pb-1 uppercase tracking-wider"
               >
                 {previewGroups.map(group => {
@@ -234,8 +300,8 @@ export function GlobalSearch() {
               </button>
             </div>
           )}
-        </Command>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </Command>
   );
 }

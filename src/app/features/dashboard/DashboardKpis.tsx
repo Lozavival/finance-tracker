@@ -286,10 +286,10 @@ export function DashboardKpisSection({ kpis, alerts }: DashboardKpisProps) {
               <p className="text-foreground text-2xl font-bold tracking-tight mb-1">
                 {activeCount > 0
                   ? t('dashboard.activeAlertsCount', { count: String(activeCount) })
-                  : t('dashboard.noActiveAlerts')}
+                  : t('dashboard.allSystemsNormal')}
               </p>
               <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                <span>{activeCount > 0 ? t('dashboard.clickToViewSignals') : t('dashboard.allSystemsNominal')}</span>
+                <span>{activeCount > 0 ? t('dashboard.clickToViewSignals') : t('dashboard.allSystemsNormal')}</span>
                 <ChevronRight className="size-3.5 text-theme-orange group-hover:translate-x-0.5 transition-transform shrink-0" />
               </div>
             </div>
