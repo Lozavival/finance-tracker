@@ -15,6 +15,11 @@ export const directionSchema = z.enum(['income', 'expense']);
 export const supportedCurrencySchema = z.enum(['USD', 'BRL']);
 export const supportedLocaleSchema = z.enum(['en-US', 'pt-BR']);
 
+export const recurrenceLimitSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('infinite') }),
+  z.object({ kind: z.literal('count'), count: z.number().int().positive() }),
+]);
+
 export const serializedTransactionSchema = z.object({
   id: z.string().min(1),
   date: localDateStringSchema,
@@ -23,20 +28,22 @@ export const serializedTransactionSchema = z.object({
   currency: supportedCurrencySchema,
   description: z.string(),
   accountId: z.string().min(1),
-  paymentMethodId: z.string().min(1),
+  paymentMethodId: z.string().min(1).optional(),
   typeId: z.string().min(1),
   transferId: z.string().optional(),
   installment: z
     .object({
-      current: z.number().int().positive(),
-      total: z.number().int().positive(),
       groupId: z.string().min(1),
+      number: z.number().int().positive(),
+      total: z.number().int().positive(),
     })
     .optional(),
   recurring: z
     .object({
       ruleId: z.string().min(1),
       iteration: z.number().int().positive(),
+      frequency: z.literal('monthly').optional(),
+      total: z.number().int().positive().optional(),
     })
     .optional(),
 });
@@ -53,24 +60,35 @@ export const serializedTransactionDraftSchema = z.discriminatedUnion('kind', [
     toValue: z.number().int().positive().optional(),
     fromAccountId: z.string().min(1),
     toAccountId: z.string().min(1),
-    description: z.string(),
+    description: z.string().optional(),
     fromCurrency: supportedCurrencySchema.optional(),
     toCurrency: supportedCurrencySchema.optional(),
   }),
   z.object({
     kind: z.literal('installments'),
-    transaction: serializedTransactionSchema.omit({ id: true, installment: true }),
+    transaction: serializedTransactionSchema.omit({
+      id: true,
+      date: true,
+      value: true,
+      installment: true,
+    }),
     count: z.number().int().positive(),
     totalValue: z.number().int().positive(),
     firstDate: localDateStringSchema,
   }),
   z.object({
     kind: z.literal('recurring'),
-    transaction: serializedTransactionSchema.omit({ id: true, recurring: true }),
+    transaction: serializedTransactionSchema.omit({
+      id: true,
+      date: true,
+      value: true,
+      recurring: true,
+      installment: true,
+    }),
     value: z.number().int().positive(),
-    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+    frequency: z.literal('monthly'),
     startDate: localDateStringSchema,
-    limit: z.number().int().positive().optional(),
+    limit: recurrenceLimitSchema,
   }),
 ]);
 
@@ -103,7 +121,7 @@ export const serializedAccountConfigSchema = z.object({
   name: z.string().min(1),
   kind: z.enum(['Checking', 'Savings', 'Cash']),
   currencies: z.array(supportedCurrencySchema),
-  openingBalances: z.record(supportedCurrencySchema, z.number().int()).optional(),
+  openingBalances: z.record(supportedCurrencySchema, z.number().int().optional()).optional(),
   openingDate: localDateStringSchema,
   initials: z.string().min(1),
   color: z.string().min(1),

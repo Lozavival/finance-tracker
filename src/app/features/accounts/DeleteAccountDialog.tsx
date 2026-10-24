@@ -60,13 +60,13 @@ export function DeleteAccountDialog({
     if (hasTransactions || isLastActiveAccount || !account) return;
     const targetAccount = { ...account };
     deleteRecurringRulesForAccount(targetAccount.id);
-    dispatch({ type: 'account/remove', payload: { id: targetAccount.id } });
+    void dispatch({ type: 'account/remove', payload: { id: targetAccount.id } });
     notify.undoable({
       id: `undo-account-delete-${targetAccount.id}`,
       messageKey: 'notifications.ops.accountDeleted',
       params: { name: targetAccount.name },
       onUndo: () => {
-        dispatch({ type: 'account/add', payload: targetAccount });
+        void dispatch({ type: 'account/add', payload: targetAccount });
       },
     });
     onDeleted?.();
@@ -79,7 +79,7 @@ export function DeleteAccountDialog({
       onSwitchToArchive(account);
     } else {
       cancelRecurringRulesForAccount(account.id);
-      dispatch({ type: 'account/archive', payload: { id: account.id } });
+      void dispatch({ type: 'account/archive', payload: { id: account.id } });
       onClose();
     }
   }
