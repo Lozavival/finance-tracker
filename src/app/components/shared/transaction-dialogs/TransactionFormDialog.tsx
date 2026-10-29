@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FormEvent } from 'react';
+import { useEffect, useState, useMemo, useRef, type FormEvent } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import {
@@ -165,8 +165,23 @@ export function TransactionFormDialog({
   const canUseInstallments = mode === 'expense' && isCreditCard(paymentMethodId);
   const effectiveInstallments = canUseInstallments ? Number(installments) || 1 : 1;
 
+  const prevOpenRef = useRef(false);
+  const prevEditingRef = useRef<EditingTarget | null>(null);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      prevOpenRef.current = false;
+      return;
+    }
+
+    const isOpening = !prevOpenRef.current;
+    const isTargetChange = editing !== prevEditingRef.current;
+    prevOpenRef.current = true;
+    prevEditingRef.current = editing;
+
+    if (!isOpening && !isTargetChange) {
+      return;
+    }
 
     setErrors({});
     setShowConvertConfirm(false);

@@ -45,6 +45,7 @@ export function NotificationCenter() {
         <button
           type="button"
           title={t('nav.notifications')}
+          aria-label={t('nav.notifications')}
           className="relative p-2 rounded-lg bg-foreground/5 border border-border hover:border-theme-cyan/50 hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] transition-all duration-300 cursor-pointer"
         >
           <Bell className="size-5 text-muted-foreground" />

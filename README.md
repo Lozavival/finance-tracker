@@ -246,6 +246,11 @@ npm run preview
 | `pnpm dev` | Starts the Vite development server with hot reload |
 | `pnpm build` | Compiles TypeScript and builds the production bundle in `dist/` |
 | `pnpm preview` | Serves the production build locally for verification |
+| `pnpm test` | Runs all application tests (Vitest unit, integration, components + Playwright E2E) |
+| `pnpm test:unit` | Runs unit tests via Vitest (`tests/unit`) |
+| `pnpm test:integration` | Runs integration tests via Vitest (`tests/integration`) |
+| `pnpm test:components` | Runs component tests via Vitest (`tests/components`) |
+| `pnpm test:e2e` | Runs Playwright end-to-end tests covering all user journeys |
 | `pnpm lint` | Runs both TypeScript type checking (`lint:tsc`) and ESLint (`lint:ts`) |
 | `pnpm lint:tsc` | Runs `tsc --noEmit` to verify type safety across the project |
 | `pnpm lint:ts` | Executes ESLint across all source files with zero-warning tolerance |

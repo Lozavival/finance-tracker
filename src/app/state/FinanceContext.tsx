@@ -54,6 +54,7 @@ export type FinanceContextValue = {
   deleteRecurringRulesForAccount: (accountId: string) => void;
   reassignType: (fromTypeId: string, toTypeId: string) => void;
   reassignPaymentMethod: (fromMethodId: string, toMethodId: string) => void;
+  resetWorkspace: (seedMode?: 'production' | 'development') => Promise<void>;
 };
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -180,6 +181,33 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       throw err;
     }
   }, [dispatch, filterPendingTxIds]);
+
+  const resetWorkspace = useCallback(
+    async (seedMode: 'production' | 'development' = 'development') => {
+      financeLogger.warn('Resetting workspace to defaults...', { seedMode });
+      try {
+        const repo = getFinanceRepository();
+        const snapshot = await repo.resetSettings(seedMode);
+        void dispatch({ type: 'settings/hydrate', payload: snapshot.settings });
+        setTransactions(snapshot.transactions);
+        setRecurringRules(snapshot.recurringRules);
+        setHistoricalRollups(snapshot.historicalRollups);
+        setLoadedFromDate(snapshot.loadedFromDate);
+        setSyncStatus('online');
+        setLoadStatus('ready');
+        financeLogger.info('Workspace reset and rehydrated successfully', {
+          transactions: snapshot.transactions.length,
+          recurringRules: snapshot.recurringRules.length,
+          accounts: snapshot.settings.accounts.length,
+        });
+      } catch (err) {
+        financeLogger.error('Failed to reset workspace:', err);
+        reportSyncErrorRef.current(err);
+        throw err;
+      }
+    },
+    [dispatch],
+  );
 
   // Register reloadWorkspace as resync handler
   useEffect(() => {
@@ -671,6 +699,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       deleteRecurringRulesForAccount,
       reassignType,
       reassignPaymentMethod,
+      resetWorkspace,
     }),
     [
       transactions,
@@ -692,6 +721,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       deleteRecurringRulesForAccount,
       reassignType,
       reassignPaymentMethod,
+      resetWorkspace,
     ],
   );
 

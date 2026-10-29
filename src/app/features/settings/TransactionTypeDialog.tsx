@@ -151,8 +151,11 @@ export function TransactionTypeDialog({
 
           <div className="space-y-4 p-6 overflow-y-auto flex-1">
             <div className="space-y-2">
-              <Label className="text-foreground">{t('settings.types.typeName')}</Label>
+              <Label htmlFor="type-name" className="text-foreground">
+                {t('settings.types.typeName')}
+              </Label>
               <Input
+                id="type-name"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder={t('settings.types.namePlaceholder')}

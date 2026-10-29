@@ -21,3 +21,6 @@ logs/
 /.plugins/
 /.opencode-skills/
 data/*.db*
+test-results/
+playwright-report/
+

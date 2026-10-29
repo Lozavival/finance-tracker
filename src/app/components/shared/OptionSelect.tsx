@@ -32,6 +32,7 @@ export function OptionSelect<T extends string>({
       <Label className="text-foreground">{label}</Label>
       <Select value={value} onValueChange={next => onChange(next as T)} disabled={disabled}>
         <SelectTrigger
+          aria-label={label}
           aria-invalid={Boolean(error)}
           className="!h-11 border-border bg-foreground/5 text-foreground disabled:opacity-50"
         >

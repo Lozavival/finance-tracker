@@ -3,10 +3,21 @@ import { Card } from '@/components/primitives/card';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { Toggle } from '@/components/primitives/toggle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/primitives/alert-dialog';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { useSettings } from '@/state/SettingsContext';
 import { useNotifications } from '@/state/NotificationsContext';
+import { useFinance } from '@/state/FinanceContext';
 import {
   Globe,
   DollarSign,
@@ -19,6 +30,7 @@ import {
   Monitor,
   Sun,
   Moon,
+  RotateCcw,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';
@@ -44,8 +56,10 @@ export function PreferencesPanel() {
 
   const { settings, dispatch } = useSettings();
   const { notify } = useNotifications();
+  const { resetWorkspace } = useFinance();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [resetMode, setResetMode] = useState<'development' | 'production' | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -193,6 +207,23 @@ export function PreferencesPanel() {
     setManualRateInput('');
     setFetchSuccess(null);
     setFetchError(null);
+  }
+
+  async function handleConfirmReset() {
+    if (!resetMode) return;
+    try {
+      const p = resetWorkspace(resetMode);
+      notify.successWhen(
+        p.then(() => true),
+        'settings.resetSuccess',
+        { id: 'workspace-reset' },
+      );
+      await p;
+    } catch {
+      // handled in context
+    } finally {
+      setResetMode(null);
+    }
   }
 
   return (
@@ -506,6 +537,65 @@ export function PreferencesPanel() {
           </div>
         </div>
       </Card>
+
+      {/* Danger Zone: Workspace Data Reset */}
+      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-destructive/30">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-destructive/15 text-destructive">
+            <RotateCcw className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-lg font-medium text-foreground">{t('settings.resetWorkspaceTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetWorkspaceDesc')}</div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4 mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setResetMode('development')}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10 cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            {t('settings.resetDevButton')}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setResetMode('production')}
+            className="border-border hover:bg-foreground/10 text-muted-foreground cursor-pointer"
+          >
+            {t('settings.resetProdButton')}
+          </Button>
+        </div>
+      </Card>
+
+      <AlertDialog open={Boolean(resetMode)} onOpenChange={open => !open && setResetMode(null)}>
+        <AlertDialogContent className="bg-popover border-border text-foreground sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('settings.resetDialogTitle')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {t('settings.resetDialogDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setResetMode(null)}
+              className="border-border bg-foreground/5 text-foreground hover:bg-foreground/10"
+            >
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmReset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('settings.resetConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

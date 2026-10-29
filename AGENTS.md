@@ -14,6 +14,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Formatting**: `npm run format` (`prettier`)
 - **Build**: `npm run build` (`vite build`)
 - **Preview**: `npm run preview`
+- **Full Application Tests**: `npm test` (`vitest run && playwright test` running all unit, integration, component, and E2E suites)
+- **Unit & Integration Tests**: `npm run test:unit`, `npm run test:integration`, `npm run test:components`
+- **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 14 user journeys)
 
 ---
 
