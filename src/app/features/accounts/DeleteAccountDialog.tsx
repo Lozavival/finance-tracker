@@ -17,6 +17,9 @@ import { useNotify } from '@/state/NotificationsContext';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { Archive, Trash2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
+
+const deleteAccLogger = logger.child('DeleteAccountDialog');
 
 export type DeleteAccountDialogProps = {
   account: AccountConfig | null;
@@ -57,8 +60,16 @@ export function DeleteAccountDialog({
   const hasTransactions = totalCount > 0;
 
   function handleDelete() {
-    if (hasTransactions || isLastActiveAccount || !account) return;
+    if (hasTransactions || isLastActiveAccount || !account) {
+      deleteAccLogger.warn('Account deletion blocked', {
+        hasTransactions,
+        isLastActiveAccount,
+        accountId: account?.id,
+      });
+      return;
+    }
     const targetAccount = { ...account };
+    deleteAccLogger.info('Deleting account', { id: targetAccount.id, name: targetAccount.name });
     deleteRecurringRulesForAccount(targetAccount.id);
     void dispatch({ type: 'account/remove', payload: { id: targetAccount.id } });
     notify.undoable({

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { type DatabaseConnection } from './client';
 import * as schema from './schema';
+import type { ServerLogger } from '../server/logger';
 import { PRODUCTION_DEFAULT_SETTINGS } from '../app/data/defaults';
 import { DEV_DEFAULT_SETTINGS, SEEDED_RECURRING_RULES, SEEDED_TRANSACTIONS } from '../app/data/fixtures';
 import { getAccountCurrencies, getAccountOpeningBalance, getAllowedPaymentMethodIds } from '../app/data/settings';
@@ -23,14 +24,18 @@ export function seedWorkspaceIfNeeded(
   conn: DatabaseConnection,
   mode: SeedMode = resolveDefaultSeedMode(),
   workspaceId: string = DEFAULT_WORKSPACE_ID,
+  logger?: ServerLogger,
 ): boolean {
+  const seedLogger = logger?.child('Seed');
   const existing = conn.db.select().from(schema.workspaces).where(eq(schema.workspaces.id, workspaceId)).get();
 
   if (existing) {
+    seedLogger?.debug(`Existing workspace "${workspaceId}" found, skipping initial seeding`);
     return false;
   }
 
-  resetAndSeedWorkspace(conn, mode, workspaceId);
+  seedLogger?.info(`No existing workspace found for "${workspaceId}". Initiating seed in "${mode}" mode...`);
+  resetAndSeedWorkspace(conn, mode, workspaceId, logger);
   return true;
 }
 
@@ -38,9 +43,22 @@ export function resetAndSeedWorkspace(
   conn: DatabaseConnection,
   mode: SeedMode = resolveDefaultSeedMode(),
   workspaceId: string = DEFAULT_WORKSPACE_ID,
+  logger?: ServerLogger,
 ): void {
+  const seedLogger = logger?.child('Seed');
   const baseSettings = mode === 'production' ? PRODUCTION_DEFAULT_SETTINGS : DEV_DEFAULT_SETTINGS;
   const nowIso = new Date().toISOString();
+
+  seedLogger?.info(`Beginning workspace reset and seed for "${workspaceId}" in "${mode}" mode`, {
+    accountsCount: baseSettings.accounts.length,
+    typesCount: baseSettings.transactionTypes.length,
+    paymentMethodsCount: baseSettings.paymentMethods.length,
+    goalsCount: baseSettings.goals.categories.length,
+    devTransactionsCount: mode === 'development' ? SEEDED_TRANSACTIONS.length : 0,
+    devRulesCount: mode === 'development' ? SEEDED_RECURRING_RULES.length : 0,
+  });
+
+  const endTimer = seedLogger?.time(`Seed workspace "${workspaceId}"`);
 
   const runSeed = conn.sqlite.transaction(() => {
     // Delete existing workspace (cascades to all child tables)
@@ -224,5 +242,12 @@ export function resetAndSeedWorkspace(
     }
   });
 
-  runSeed();
+  try {
+    runSeed();
+    endTimer?.();
+    seedLogger?.info(`Workspace "${workspaceId}" seeded successfully in "${mode}" mode`);
+  } catch (seedErr) {
+    seedLogger?.error(`Failed to reset and seed workspace "${workspaceId}":`, seedErr);
+    throw seedErr;
+  }
 }

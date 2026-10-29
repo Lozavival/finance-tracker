@@ -1,5 +1,8 @@
 import { addMonthsClamped } from './dates';
 import type { Transaction, TransactionDraft, InstallmentInfo } from './transactions';
+import { logger } from '../lib/logger';
+
+const installmentsLogger = logger.child('Installments');
 
 export const MAX_INSTALLMENTS = 48;
 
@@ -18,6 +21,12 @@ export function buildInstallments(
   groupId: string,
   ids: string[],
 ): Transaction[] {
+  installmentsLogger.debug('Building installment series', {
+    groupId,
+    count: draft.count,
+    totalCents: draft.totalValue,
+    firstDate: draft.firstDate,
+  });
   const values = splitInstallmentValues(draft.totalValue, draft.count);
   return values.map((value, i) => ({
     ...draft.transaction,

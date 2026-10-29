@@ -4,6 +4,7 @@ import Database, { type Database as SqliteDatabase } from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
 import { foldText } from '../app/data/search';
+import type { ServerLogger } from '../server/logger';
 
 export type DrizzleDb = BetterSQLite3Database<typeof schema>;
 
@@ -164,12 +165,16 @@ CREATE TRIGGER IF NOT EXISTS trg_tx_fts_update AFTER UPDATE OF description ON tr
 END;
 `;
 
-export function createDatabaseConnection(dbPath?: string): DatabaseConnection {
+export function createDatabaseConnection(dbPath?: string, logger?: ServerLogger): DatabaseConnection {
   const resolvedPath = dbPath ?? process.env.DATABASE_PATH ?? path.resolve(process.cwd(), 'data', 'finance-tracker.db');
+  const dbLogger = logger?.child('db');
+
+  dbLogger?.info(`Initializing SQLite database connection at "${resolvedPath}"`);
 
   if (resolvedPath !== ':memory:') {
     const dir = path.dirname(resolvedPath);
     if (!fs.existsSync(dir)) {
+      dbLogger?.debug(`Creating database directory "${dir}"`);
       fs.mkdirSync(dir, { recursive: true });
     }
   }
@@ -177,20 +182,32 @@ export function createDatabaseConnection(dbPath?: string): DatabaseConnection {
   const sqlite = new Database(resolvedPath);
   if (resolvedPath !== ':memory:') {
     sqlite.pragma('journal_mode = WAL');
+    dbLogger?.debug('Enabled WAL journal mode');
   }
   sqlite.pragma('foreign_keys = ON');
-  sqlite.exec(SCHEMA_DDL);
+  dbLogger?.debug('Enabled foreign keys constraint verification');
+  try {
+    sqlite.exec(SCHEMA_DDL);
+    dbLogger?.debug('Applied schema DDL successfully');
+  } catch (ddlErr) {
+    dbLogger?.error('Failed to apply database schema DDL:', ddlErr);
+    throw ddlErr;
+  }
 
   // Register deterministic `fold` function for accent & case insensitive queries on short tokens
   sqlite.function('fold', { deterministic: true }, (v: unknown) => (typeof v === 'string' ? foldText(v) : v));
 
   // Backfill for pre-existing databases and sync rowid indexing
+  const endFtsTimer = dbLogger?.time('FTS5 transactions_fts backfill');
   sqlite.transaction(() => {
     sqlite.exec(`
       DELETE FROM transactions_fts;
       INSERT INTO transactions_fts(rowid, description) SELECT rowid, description FROM transactions;
     `);
   })();
+  endFtsTimer?.();
+  const ftsCount = sqlite.prepare('SELECT COUNT(*) as count FROM transactions_fts').get() as { count: number };
+  dbLogger?.info(`FTS5 index synchronized with ${ftsCount.count} indexed records`);
 
   const db = drizzle(sqlite, { schema });
   return { sqlite, db };

@@ -1,4 +1,7 @@
 import { type SupportedCurrency } from '@/i18n/types';
+import { logger } from '../lib/logger';
+
+const currencyLogger = logger.child('Currency');
 
 export type ExchangeRateState = {
   rate: number | null; // USD to BRL rate (e.g. 5.65). null if not set
@@ -99,6 +102,8 @@ export async function fetchLiveExchangeRate(options?: {
     });
   }
 
+  currencyLogger.debug('Fetching live USD/BRL exchange rate...');
+
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/USD', {
       signal: controller.signal,
@@ -111,11 +116,14 @@ export async function fetchLiveExchangeRate(options?: {
     if (typeof brlRate !== 'number' || brlRate <= 0) {
       throw new ExchangeRateFetchError('INVALID_RATE', 'Invalid BRL rate received');
     }
-    return {
+    const rateResult = {
       rate: Number(brlRate.toFixed(4)),
       timestamp: new Date().toISOString(),
     };
+    currencyLogger.info('Live USD/BRL exchange rate received:', rateResult.rate);
+    return rateResult;
   } catch (err) {
+    currencyLogger.warn('Failed to fetch live USD/BRL exchange rate:', err);
     if (err instanceof ExchangeRateFetchError) {
       throw err;
     }

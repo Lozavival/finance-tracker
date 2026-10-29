@@ -21,6 +21,9 @@ import { SEARCH_MIN_LENGTH, collapseSearchResults, matchAccounts } from '@/data/
 import { formatRowDate } from '@/data/dates';
 import { formatSignedValue } from '@/data/transactions';
 import { getAccountColor } from '@/data/settings';
+import { logger } from '@/lib/logger';
+
+const searchUiLogger = logger.child('GlobalSearch');
 
 export function GlobalSearch() {
   const { t, locale } = useI18n();
@@ -71,6 +74,7 @@ export function GlobalSearch() {
 
   const handleSelectSeeAll = () => {
     if (!query.trim()) return;
+    searchUiLogger.info('User navigated to full search page', { query: query.trim() });
     setOpen(false);
     const targetQ = encodeURIComponent(query.trim());
     setQuery('');
@@ -78,6 +82,7 @@ export function GlobalSearch() {
   };
 
   const handleSelectAccount = (accountId: string) => {
+    searchUiLogger.info('User selected account from search suggestions', { accountId });
     setOpen(false);
     setQuery('');
     void navigate(`/accounts/${accountId}`);

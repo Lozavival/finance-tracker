@@ -15,6 +15,9 @@ import { PRODUCTION_DEFAULT_SETTINGS } from '@/data/defaults/defaultSettings';
 import { getFinanceRepository } from '@/data/repository';
 import { settingsReducer, type SettingsAction } from './settingsReducer';
 import { useNotifications } from './NotificationsContext';
+import { logger } from '@/lib/logger';
+
+const settingsLogger = logger.child('SettingsContext');
 
 export type SettingsDispatch = (action: SettingsAction) => Promise<boolean>;
 
@@ -54,6 +57,10 @@ export function SettingsProvider({
 
   const dispatch = useCallback<SettingsDispatch>(
     action => {
+      settingsLogger.debug('Dispatching settings action:', {
+        type: action.type,
+        payload: 'payload' in action ? action.payload : undefined,
+      });
       const prevState = settingsRef.current;
       const nextState = settingsReducer(prevState, action);
       settingsRef.current = nextState;
@@ -63,8 +70,12 @@ export function SettingsProvider({
 
       const persist = (p: Promise<unknown>): Promise<boolean> =>
         p.then(
-          () => true,
+          () => {
+            settingsLogger.info('Successfully persisted settings action:', action.type);
+            return true;
+          },
           err => {
+            settingsLogger.error('Failed to persist settings action:', { action: action.type, error: err });
             onPersistError(err);
             return false;
           },

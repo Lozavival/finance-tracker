@@ -42,6 +42,9 @@ export type MonthlyBudgetSummary = {
 
 import { convertCents } from './currency';
 import { type SupportedCurrency } from '@/i18n/types';
+import { logger } from '../lib/logger';
+
+const goalsLogger = logger.child('Goals');
 
 export function calculateMonthlyBudget(
   transactions: Transaction[],
@@ -96,10 +99,16 @@ export function calculateMonthlyBudget(
   }
 
   // If there are unmapped expenses and categories exist, place them into the first category or distribute
-  if (unmappedExpenses.length > 0 && goalsConfig.categories.length > 0) {
-    const firstCatList = categoryTransactionsMap.get(goalsConfig.categories[0].id);
-    if (firstCatList) {
-      firstCatList.push(...unmappedExpenses);
+  if (unmappedExpenses.length > 0) {
+    goalsLogger.warn('Transactions not mapped to any goal category:', {
+      unmappedCount: unmappedExpenses.length,
+      types: Array.from(new Set(unmappedExpenses.map(t => t.typeId))),
+    });
+    if (goalsConfig.categories.length > 0) {
+      const firstCatList = categoryTransactionsMap.get(goalsConfig.categories[0].id);
+      if (firstCatList) {
+        firstCatList.push(...unmappedExpenses);
+      }
     }
   }
 
@@ -129,7 +138,7 @@ export function calculateMonthlyBudget(
   const remainingBalance = actualIncome - totalExpenses;
   const usedPercentage = budgetBase > 0 ? (totalExpenses / budgetBase) * 100 : 0;
 
-  return {
+  const summary = {
     monthDate: new Date(targetYear, targetMonth, 1),
     actualIncome,
     budgetBase,
@@ -140,6 +149,17 @@ export function calculateMonthlyBudget(
     usedPercentage,
     categories: categorySummaries,
   };
+
+  goalsLogger.debug('calculateMonthlyBudget computed', {
+    targetYear,
+    targetMonth: targetMonth + 1,
+    actualIncome,
+    totalExpenses,
+    budgetBase,
+    categoriesCount: categorySummaries.length,
+  });
+
+  return summary;
 }
 
 export function formatPercent(value: number, decimals = 2): string {

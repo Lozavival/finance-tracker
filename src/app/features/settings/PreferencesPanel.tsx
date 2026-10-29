@@ -23,6 +23,9 @@ import {
 import { useTheme } from 'next-themes';
 import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';
 import { fetchLiveExchangeRate, getExchangeRateErrorDetails } from '@/data/currency';
+import { logger } from '@/lib/logger';
+
+const prefsLogger = logger.child('PreferencesPanel');
 
 export function PreferencesPanel() {
   const {
@@ -91,6 +94,7 @@ export function PreferencesPanel() {
     try {
       const result = await fetchLiveExchangeRate();
       if (result && result.rate) {
+        prefsLogger.info('Live exchange rate fetched successfully', { rate: result.rate });
         const nowIso = result.timestamp || new Date().toISOString();
         void dispatch({
           type: 'settings/updateExchangeRate',
@@ -144,9 +148,11 @@ export function PreferencesPanel() {
   function handleSaveManualRate() {
     const parsed = Number(manualRateInput);
     if (!Number.isFinite(parsed) || parsed <= 0) {
+      prefsLogger.warn('Invalid manual rate input rejected', { input: manualRateInput });
       notify.validation('settings.invalidRate', { id: 'manual-rate-validation' });
       return;
     }
+    prefsLogger.info('Manual exchange rate saved', { rate: parsed });
     const savePromise = dispatch({
       type: 'settings/updateExchangeRate',
       payload: {
@@ -174,6 +180,7 @@ export function PreferencesPanel() {
   }
 
   function handleClearRate() {
+    prefsLogger.info('Manual exchange rate cleared');
     void dispatch({
       type: 'settings/updateExchangeRate',
       payload: {

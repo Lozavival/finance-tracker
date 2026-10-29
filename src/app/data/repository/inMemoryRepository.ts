@@ -29,8 +29,10 @@ import type {
   WorkspaceSnapshot,
 } from './types';
 import { SEARCH_MIN_LENGTH, tokenizeSearchQuery, foldText, compareSearchOrder } from '@/data/search';
+import { logger } from '../../lib/logger';
 
 export class InMemoryFinanceRepository implements FinanceRepository {
+  private readonly logger = logger.child('InMemoryRepo');
   private settings: Settings;
   private transactions: Transaction[];
   private recurringRules: RecurringRule[];
@@ -75,6 +77,8 @@ export class InMemoryFinanceRepository implements FinanceRepository {
       }
     }
 
+    this.logger.debug('loadWorkspace completed', { windowDays, transactionsCount: windowed.length });
+
     return Promise.resolve({
       settings: this.settings,
       transactions: windowed,
@@ -109,6 +113,11 @@ export class InMemoryFinanceRepository implements FinanceRepository {
     });
 
     const sorted = [...matched].sort(compareSearchOrder(getToday()));
+    this.logger.debug('searchTransactions completed', {
+      rawText,
+      totalCount: matched.length,
+      returnedCount: Math.min(sorted.length, limit),
+    });
     return Promise.resolve({
       transactions: sorted.slice(0, limit),
       totalCount: matched.length,
@@ -190,6 +199,11 @@ export class InMemoryFinanceRepository implements FinanceRepository {
     }
 
     this.transactions = nextTransactions;
+    this.logger.info('saveTransactionDraft completed', {
+      kind: draft.kind,
+      isEditing: Boolean(editingTarget),
+      totalTransactions: this.transactions.length,
+    });
     return Promise.resolve({
       transactions: [...this.transactions],
       recurringRules: [...this.recurringRules],
@@ -222,6 +236,12 @@ export class InMemoryFinanceRepository implements FinanceRepository {
     } else {
       this.transactions = this.transactions.filter(t => t.id !== target.id);
     }
+
+    this.logger.info('deleteTransactionTarget completed', {
+      targetId: target.id,
+      scope,
+      remainingTransactions: this.transactions.length,
+    });
 
     return Promise.resolve({
       transactions: [...this.transactions],

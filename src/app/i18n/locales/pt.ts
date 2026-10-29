@@ -894,6 +894,8 @@ export const pt: Translations = {
       description: 'Ocorreu um erro inesperado na aplicação ao renderizar esta página.',
       reload: 'Recarregar Página',
       goHome: 'Voltar ao Painel',
+      copyLogs: 'Copiar Logs de Diagnóstico',
+      logsCopied: 'Logs de diagnóstico copiados para a área de transferência',
     },
   },
 };

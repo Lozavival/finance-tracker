@@ -10,6 +10,9 @@ import {
   getAccountOpeningBalance,
 } from './settings';
 import { addDays, formatShort } from './dates';
+import { logger } from '../lib/logger';
+
+const ledgerLogger = logger.child('Ledger');
 
 export type CashMovementKind = 'opening' | 'transaction' | 'card-bill';
 
@@ -108,10 +111,17 @@ export function buildCashMovements(
     });
   }
 
-  return movements.filter(m => {
+  const validMovements = movements.filter(m => {
     const acc = findAccount(settings, m.accountId);
     return acc ? m.date.getTime() >= acc.openingDate.getTime() : false;
   });
+
+  ledgerLogger.debug('buildCashMovements generated valid cash movements', {
+    totalMovements: validMovements.length,
+    accountsCount: settings.accounts.length,
+  });
+
+  return validMovements;
 }
 
 export type BalancePoint = { date: Date; balance: number };
@@ -169,6 +179,10 @@ export function buildLedgers(movements: CashMovement[], settings: Settings): Rec
     }
     ledger.points = Array.from(pointsMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }
+
+  ledgerLogger.debug('buildLedgers built account ledgers', {
+    distinctLedgersCount: distinctLedgers.size,
+  });
 
   return ledgers;
 }

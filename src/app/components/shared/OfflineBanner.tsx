@@ -2,6 +2,9 @@ import { WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { useFinance } from '@/state/FinanceContext';
 import { useI18n } from '@/i18n';
 import { Button } from '@/components/primitives/button';
+import { logger } from '@/lib/logger';
+
+const bannerLogger = logger.child('OfflineBanner');
 
 export function OfflineBanner() {
   const { syncStatus, loadStatus, reloadWorkspace } = useFinance();
@@ -27,7 +30,9 @@ export function OfflineBanner() {
           variant="outline"
           size="sm"
           onClick={() => {
-            void reloadWorkspace().catch(() => {});
+            void reloadWorkspace().catch(err => {
+              bannerLogger.warn('Retry reconnect from OfflineBanner failed:', err);
+            });
           }}
           className="h-7 px-2.5 text-xs border-border/40 hover:bg-foreground/10 text-foreground flex items-center gap-1.5"
         >

@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { type DatabaseConnection } from '../db/client';
 import * as schema from '../db/schema';
+import type { ServerLogger } from './logger';
 import {
   DEFAULT_WORKSPACE_ID,
   resetAndSeedWorkspace,
@@ -144,13 +145,34 @@ function mapRawRowToTransaction(row: RawSqliteTransactionRow): Transaction {
 
 export class SqliteRepository implements FinanceRepository {
   private loadedFromDateStr: string | null = null;
+  private readonly logger?: ServerLogger;
 
   constructor(
     private readonly conn: DatabaseConnection,
     private readonly workspaceId: string = DEFAULT_WORKSPACE_ID,
     private readonly seedMode: SeedMode = resolveDefaultSeedMode(),
+    logger?: ServerLogger,
   ) {
-    seedWorkspaceIfNeeded(this.conn, this.seedMode, this.workspaceId);
+    this.logger = logger?.child('SqliteRepo');
+    const seeded = seedWorkspaceIfNeeded(this.conn, this.seedMode, this.workspaceId);
+    if (seeded) {
+      this.logger?.info(`Initialized and seeded workspace "${this.workspaceId}" in mode "${this.seedMode}"`);
+    } else {
+      this.logger?.debug(`Connected to existing workspace "${this.workspaceId}"`);
+    }
+  }
+
+  private runInTransaction<T>(operationName: string, fn: () => T): T {
+    this.logger?.debug(`[tx:begin] ${operationName}`);
+    const tx = this.conn.sqlite.transaction(fn);
+    try {
+      const result = tx();
+      this.logger?.debug(`[tx:commit] ${operationName}`);
+      return result;
+    } catch (err) {
+      this.logger?.error(`[tx:rollback] ${operationName} failed:`, err);
+      throw err;
+    }
   }
 
   private loadSettingsFromDb(): Settings {
@@ -442,6 +464,7 @@ export class SqliteRepository implements FinanceRepository {
   }
 
   loadWorkspace(windowDays = 90): Promise<WorkspaceSnapshot> {
+    this.logger?.debug(`loadWorkspace requested (windowDays=${windowDays})`);
     const settings = this.loadSettingsFromDb();
     const recurringRules = this.loadRecurringRulesFromDb();
 
@@ -451,6 +474,10 @@ export class SqliteRepository implements FinanceRepository {
     const { transactions, historicalRollups } = this.loadWindowedTransactionsAndRollups(
       settings,
       this.loadedFromDateStr,
+    );
+
+    this.logger?.info(
+      `loadWorkspace loaded: ${transactions.length} transactions, ${recurringRules.length} recurring rules, ${settings.accounts.length} accounts`,
     );
 
     return Promise.resolve({
@@ -463,6 +490,7 @@ export class SqliteRepository implements FinanceRepository {
   }
 
   fetchTransactions(query: TransactionQuery): Promise<Transaction[]> {
+    this.logger?.debug('fetchTransactions query:', query);
     const conditions = [eq(schema.transactions.workspaceId, this.workspaceId)];
 
     if (query.fromDate) {
@@ -490,6 +518,8 @@ export class SqliteRepository implements FinanceRepository {
       .orderBy(asc(schema.transactions.date))
       .all();
 
+    this.logger?.debug(`fetchTransactions returned ${rows.length} transactions`);
+
     return Promise.resolve(rows.map(mapRowToTransaction));
   }
 
@@ -500,6 +530,7 @@ export class SqliteRepository implements FinanceRepository {
       return Promise.resolve({ transactions: [], totalCount: 0 });
     }
 
+    const endTimer = this.logger?.time(`searchTransactions "${rawText.slice(0, 30)}"`);
     const limit = Math.min(Math.max(query.limit ?? 500, 1), 2000);
     const trigramMatch = buildFtsMatchExpression(tokens.filter(t => t.length >= TRIGRAM_MIN_TOKEN));
     const shortTokens = tokens.filter(t => t.length < TRIGRAM_MIN_TOKEN);
@@ -537,6 +568,8 @@ export class SqliteRepository implements FinanceRepository {
     `;
 
     const rows = this.conn.db.all<RawSqliteTransactionRow>(selectQuery);
+    endTimer?.();
+    this.logger?.debug(`searchTransactions matched ${totalCount} rows (returning ${rows.length}) for tokens:`, tokens);
     return Promise.resolve({
       transactions: rows.map(mapRawRowToTransaction),
       totalCount,
@@ -573,7 +606,7 @@ export class SqliteRepository implements FinanceRepository {
     const settings = this.loadSettingsFromDb();
     const nowIso = new Date().toISOString();
 
-    const runSave = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`saveTransactionDraft (${draft.kind})`, () => {
       let existingIds: string[] = [];
       let groupId = createTransactionId();
       let transferId = createTransactionId();
@@ -729,7 +762,10 @@ export class SqliteRepository implements FinanceRepository {
       }
     });
 
-    runSave();
+    this.logger?.info('saveTransactionDraft completed', {
+      kind: draft.kind,
+      isEditing: Boolean(editingTarget),
+    });
 
     const { transactions } = this.loadWindowedTransactionsAndRollups(settings, this.loadedFromDateStr);
     const recurringRules = this.loadRecurringRulesFromDb();
@@ -740,7 +776,7 @@ export class SqliteRepository implements FinanceRepository {
     target: Transaction,
     scope: 'only-this' | 'this-and-future' | 'all' = 'only-this',
   ): Promise<SaveTransactionResult> {
-    const runDelete = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`deleteTransactionTarget (${target.id}, ${scope})`, () => {
       if (target.transferId) {
         this.conn.db
           .delete(schema.transactions)
@@ -814,7 +850,13 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runDelete();
+    this.logger?.info('deleteTransactionTarget completed', {
+      targetId: target.id,
+      scope,
+      isTransfer: Boolean(target.transferId),
+      isInstallment: Boolean(target.installment),
+      isRecurring: Boolean(target.recurring),
+    });
 
     const settings = this.loadSettingsFromDb();
     const { transactions } = this.loadWindowedTransactionsAndRollups(settings, this.loadedFromDateStr);
@@ -824,7 +866,7 @@ export class SqliteRepository implements FinanceRepository {
 
   cancelRecurringRule(ruleId: string, effectiveDate: Date): Promise<SaveTransactionResult> {
     const effectiveStr = toLocalDateString(effectiveDate);
-    const runCancel = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`cancelRecurringRule (${ruleId})`, () => {
       this.conn.db
         .update(schema.recurringRules)
         .set({ status: 'canceled', canceledAt: effectiveStr })
@@ -843,7 +885,7 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runCancel();
+    this.logger?.info('cancelRecurringRule completed', { ruleId, effectiveDate: effectiveStr });
 
     const settings = this.loadSettingsFromDb();
     const { transactions } = this.loadWindowedTransactionsAndRollups(settings, this.loadedFromDateStr);
@@ -852,7 +894,7 @@ export class SqliteRepository implements FinanceRepository {
   }
 
   deleteRecurringRule(ruleId: string): Promise<SaveTransactionResult> {
-    const runDelete = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`deleteRecurringRule (${ruleId})`, () => {
       this.conn.db
         .delete(schema.transactions)
         .where(
@@ -866,7 +908,7 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runDelete();
+    this.logger?.info('deleteRecurringRule completed', { ruleId });
 
     const settings = this.loadSettingsFromDb();
     const { transactions } = this.loadWindowedTransactionsAndRollups(settings, this.loadedFromDateStr);
@@ -878,7 +920,7 @@ export class SqliteRepository implements FinanceRepository {
     const settings = this.loadSettingsFromDb();
     const nowIso = new Date().toISOString();
 
-    const runCreate = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`createAccount (${account.name})`, () => {
       this.conn.db
         .insert(schema.accounts)
         .values({
@@ -924,18 +966,28 @@ export class SqliteRepository implements FinanceRepository {
       }
     });
 
-    runCreate();
+    this.logger?.info('Created account', {
+      id: account.id,
+      name: account.name,
+      kind: account.kind,
+      currencies: getAccountCurrencies(account),
+      hasCard: Boolean(account.card),
+    });
+
     return Promise.resolve();
   }
 
   updateAccount(id: string, changes: Partial<Omit<AccountConfig, 'id'>>): Promise<void> {
     const settings = this.loadSettingsFromDb();
     const current = findAccount(settings, id);
-    if (!current) return Promise.resolve();
+    if (!current) {
+      this.logger?.warn(`Cannot update account "${id}": not found`);
+      return Promise.resolve();
+    }
 
     const merged: AccountConfig = { ...current, ...changes };
 
-    const runUpdate = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`updateAccount (${id})`, () => {
       this.conn.db
         .update(schema.accounts)
         .set({
@@ -984,13 +1036,17 @@ export class SqliteRepository implements FinanceRepository {
       }
     });
 
-    runUpdate();
+    this.logger?.info('Updated account', {
+      id,
+      changedFields: Object.keys(changes),
+    });
+
     return Promise.resolve();
   }
 
   archiveAccount(id: string, cancelRecurrences = false, effectiveDate: Date = getToday()): Promise<void> {
     const effectiveStr = toLocalDateString(effectiveDate);
-    const runArchive = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`archiveAccount (${id})`, () => {
       this.conn.db
         .update(schema.accounts)
         .set({ archived: true })
@@ -1031,11 +1087,13 @@ export class SqliteRepository implements FinanceRepository {
       }
     });
 
-    runArchive();
+    this.logger?.info('Archived account', { id, cancelRecurrences, effectiveDate: effectiveStr });
+
     return Promise.resolve();
   }
 
   restoreAccount(id: string): Promise<void> {
+    this.logger?.info(`Restoring account "${id}"`);
     this.conn.db
       .update(schema.accounts)
       .set({ archived: false })
@@ -1052,10 +1110,11 @@ export class SqliteRepository implements FinanceRepository {
       .get();
 
     if (!target || target.system) {
+      this.logger?.warn(`Cannot delete account "${id}": system account or not found`);
       return Promise.reject(new Error('Cannot delete system account'));
     }
 
-    const runDelete = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`deleteAccount (${id})`, () => {
       const transferRows = this.conn.db
         .select()
         .from(schema.transactions)
@@ -1087,7 +1146,8 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runDelete();
+    this.logger?.info('Deleted account', { id });
+
     return Promise.resolve();
   }
 
@@ -1111,6 +1171,8 @@ export class SqliteRepository implements FinanceRepository {
         sortOrder: existing.length,
       })
       .run();
+
+    this.logger?.info('Created transaction type', { id: type.id, name: type.name, direction: type.direction });
     return Promise.resolve();
   }
 
@@ -1121,7 +1183,10 @@ export class SqliteRepository implements FinanceRepository {
       .where(and(eq(schema.transactionTypes.workspaceId, this.workspaceId), eq(schema.transactionTypes.id, id)))
       .get();
 
-    if (!current) return Promise.resolve();
+    if (!current) {
+      this.logger?.warn(`Cannot update transaction type "${id}": not found`);
+      return Promise.resolve();
+    }
 
     this.conn.db
       .update(schema.transactionTypes)
@@ -1133,11 +1198,13 @@ export class SqliteRepository implements FinanceRepository {
       })
       .where(and(eq(schema.transactionTypes.workspaceId, this.workspaceId), eq(schema.transactionTypes.id, id)))
       .run();
+
+    this.logger?.info('Updated transaction type', { id, changedFields: Object.keys(changes) });
     return Promise.resolve();
   }
 
   reorderTransactionTypes(_direction: 'income' | 'expense', orderedIds: string[]): Promise<void> {
-    const runReorder = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`reorderTransactionTypes (${_direction})`, () => {
       orderedIds.forEach((id, idx) => {
         this.conn.db
           .update(schema.transactionTypes)
@@ -1147,7 +1214,7 @@ export class SqliteRepository implements FinanceRepository {
       });
     });
 
-    runReorder();
+    this.logger?.info('Reordered transaction types', { direction: _direction, count: orderedIds.length });
     return Promise.resolve();
   }
 
@@ -1159,10 +1226,11 @@ export class SqliteRepository implements FinanceRepository {
       .get();
 
     if (!target || target.systemTag === 'transfer' || target.id === TRANSFER_TYPE_ID) {
+      this.logger?.warn(`Cannot delete system transaction type "${fromTypeId}"`);
       return Promise.reject(new Error('Cannot delete system transaction type'));
     }
 
-    const runReassignAndDelete = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`reassignAndDeleteTransactionType (${fromTypeId} -> ${toTypeId ?? 'none'})`, () => {
       if (toTypeId) {
         this.conn.db
           .update(schema.transactions)
@@ -1197,7 +1265,7 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runReassignAndDelete();
+    this.logger?.info('Reassigned and deleted transaction type', { fromTypeId, toTypeId });
     return Promise.resolve();
   }
 
@@ -1221,6 +1289,8 @@ export class SqliteRepository implements FinanceRepository {
         sortOrder: existing.length,
       })
       .run();
+
+    this.logger?.info('Created payment method', { id: method.id, name: method.name, behavior: method.behavior });
     return Promise.resolve();
   }
 
@@ -1231,7 +1301,10 @@ export class SqliteRepository implements FinanceRepository {
       .where(and(eq(schema.paymentMethods.workspaceId, this.workspaceId), eq(schema.paymentMethods.id, id)))
       .get();
 
-    if (!current) return Promise.resolve();
+    if (!current) {
+      this.logger?.warn(`Cannot update payment method "${id}": not found`);
+      return Promise.resolve();
+    }
 
     this.conn.db
       .update(schema.paymentMethods)
@@ -1241,11 +1314,13 @@ export class SqliteRepository implements FinanceRepository {
       })
       .where(and(eq(schema.paymentMethods.workspaceId, this.workspaceId), eq(schema.paymentMethods.id, id)))
       .run();
+
+    this.logger?.info('Updated payment method', { id, changedFields: Object.keys(changes) });
     return Promise.resolve();
   }
 
   reorderPaymentMethods(orderedIds: string[]): Promise<void> {
-    const runReorder = this.conn.sqlite.transaction(() => {
+    this.runInTransaction('reorderPaymentMethods', () => {
       orderedIds.forEach((id, idx) => {
         this.conn.db
           .update(schema.paymentMethods)
@@ -1255,7 +1330,7 @@ export class SqliteRepository implements FinanceRepository {
       });
     });
 
-    runReorder();
+    this.logger?.info('Reordered payment methods', { count: orderedIds.length });
     return Promise.resolve();
   }
 
@@ -1267,10 +1342,11 @@ export class SqliteRepository implements FinanceRepository {
       .get();
 
     if (!target || target.systemTag !== null || target.id === 'cash' || target.id === CREDIT_CARD_METHOD_ID) {
+      this.logger?.warn(`Cannot delete system payment method "${fromMethodId}"`);
       return Promise.reject(new Error('Cannot delete system payment method'));
     }
 
-    const runReassignAndDelete = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`reassignAndDeletePaymentMethod (${fromMethodId} -> ${toMethodId ?? 'none'})`, () => {
       if (toMethodId) {
         this.conn.db
           .update(schema.transactions)
@@ -1306,7 +1382,7 @@ export class SqliteRepository implements FinanceRepository {
         .run();
     });
 
-    runReassignAndDelete();
+    this.logger?.info('Reassigned and deleted payment method', { fromMethodId, toMethodId });
     return Promise.resolve();
   }
 
@@ -1319,6 +1395,8 @@ export class SqliteRepository implements FinanceRepository {
       })
       .where(eq(schema.workspaces.id, this.workspaceId))
       .run();
+
+    this.logger?.info('Updated reference monthly income', { incomeCents });
     return Promise.resolve();
   }
 
@@ -1331,11 +1409,13 @@ export class SqliteRepository implements FinanceRepository {
       })
       .where(eq(schema.workspaces.id, this.workspaceId))
       .run();
+
+    this.logger?.info('Updated goals mode', { mode });
     return Promise.resolve();
   }
 
   saveGoalCategories(categories: GoalCategory[], typeMappings: Record<string, string>): Promise<void> {
-    const runSaveGoals = this.conn.sqlite.transaction(() => {
+    this.runInTransaction(`saveGoalCategories (${categories.length} categories)`, () => {
       this.conn.db
         .delete(schema.goalTypeMappings)
         .where(eq(schema.goalTypeMappings.workspaceId, this.workspaceId))
@@ -1374,7 +1454,10 @@ export class SqliteRepository implements FinanceRepository {
       }
     });
 
-    runSaveGoals();
+    this.logger?.info('Saved goal categories', {
+      categoriesCount: categories.length,
+      typeMappingsCount: Object.keys(typeMappings).length,
+    });
     return Promise.resolve();
   }
 
@@ -1389,7 +1472,10 @@ export class SqliteRepository implements FinanceRepository {
       .where(eq(schema.workspaces.id, this.workspaceId))
       .get();
 
-    if (!current) return Promise.resolve();
+    if (!current) {
+      this.logger?.warn(`Cannot update preferences for workspace "${this.workspaceId}": not found`);
+      return Promise.resolve();
+    }
 
     this.conn.db
       .update(schema.workspaces)
@@ -1409,11 +1495,18 @@ export class SqliteRepository implements FinanceRepository {
       })
       .where(eq(schema.workspaces.id, this.workspaceId))
       .run();
+
+    this.logger?.info('Updated workspace preferences', {
+      language: changes.language,
+      currency: changes.currency,
+      hasExchangeRateUpdate: Boolean(changes.exchangeRate),
+    });
     return Promise.resolve();
   }
 
   resetSettings(seedMode: 'production' | 'development' = this.seedMode): Promise<WorkspaceSnapshot> {
-    resetAndSeedWorkspace(this.conn, seedMode, this.workspaceId);
+    this.logger?.warn(`resetSettings requested with seedMode "${seedMode}" for workspace "${this.workspaceId}"`);
+    resetAndSeedWorkspace(this.conn, seedMode, this.workspaceId, this.logger);
     return this.loadWorkspace(90);
   }
 }

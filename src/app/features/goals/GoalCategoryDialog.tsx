@@ -19,6 +19,9 @@ import { type ColorToken, type TransactionTypeConfig } from '@/data/settings';
 import { type IconKey } from '@/data/icons';
 import { Plus, Check, ArrowRightLeft } from 'lucide-react';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
+
+const goalDialogLogger = logger.child('GoalCategoryDialog');
 
 type GoalCategoryDialogProps = {
   open: boolean;
@@ -79,17 +82,26 @@ export function GoalCategoryDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
+      goalDialogLogger.warn('Goal category submission rejected: name required');
       setError(t('goals.errors.categoryNameRequired'));
       return;
     }
 
     const numericPct = typeof percentage === 'number' ? percentage : parseFloat(String(percentage)) || 0;
     if (numericPct < 0 || numericPct > 100) {
+      goalDialogLogger.warn('Goal category submission rejected: invalid percentage', { numericPct });
       setError(t('goals.errors.percentageRange'));
       return;
     }
 
     const categoryId = category ? category.id : `cat-${Date.now()}-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
+    goalDialogLogger.info('Goal category saved', {
+      id: categoryId,
+      name: name.trim(),
+      percentage: numericPct,
+      mappedTypesCount: selectedTypeIds.length,
+    });
 
     onSave(
       {

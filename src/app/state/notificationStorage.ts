@@ -4,6 +4,9 @@ import {
   type AlertState,
   DEFAULT_NOTIFICATION_PREFERENCES,
 } from '@/data/notifications';
+import { logger } from '@/lib/logger';
+
+const storageLogger = logger.child('Storage');
 
 const PREFS_STORAGE_KEY = 'finance-tracker_notifications_prefs';
 const ACTIVITY_STORAGE_KEY = 'finance-tracker_notifications_activity';
@@ -29,7 +32,8 @@ export function loadStoredPreferences(): NotificationPreferences {
         ...(parsed.alertKinds || {}),
       },
     };
-  } catch {
+  } catch (err) {
+    storageLogger.warn('Failed to load notification preferences from localStorage:', err);
     return DEFAULT_NOTIFICATION_PREFERENCES;
   }
 }
@@ -38,8 +42,8 @@ export function saveStoredPreferences(prefs: NotificationPreferences): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    // Ignore storage quota or access errors
+  } catch (err) {
+    storageLogger.warn('Failed to save notification preferences to localStorage:', err);
   }
 }
 
@@ -53,7 +57,8 @@ export function loadStoredActivity(): ActivityEntry[] {
       return parsed as ActivityEntry[];
     }
     return [];
-  } catch {
+  } catch (err) {
+    storageLogger.warn('Failed to load notification activity from localStorage:', err);
     return [];
   }
 }
@@ -62,8 +67,8 @@ export function saveStoredActivity(activity: ActivityEntry[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(activity));
-  } catch {
-    // Ignore storage quota or access errors
+  } catch (err) {
+    storageLogger.warn('Failed to save notification activity to localStorage:', err);
   }
 }
 
@@ -77,7 +82,8 @@ export function loadStoredAlertState(): Record<string, AlertState> {
       return parsed as Record<string, AlertState>;
     }
     return {};
-  } catch {
+  } catch (err) {
+    storageLogger.warn('Failed to load alert state from localStorage:', err);
     return {};
   }
 }
@@ -86,7 +92,7 @@ export function saveStoredAlertState(state: Record<string, AlertState>): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Ignore storage quota or access errors
+  } catch (err) {
+    storageLogger.warn('Failed to save alert state to localStorage:', err);
   }
 }

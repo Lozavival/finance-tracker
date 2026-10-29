@@ -28,6 +28,9 @@ import { InstallmentsField } from './InstallmentsField';
 import { RecurringField } from './RecurringField';
 import { type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useSettings } from '@/state/SettingsContext';
+import { logger } from '@/lib/logger';
+
+const formLogger = logger.child('TransactionForm');
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { getIcon } from '@/data/icons';
@@ -346,7 +349,15 @@ export function TransactionFormDialog({
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !date) return;
+    if (Object.keys(nextErrors).length > 0 || !date) {
+      formLogger.warn('TransactionForm submission rejected by validation', {
+        errors: nextErrors,
+        hasDate: Boolean(date),
+        mode,
+        value,
+      });
+      return;
+    }
 
     const valueCents = dollarsToCents(normalizedValue);
     const toValueCents = dollarsToCents(normalizedToValue);
@@ -419,6 +430,7 @@ export function TransactionFormDialog({
       return;
     }
 
+    formLogger.info('TransactionForm draft submitted', { kind: draft.kind });
     onSave(draft);
   }
 

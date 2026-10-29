@@ -33,6 +33,9 @@ import { getToday } from '@/data/dates';
 import { InlineAlert } from '@/components/shared/InlineAlert';
 import { useI18n } from '@/i18n';
 import { Trash2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
+
+const accountFormLogger = logger.child('AccountForm');
 
 type AccountFormDialogProps = {
   open: boolean;
@@ -356,7 +359,14 @@ export function AccountFormDialog({
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !openingDate) return;
+    if (Object.keys(nextErrors).length > 0 || !openingDate) {
+      accountFormLogger.warn('AccountForm submission rejected by validation', {
+        errors: nextErrors,
+        hasOpeningDate: Boolean(openingDate),
+        name: trimmedName,
+      });
+      return;
+    }
 
     let id = account?.id;
     if (!id) {
@@ -393,6 +403,12 @@ export function AccountFormDialog({
           : undefined,
     };
 
+    accountFormLogger.info('AccountForm saved account', {
+      id: result.id,
+      name: result.name,
+      kind: result.kind,
+      hasCard: Boolean(result.card),
+    });
     onSave(result);
     onOpenChange(false);
   }

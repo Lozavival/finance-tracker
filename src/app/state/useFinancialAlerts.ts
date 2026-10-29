@@ -6,6 +6,9 @@ import { useI18n } from '@/i18n';
 import { calculateMonthlyBudget } from '@/data/goals';
 import { generateSmartFinancialSignals } from '@/data/analytics';
 import { type FinancialAlert, buildFinancialAlerts, formatSignalParams } from '@/data/notifications';
+import { logger } from '@/lib/logger';
+
+const alertsLogger = logger.child('FinancialAlerts');
 
 export function useFinancialAlerts() {
   const finance = useFinance();
@@ -74,14 +77,7 @@ export function useFinancialAlerts() {
     return allAlerts.filter(a => !alertState[a.key]?.dismissedAt);
   }, [allAlerts, alertState]);
 
-  // 5. Track firstSeenAt for active alerts
-  useEffect(() => {
-    if (activeAlerts.length > 0) {
-      observeAlerts(activeAlerts.map(a => a.key));
-    }
-  }, [activeAlerts, observeAlerts]);
-
-  // 6. Compute unread counts and severity flags
+  // 5. Compute unread counts and severity flags
   const unreadCount = useMemo(() => {
     return activeAlerts.filter(a => !alertState[a.key]?.readAt).length;
   }, [activeAlerts, alertState]);
@@ -89,6 +85,19 @@ export function useFinancialAlerts() {
   const hasCritical = useMemo(() => {
     return activeAlerts.some(a => a.severity === 'critical');
   }, [activeAlerts]);
+
+  // 6. Track firstSeenAt for active alerts
+  useEffect(() => {
+    if (activeAlerts.length > 0) {
+      observeAlerts(activeAlerts.map(a => a.key));
+      alertsLogger.debug('Active financial alerts evaluated', {
+        total: activeAlerts.length,
+        unread: unreadCount,
+        hasCritical,
+        keys: activeAlerts.map(a => a.key),
+      });
+    }
+  }, [activeAlerts, observeAlerts, unreadCount, hasCritical]);
 
   return {
     alerts: activeAlerts,

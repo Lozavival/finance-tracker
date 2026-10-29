@@ -2,6 +2,9 @@ import { type SupportedCurrency } from '@/i18n/types';
 import { type Transaction } from './transactions';
 import { type CreditCardConfig, type Settings, findAccount, isCreditCard } from './settings';
 import { toLocalDateString } from './dates';
+import { logger } from '../lib/logger';
+
+const statementLogger = logger.child('CardStatements');
 
 export type StatementStatus = 'open' | 'closed' | 'paid';
 
@@ -71,7 +74,14 @@ export function buildStatements(transactions: Transaction[], settings: Settings,
     if (!isCreditCard(settings, tx.paymentMethodId)) continue;
 
     const accountDetails = findAccount(settings, tx.accountId);
-    if (!accountDetails || !accountDetails.card) continue;
+    if (!accountDetails || !accountDetails.card) {
+      statementLogger.warn('Credit card transaction skipped for statements: account missing card config', {
+        txId: tx.id,
+        accountId: tx.accountId,
+        paymentMethodId: tx.paymentMethodId,
+      });
+      continue;
+    }
 
     const dates = getStatementDates(accountDetails.card, tx.date);
     const id = `${tx.accountId}:${toLocalDateString(dates.closingDate)}`;
@@ -113,7 +123,12 @@ export function buildStatements(transactions: Transaction[], settings: Settings,
     stmt.items.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
-  return Array.from(statementMap.values()).sort((a, b) => a.closingDate.getTime() - b.closingDate.getTime());
+  const result = Array.from(statementMap.values()).sort((a, b) => a.closingDate.getTime() - b.closingDate.getTime());
+  statementLogger.debug('buildStatements generated statements', {
+    statementsCount: result.length,
+    inputTxCount: transactions.length,
+  });
+  return result;
 }
 
 export function getCardUsage(statements: CardStatement[], accountId: string, settings: Settings) {

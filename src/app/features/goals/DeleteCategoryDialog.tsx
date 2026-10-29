@@ -10,6 +10,9 @@ import {
 } from '@/components/primitives/alert-dialog';
 import { type GoalCategory } from '@/data/goals';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
+
+const deleteCategoryLogger = logger.child('DeleteCategoryDialog');
 
 type DeleteCategoryDialogProps = {
   open: boolean;
@@ -37,6 +40,10 @@ export function DeleteCategoryDialog({ open, onOpenChange, category, onConfirm }
           <AlertDialogCancel onClick={() => onOpenChange(false)}>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
+              deleteCategoryLogger.info('User confirmed goal category deletion', {
+                categoryId: category.id,
+                name: category.name,
+              });
               onConfirm(category.id);
               onOpenChange(false);
             }}

@@ -3,6 +3,7 @@ import type { GoalCategory } from '@/data/goals';
 import type { AccountConfig, PaymentMethodConfig, Settings, TransactionTypeConfig } from '@/data/settings';
 import type { EditingTarget, Transaction, TransactionDraft } from '@/data/transactions';
 import type { SupportedCurrency, SupportedLocale } from '@/i18n/types';
+import { logger } from '@/lib/logger';
 import {
   deserializeRecurringRule,
   deserializeSnapshot,
@@ -25,31 +26,63 @@ import type {
 } from './types';
 
 export class HttpFinanceRepository implements FinanceRepository {
+  private readonly logger = logger.child('HttpRepo');
+
   constructor(private readonly baseUrl = '/api') {}
 
   private async rpc<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
-    const res = await fetch(`${this.baseUrl}/rpc`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, payload }),
-      keepalive: true,
-    });
-
-    if (!res.ok) {
-      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(errBody.error ?? `Repository RPC "${action}" failed (${res.status})`);
+    const endTimer = this.logger.time(`RPC "${action}"`);
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}/rpc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload }),
+        keepalive: true,
+      });
+    } catch (err) {
+      this.logger.error(`RPC "${action}" network request failed:`, err);
+      throw err;
     }
 
+    if (!res.ok) {
+      let errBody: { error?: string } = {};
+      try {
+        errBody = (await res.json()) as { error?: string };
+      } catch (parseErr) {
+        this.logger.warn(`Failed to parse error response JSON for RPC "${action}":`, parseErr);
+      }
+      const errorMsg = errBody.error ?? `Repository RPC "${action}" failed (${res.status})`;
+      this.logger.error(`RPC "${action}" rejected with status ${res.status}:`, errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    endTimer();
     return (await res.json()) as T;
   }
 
   async loadWorkspace(windowDays = 90): Promise<WorkspaceSnapshot> {
-    const res = await fetch(`${this.baseUrl}/workspace?windowDays=${encodeURIComponent(String(windowDays))}`);
+    const endTimer = this.logger.time(`loadWorkspace (windowDays=${windowDays})`);
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}/workspace?windowDays=${encodeURIComponent(String(windowDays))}`);
+    } catch (err) {
+      this.logger.error('Failed to load workspace due to network error:', err);
+      throw err;
+    }
+
     if (!res.ok) {
+      this.logger.error(`Failed to load workspace: HTTP ${res.status}`);
       throw new Error(`Failed to load workspace (${res.status})`);
     }
+
     const raw = (await res.json()) as SerializedWorkspaceSnapshot;
-    return deserializeSnapshot(raw);
+    const snapshot = deserializeSnapshot(raw);
+    endTimer();
+    this.logger.info(
+      `Workspace snapshot loaded: ${snapshot.transactions.length} txs, ${snapshot.recurringRules.length} rules, ${snapshot.settings.accounts.length} accounts`,
+    );
+    return snapshot;
   }
 
   async fetchTransactions(query: TransactionQuery): Promise<Transaction[]> {
@@ -59,11 +92,25 @@ export class HttpFinanceRepository implements FinanceRepository {
     if (query.accountId) params.set('accountId', query.accountId);
 
     const qs = params.toString();
-    const res = await fetch(`${this.baseUrl}/transactions${qs ? `?${qs}` : ''}`);
+    const url = `${this.baseUrl}/transactions${qs ? `?${qs}` : ''}`;
+    const endTimer = this.logger.time(`fetchTransactions (${qs || 'all'})`);
+
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch (err) {
+      this.logger.error('fetchTransactions network error:', err);
+      throw err;
+    }
+
     if (!res.ok) {
+      this.logger.error(`fetchTransactions failed (${res.status})`);
       throw new Error(`Failed to fetch transactions (${res.status})`);
     }
+
     const data = (await res.json()) as { transactions: SerializedTransaction[] };
+    endTimer();
+    this.logger.debug(`fetchTransactions retrieved ${data.transactions.length} transactions`);
     return data.transactions.map(deserializeTransaction);
   }
 

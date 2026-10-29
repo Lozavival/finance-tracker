@@ -12,6 +12,9 @@ import {
   DEFAULT_CURRENCY,
 } from './types';
 import { dictionaries, en, type Translations } from './locales';
+import { logger } from '@/lib/logger';
+
+const i18nLogger = logger.child('I18n');
 
 export type TranslationKey = NestedKeyOf<Translations>;
 
@@ -46,8 +49,8 @@ function getStoredLocale(): SupportedLocale {
     if (stored && SUPPORTED_LOCALES.some(l => l.code === stored)) {
       return stored as SupportedLocale;
     }
-  } catch {
-    // Ignore storage errors and fall back to default
+  } catch (err) {
+    i18nLogger.warn('Failed to read locale from storage:', err);
   }
   return DEFAULT_LOCALE;
 }
@@ -59,8 +62,8 @@ function getStoredCurrency(): SupportedCurrency {
     if (stored && SUPPORTED_CURRENCIES.some(c => c.code === stored)) {
       return stored as SupportedCurrency;
     }
-  } catch {
-    // Ignore storage errors and fall back to default
+  } catch (err) {
+    i18nLogger.warn('Failed to read currency from storage:', err);
   }
   return DEFAULT_CURRENCY;
 }
@@ -90,24 +93,26 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<SupportedCurrency>(getStoredCurrency);
 
   const setLocale = useCallback((newLocale: SupportedLocale) => {
+    i18nLogger.info('Switched active locale:', newLocale);
     setLocaleState(newLocale);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_LOCALE_KEY, newLocale);
-      } catch {
-        // Storage write failures handled gracefully
+      } catch (err) {
+        i18nLogger.warn('Failed to write locale preference to localStorage:', err);
       }
       document.documentElement.lang = newLocale;
     }
   }, []);
 
   const setCurrency = useCallback((newCurrency: SupportedCurrency) => {
+    i18nLogger.info('Switched preferred currency:', newCurrency);
     setCurrencyState(newCurrency);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_CURRENCY_KEY, newCurrency);
-      } catch {
-        // Storage write failures handled gracefully
+      } catch (err) {
+        i18nLogger.warn('Failed to write currency preference to localStorage:', err);
       }
     }
   }, []);
@@ -141,7 +146,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
           style: 'currency',
           currency: activeCurr,
         }).format(amount);
-      } catch {
+      } catch (err) {
+        i18nLogger.warn('Intl.NumberFormat currency failed, using fallback:', err);
         return `$${amount.toFixed(2)}`;
       }
     },
@@ -159,7 +165,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     (value: number, options?: Intl.NumberFormatOptions): string => {
       try {
         return new Intl.NumberFormat(locale, options).format(value);
-      } catch {
+      } catch (err) {
+        i18nLogger.warn('Intl.NumberFormat number failed, using fallback:', err);
         return String(value);
       }
     },
@@ -170,7 +177,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     (date: Date, options?: Intl.DateTimeFormatOptions): string => {
       try {
         return new Intl.DateTimeFormat(locale, options).format(date);
-      } catch {
+      } catch (err) {
+        i18nLogger.warn('Intl.DateTimeFormat date failed, using fallback:', err);
         return date.toLocaleDateString();
       }
     },

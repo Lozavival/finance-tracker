@@ -1,7 +1,9 @@
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, ClipboardCopy } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/primitives/card';
 import { useI18n } from '@/i18n';
+import { useNotifications } from '@/state/NotificationsContext';
+import { logger } from '@/lib/logger';
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -10,6 +12,23 @@ export type ErrorFallbackProps = {
 
 export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
   const { t } = useI18n();
+  const { notify } = useNotifications();
+
+  const handleCopyLogs = async () => {
+    try {
+      const diagnosticBundle = [
+        `Error: ${error.name}: ${error.message}`,
+        error.stack ? `Stack:\n${error.stack}` : '',
+        '',
+        logger.exportLogs(),
+      ].join('\n');
+
+      await navigator.clipboard.writeText(diagnosticBundle);
+      notify.success('errors.boundary.logsCopied');
+    } catch (err) {
+      logger.error('Failed to copy diagnostic logs to clipboard:', err);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[450px] p-6">
@@ -26,13 +45,24 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="pt-2">
+        <CardContent className="pt-2 space-y-3">
           <div className="p-3 rounded-lg bg-foreground/5 border border-border/40 font-mono text-xs text-muted-foreground break-words max-h-32 overflow-y-auto">
             {error.message || 'Unknown application error'}
           </div>
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyLogs}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 h-8"
+            >
+              <ClipboardCopy className="size-3.5" />
+              <span>{t('errors.boundary.copyLogs')}</span>
+            </Button>
+          </div>
         </CardContent>
 
-        <CardFooter className="flex gap-3 justify-end pt-4">
+        <CardFooter className="flex gap-3 justify-end pt-2">
           <Button
             variant="outline"
             size="sm"

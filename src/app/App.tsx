@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { TopNavigation } from '@/layout/TopNavigation';
 import { Sidebar } from '@/layout/Sidebar';
@@ -15,9 +16,24 @@ import { I18nProvider } from '@/i18n';
 import { OfflineBanner } from '@/components/shared/OfflineBanner';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
+import { logger } from '@/lib/logger';
+
+const routerLogger = logger.child('Router');
+
+function NotFoundRedirect() {
+  const location = useLocation();
+  useEffect(() => {
+    routerLogger.warn('Unrecognized route, redirecting to /dashboard:', location.pathname);
+  }, [location.pathname]);
+  return <Navigate to="/dashboard" replace />;
+}
 
 function AppLayout() {
   const location = useLocation();
+
+  useEffect(() => {
+    routerLogger.debug('Navigated to route:', location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -39,7 +55,7 @@ function AppLayout() {
               <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
               <Route path="/goals" element={<GoalsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<NotFoundRedirect />} />
             </Routes>
           </ErrorBoundary>
         </div>

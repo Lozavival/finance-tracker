@@ -13,6 +13,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/primitives/radio-group'
 import { type Transaction } from '@/data/transactions';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { logger } from '@/lib/logger';
+
+const dialogLogger = logger.child('DeleteTransactionDialog');
 
 export type DeletionScope = 'only-this' | 'this-and-future' | 'all';
 
@@ -125,7 +128,13 @@ export function DeleteTransactionDialog({ target, onOpenChange, onConfirm }: Del
             {t('common.cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => onConfirm(isRecurring ? scope : undefined)}
+            onClick={() => {
+              dialogLogger.info('User confirmed delete dialog', {
+                targetId: target?.id,
+                scope: isRecurring ? scope : undefined,
+              });
+              onConfirm(isRecurring ? scope : undefined);
+            }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {t('common.exclude')}

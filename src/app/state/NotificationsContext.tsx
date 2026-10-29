@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { useI18n, type TranslationKey } from '@/i18n';
 import { type TranslationParams } from '@/i18n/types';
 import { logger } from '@/lib/logger';
+
+const notifLogger = logger.child('Notifications');
 import {
   type ActivityEntry,
   type AlertState,
@@ -124,6 +126,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const notify = useMemo(
     () => ({
       success: (key: TranslationKey, opts?: NotifyOptions) => {
+        notifLogger.debug(`Toast success [${key}]`, opts);
         if (opts?.log !== false) {
           logActivity('success', key, opts?.params);
         }
@@ -135,6 +138,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
       },
       info: (key: TranslationKey, opts?: NotifyOptions) => {
+        notifLogger.info(`Toast info [${key}]`, opts);
         if (opts?.log !== false) {
           logActivity('info', key, opts?.params);
         }
@@ -146,6 +150,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
       },
       error: (key: TranslationKey, opts?: NotifyOptions) => {
+        notifLogger.error(`Toast error [${key}]`, opts);
         if (opts?.log !== false) {
           logActivity('error', key, opts?.params);
         }
@@ -161,6 +166,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         });
       },
       validation: (key: TranslationKey, opts?: NotifyOptions) => {
+        notifLogger.warn(`Toast validation [${key}]`, opts);
         // Validation toasts are ephemeral and never logged to Activity
         toast.error(t(key, opts?.params), {
           id: opts?.id,
@@ -168,6 +174,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         });
       },
       undoable: (opts: UndoableOptions) => {
+        notifLogger.info(`Toast undoable [${opts.messageKey}]`, opts);
         logActivity('info', opts.messageKey, opts.params);
         const duration = opts.durationMs ?? UNDO_TOAST_DURATION;
         toast(t(opts.messageKey, opts.params), {
@@ -176,6 +183,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           action: {
             label: t('notifications.undo'),
             onClick: () => {
+              notifLogger.info(`User triggered Undo for [${opts.messageKey}]`, { id: opts.id });
               opts.onUndo();
               logActivity('info', 'notifications.ops.undone');
             },
@@ -209,7 +217,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const reportSyncError = useCallback(
     (error: unknown) => {
-      logger.error('Sync persistence failed:', error);
+      notifLogger.error('Sync persistence failed:', error);
       const rawMessage = error instanceof Error ? error.message : String(error);
       const sanitizedReason = rawMessage.slice(0, 120);
 
@@ -225,7 +233,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const now = Date.now();
         // Circuit breaker: skip if already resyncing or resynced in last 10 seconds
         if (isResyncingRef.current || now - lastResyncTimestampRef.current < 10000) {
-          logger.warn('Skipping redundant resync due to circuit breaker');
+          notifLogger.warn('Skipping redundant resync due to circuit breaker');
           return;
         }
 
@@ -283,6 +291,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const markAlertsRead = useCallback((keys: string[]) => {
     if (keys.length === 0) return;
+    notifLogger.debug('markAlertsRead', { keys });
     const nowIso = new Date().toISOString();
     setAlertState(prev => {
       let changed = false;
@@ -302,6 +311,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissAlert = useCallback((key: string) => {
+    notifLogger.info('dismissAlert', { key });
     const nowIso = new Date().toISOString();
     setAlertState(prev => {
       const existing = prev[key];

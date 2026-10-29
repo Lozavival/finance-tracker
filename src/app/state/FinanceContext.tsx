@@ -17,6 +17,9 @@ import { useSettings } from './SettingsContext';
 import { useNotifications } from './NotificationsContext';
 import { useI18n } from '@/i18n';
 import { fetchLiveExchangeRate, getExchangeRateErrorDetails } from '@/data/currency';
+import { logger } from '@/lib/logger';
+
+const financeLogger = logger.child('FinanceContext');
 
 export type DeleteTransactionResult = {
   undo: () => void;
@@ -154,6 +157,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const reloadWorkspace = useCallback(async () => {
+    financeLogger.debug('Reloading workspace snapshot...');
     try {
       const repo = getFinanceRepository();
       const snapshot = await repo.loadWorkspace(90);
@@ -164,7 +168,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       setLoadedFromDate(snapshot.loadedFromDate);
       setSyncStatus('online');
       setLoadStatus('ready');
+      financeLogger.info('Workspace reloaded successfully', {
+        transactions: snapshot.transactions.length,
+        recurringRules: snapshot.recurringRules.length,
+        accounts: snapshot.settings.accounts.length,
+      });
     } catch (err) {
+      financeLogger.error('Failed to reload workspace, switching to offline mode:', err);
       setSyncStatus('offline');
       setLoadStatus('error');
       throw err;
@@ -189,16 +199,22 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             .then(snap => {
               if (!cancelled) refreshLiveRate(snap.settings.exchangeRate);
             })
-            .catch(() => {});
+            .catch(err => {
+              financeLogger.debug('Auto-fetch exchange rate skipped or failed on startup:', err);
+            });
         }
       })
-      .catch(() => {
+      .catch(err => {
         if (cancelled) return;
+        financeLogger.warn('Initial workspace load failed, application in offline mode:', err);
         notify.error('notifications.system.offlineDesc', { id: 'initial-offline' });
       });
 
     const handleOnline = () => {
-      void reloadWorkspace().catch(() => {});
+      financeLogger.info('Browser returned online, attempting workspace reload...');
+      void reloadWorkspace().catch(err => {
+        financeLogger.warn('Failed to reload workspace upon reconnecting online:', err);
+      });
     };
     window.addEventListener('online', handleOnline);
 
@@ -214,13 +230,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       if (!currentCutoff) return;
 
       if (!fromDate || fromDate.getTime() < currentCutoff.getTime()) {
+        financeLogger.debug('Loading historical transactions beyond cutoff date...');
         try {
           const allTransactions = await getFinanceRepository().fetchTransactions({});
+          financeLogger.info(`Loaded ${allTransactions.length} historical transactions beyond cutoff`);
           loadedFromDateRef.current = null;
           setLoadedFromDate(null);
           setHistoricalRollups({});
           setTransactions(filterPendingTxIds(allTransactions));
         } catch (err) {
+          financeLogger.error('Failed to load historical transactions:', err);
           reportSyncErrorRef.current(err);
         }
       }
@@ -239,6 +258,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const saveTransactionDraft = useCallback(
     async (draft: TransactionDraft, editingTarget?: EditingTarget | null): Promise<boolean> => {
+      financeLogger.info('Saving transaction draft:', {
+        kind: draft.kind,
+        isEditing: Boolean(editingTarget),
+        amountCents:
+          draft.kind === 'transfer'
+            ? draft.value
+            : draft.kind === 'installments'
+              ? draft.totalValue
+              : draft.kind === 'recurring'
+                ? draft.value
+                : draft.transaction.value,
+        currency: draft.kind === 'transfer' ? draft.fromCurrency : draft.transaction.currency,
+      });
+
       setTransactions(prev => {
         let nextTransactions = [...prev];
         let existingIds: string[] = [];
@@ -330,8 +363,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const result = await getFinanceRepository().saveTransactionDraft(draft, editingTarget);
         setTransactions(filterPendingTxIds(result.transactions));
         setRecurringRules(result.recurringRules);
+        financeLogger.info('Transaction draft persisted successfully');
         return true;
       } catch (err) {
+        financeLogger.error('Failed to persist transaction draft:', err);
         reportSyncErrorRef.current(err);
         return false;
       }
@@ -382,16 +417,24 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
       const removedIds = new Set(removedTransactions.map(t => t.id));
       const operationKey = `tx-delete-${target.id}-${Date.now()}`;
+      financeLogger.info('deleteTransactionTarget scheduled:', {
+        targetId: target.id,
+        scope,
+        removedCount: removedTransactions.length,
+      });
 
       const commit = () => {
         pendingDeletesRef.current.delete(operationKey);
+        financeLogger.debug('Committing deferred transaction deletion:', { targetId: target.id, scope });
         void getFinanceRepository()
           .deleteTransactionTarget(target, scope)
           .then(result => {
             setTransactions(filterPendingTxIds(result.transactions));
             setRecurringRules(result.recurringRules);
+            financeLogger.info('Deferred transaction deletion persisted successfully:', target.id);
           })
           .catch(err => {
+            financeLogger.error('Deferred transaction deletion persistence failed:', err);
             reportSyncErrorRef.current(err);
           });
       };
@@ -405,6 +448,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       });
 
       const undo = () => {
+        financeLogger.info('Undoing transaction deletion:', { targetId: target.id });
         const pending = pendingDeletesRef.current.get(operationKey);
         if (pending) {
           clearTimeout(pending.timer);
@@ -449,16 +493,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
       const removedIds = new Set(removedTransactions.map(t => t.id));
       const operationKey = `rule-cancel-${ruleId}-${Date.now()}`;
+      financeLogger.info('cancelRecurringRule scheduled:', { ruleId, effectiveDate });
 
       const commit = () => {
         pendingDeletesRef.current.delete(operationKey);
+        financeLogger.debug('Committing deferred cancelRecurringRule:', ruleId);
         void getFinanceRepository()
           .cancelRecurringRule(ruleId, effectiveDate)
           .then(result => {
             setTransactions(filterPendingTxIds(result.transactions));
             setRecurringRules(result.recurringRules);
+            financeLogger.info('Deferred cancelRecurringRule persisted successfully:', ruleId);
           })
           .catch(err => {
+            financeLogger.error('Deferred cancelRecurringRule persistence failed:', err);
             reportSyncErrorRef.current(err);
           });
       };
@@ -472,6 +520,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       });
 
       const undo = () => {
+        financeLogger.info('Undoing cancelRecurringRule:', ruleId);
         const pending = pendingDeletesRef.current.get(operationKey);
         if (pending) {
           clearTimeout(pending.timer);
@@ -507,16 +556,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
       const removedIds = new Set(removedTransactions.map(t => t.id));
       const operationKey = `rule-delete-${ruleId}-${Date.now()}`;
+      financeLogger.info('deleteRecurringRule scheduled:', ruleId);
 
       const commit = () => {
         pendingDeletesRef.current.delete(operationKey);
+        financeLogger.debug('Committing deferred deleteRecurringRule:', ruleId);
         void getFinanceRepository()
           .deleteRecurringRule(ruleId)
           .then(result => {
             setTransactions(filterPendingTxIds(result.transactions));
             setRecurringRules(result.recurringRules);
+            financeLogger.info('Deferred deleteRecurringRule persisted successfully:', ruleId);
           })
           .catch(err => {
+            financeLogger.error('Deferred deleteRecurringRule persistence failed:', err);
             reportSyncErrorRef.current(err);
           });
       };
@@ -530,6 +583,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       });
 
       const undo = () => {
+        financeLogger.info('Undoing deleteRecurringRule:', ruleId);
         const pending = pendingDeletesRef.current.get(operationKey);
         if (pending) {
           clearTimeout(pending.timer);
@@ -554,6 +608,11 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       if (activeRules.length === 0) return;
 
       const activeRuleIds = new Set(activeRules.map(r => r.id));
+      financeLogger.info('cancelRecurringRulesForAccount:', {
+        accountId,
+        effectiveDate: effectiveDate.toISOString(),
+        affectedRulesCount: activeRules.length,
+      });
 
       setRecurringRules(prev =>
         prev.map(r => (activeRuleIds.has(r.id) ? { ...r, status: 'canceled', canceledAt: effectiveDate } : r)),
@@ -569,16 +628,19 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteRecurringRulesForAccount = useCallback((accountId: string) => {
+    financeLogger.info('deleteRecurringRulesForAccount:', { accountId });
     setRecurringRules(prev => prev.filter(r => r.accountId !== accountId));
     setTransactions(prev => prev.filter(t => t.accountId !== accountId));
   }, []);
 
   const reassignType = useCallback((fromTypeId: string, toTypeId: string) => {
+    financeLogger.info('reassignType:', { fromTypeId, toTypeId });
     setTransactions(prev => prev.map(t => (t.typeId === fromTypeId ? { ...t, typeId: toTypeId } : t)));
     setRecurringRules(prev => prev.map(r => (r.typeId === fromTypeId ? { ...r, typeId: toTypeId } : r)));
   }, []);
 
   const reassignPaymentMethod = useCallback((fromMethodId: string, toMethodId: string) => {
+    financeLogger.info('reassignPaymentMethod:', { fromMethodId, toMethodId });
     setTransactions(prev =>
       prev.map(t => (t.paymentMethodId === fromMethodId ? { ...t, paymentMethodId: toMethodId } : t)),
     );

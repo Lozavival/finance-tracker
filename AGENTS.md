@@ -59,6 +59,7 @@ src/
 │   └── seedDatabase.ts           # Production / initial database population engine
 ├── server/                       # Server plugins and repository adapters
 │   ├── apiPlugin.ts              # Vite dev server middleware API routes (/api/finance/*)
+│   ├── logger.ts                 # Server-side structured logger, performance timing, and request tracing
 │   ├── rpcSchemas.ts             # Zod input validation schemas for RPC actions
 │   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
@@ -74,8 +75,8 @@ src/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
     │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, HighlightedText, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
     ├── lib/
-    │   ├── logger.ts             # Dev environment logger wrapper
-    │   └── utils.ts              # Global utils (cn class merging)
+    │   ├── logger.ts             # Hierarchical client logger, breadcrumb buffer & error tracing
+    │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
     │   ├── analytics.ts          # Financial KPI calculations and spending analysis
     │   ├── cardStatements.ts     # Billing cycle calculation & statement closing engine
@@ -162,6 +163,20 @@ src/
   ```bash
   git diff | grep -E '\b(emerald|cyan|amber|rose|violet|indigo|sky|blue|red|green|yellow|slate|zinc|gray)-[0-9]{2,3}\b'
   ```
+
+### 6. Logging, Error Tracing & Diagnostics
+- **Client-Side Diagnostics (`src/app/lib/logger.ts`)**:
+  - Hierarchical scoped loggers: `logger.child('Namespace')`.
+  - Levels: `trace`, `debug`, `info`, `warn`, `error`, `silent` (configurable dynamically via `localStorage` key `ft_log_level` or `window.__FT_LOGGER__.setLevel`).
+  - Circular Breadcrumb Buffer: Stores the last 300 log entries with timestamps, arguments, and serialized error traces. Developers or users can dump this via `window.__FT_LOGGER__.exportLogs()` or the "Copy Diagnostic Logs" button in `ErrorFallback`.
+  - Global Unhandled Traps: `logger.setupGlobalHandlers()` captures `window.onerror` and `unhandledrejection` events.
+  - Zero Silent Failure: Empty catch blocks (`catch () {}` or `.catch(() => {})`) are strictly forbidden. Catch handlers must log errors or warnings with context.
+- **Server-Side Diagnostics (`src/server/logger.ts`)**:
+  - Structured request tracing with millisecond duration metrics: `[api] METHOD /path -> status (durationMs)`.
+  - SQLite Transaction Hooks: Atomic transactions must log `[tx:begin]`, `[tx:commit]`, and `[tx:rollback]` on error.
+  - Payload Validation Warnings: Log full Zod issue details when RPC validation fails.
+- **Relative Imports in Shared Domain Engines**:
+  - Modules in `src/app/data/` imported directly or indirectly by server code (e.g. `currency.ts`, `settings.ts`) must use relative paths when importing logger utilities (`../lib/logger`), as Node evaluates `vite.config.ts` prior to alias resolution.
 
 ---
 

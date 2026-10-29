@@ -880,6 +880,8 @@ export const en = {
       description: 'An unexpected application error occurred while displaying this page.',
       reload: 'Reload Page',
       goHome: 'Back to Dashboard',
+      copyLogs: 'Copy Diagnostic Logs',
+      logsCopied: 'Diagnostic logs copied to clipboard',
     },
   },
 };

@@ -5,6 +5,8 @@ import { SEARCH_MIN_LENGTH, tokenizeSearchQuery } from '@/data/search';
 import { useFinance } from './FinanceContext';
 import { logger } from '@/lib/logger';
 
+const searchLogger = logger.child('Search');
+
 export type SearchStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface UseTransactionSearchResult {
@@ -45,6 +47,7 @@ export function useTransactionSearch(
 
     const timer = setTimeout(async () => {
       try {
+        searchLogger.debug('Executing search query', { query: trimmed, limit });
         const repo = getFinanceRepository();
         const result = await repo.searchTransactions({
           text: trimmed,
@@ -53,6 +56,11 @@ export function useTransactionSearch(
         });
 
         if (!controller.signal.aborted) {
+          searchLogger.debug('Search query returned results', {
+            query: trimmed,
+            count: result.transactions.length,
+            totalCount: result.totalCount,
+          });
           setTransactions(result.transactions);
           setTotalCount(result.totalCount);
           setStatus('success');
@@ -61,7 +69,7 @@ export function useTransactionSearch(
         if (err instanceof DOMException && err.name === 'AbortError') {
           return;
         }
-        logger.error('Failed to execute transaction search:', err);
+        searchLogger.error('Failed to execute transaction search:', err);
         if (!controller.signal.aborted) {
           setStatus('error');
           setTransactions([]);

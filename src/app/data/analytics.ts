@@ -7,6 +7,9 @@ import { type AccountLedger, balanceAt } from './ledger';
 import { addMonthsClamped, addDays } from './dates';
 import { convertCents } from './currency';
 import { type SupportedCurrency } from '@/i18n/types';
+import { logger } from '../lib/logger';
+
+const analyticsLogger = logger.child('Analytics');
 
 export type DashboardKpis = {
   totalBalance: number; // integer cents in preferred currency
@@ -217,7 +220,7 @@ export function calculateDashboardKpis(
   const dayOfMonth = today.getDate();
   const monthProgressPercent = Math.min((dayOfMonth / daysInMonth) * 100, 100);
 
-  return {
+  const kpis: DashboardKpis = {
     totalBalance,
     totalBalanceCents: convertedBalanceCents,
     balancesByCurrency,
@@ -242,6 +245,16 @@ export function calculateDashboardKpis(
     daysInMonth,
     activeSignalsCount,
   };
+
+  analyticsLogger.debug('calculateDashboardKpis computed', {
+    preferredCurrency,
+    totalBalanceCents: convertedBalanceCents,
+    netSavingsCents: convertedNetSavingsCents,
+    savingsRate,
+    activeSignalsCount,
+  });
+
+  return kpis;
 }
 
 /**
@@ -689,6 +702,11 @@ export function generateSmartFinancialSignals(
       });
     }
   }
+
+  analyticsLogger.debug('generateSmartFinancialSignals generated signals', {
+    count: signals.length,
+    signalTypes: signals.map(s => s.type),
+  });
 
   return signals;
 }

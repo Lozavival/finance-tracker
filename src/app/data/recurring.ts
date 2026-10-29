@@ -2,6 +2,9 @@ import { addMonthsClamped } from './dates';
 import type { Transaction, TransactionDirection } from './transactions';
 
 import { type SupportedCurrency } from '@/i18n/types';
+import { logger } from '../lib/logger';
+
+const recurringLogger = logger.child('Recurring');
 
 export const RECURRING_PROJECTION_MONTHS = 24;
 
@@ -72,6 +75,13 @@ export function buildRecurringTransactions(
       },
     });
   }
+
+  recurringLogger.debug('buildRecurringTransactions generated instances', {
+    ruleId: rule.id,
+    count: transactions.length,
+    limitKind: rule.limit.kind,
+    canceledAt: rule.canceledAt,
+  });
 
   return transactions;
 }

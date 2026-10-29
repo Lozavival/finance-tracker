@@ -9,6 +9,9 @@ import { useNotifications } from '@/state/NotificationsContext';
 import { useFinancialAlerts } from '@/state/useFinancialAlerts';
 import { NotificationAlertItem } from './NotificationAlertItem';
 import { NotificationActivityList } from './NotificationActivityList';
+import { logger } from '@/lib/logger';
+
+const notifCenterLogger = logger.child('NotificationCenter');
 
 export function NotificationCenter() {
   const { t } = useI18n();
@@ -26,6 +29,10 @@ export function NotificationCenter() {
   }
 
   function handleMarkAllRead() {
+    notifCenterLogger.info('User clicked mark all read', {
+      alertsCount: alerts.length,
+      activityCount: activity.length,
+    });
     if (alerts.length > 0) {
       markAlertsRead(alerts.map(a => a.key));
     }

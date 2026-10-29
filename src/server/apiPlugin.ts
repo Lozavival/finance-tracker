@@ -2,6 +2,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { Plugin, ViteDevServer } from 'vite';
 import { createDatabaseConnection } from '../db/client';
 import { SqliteRepository } from './sqliteRepository';
+import { DEFAULT_WORKSPACE_ID, resolveDefaultSeedMode } from '../db/seedDatabase';
+import { createServerLogger, type ServerLogger } from './logger';
 import {
   deserializeAccount,
   deserializeDraft,
@@ -71,13 +73,14 @@ function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
-export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteDevServer['config']['logger']) {
+export function createFinanceApiMiddleware(dbPath?: string, viteLogger?: ViteDevServer['config']['logger']) {
   let repo: SqliteRepository | null = null;
+  const logger: ServerLogger = createServerLogger(viteLogger, 'api');
 
   const getRepo = (): SqliteRepository => {
     if (!repo) {
-      const conn = createDatabaseConnection(dbPath);
-      repo = new SqliteRepository(conn);
+      const conn = createDatabaseConnection(dbPath, logger);
+      repo = new SqliteRepository(conn, DEFAULT_WORKSPACE_ID, resolveDefaultSeedMode(), logger);
     }
     return repo;
   };
@@ -88,6 +91,26 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
       return;
     }
 
+    const startHr = process.hrtime.bigint();
+    const reqMethod = req.method ?? 'GET';
+    const reqPath = req.url;
+
+    const respond = (status: number, data: unknown, context?: string): void => {
+      const durationMs = Number(process.hrtime.bigint() - startHr) / 1_000_000;
+      const roundedMs = Math.round(durationMs * 100) / 100;
+      const desc = context ? ` [${context}]` : '';
+
+      if (status >= 500) {
+        logger.error(`${reqMethod} ${reqPath}${desc} -> ${status} (${roundedMs}ms)`);
+      } else if (status >= 400) {
+        logger.warn(`${reqMethod} ${reqPath}${desc} -> ${status} (${roundedMs}ms)`);
+      } else {
+        logger.info(`${reqMethod} ${reqPath}${desc} -> ${status} (${roundedMs}ms)`);
+      }
+
+      sendJson(res, status, data);
+    };
+
     try {
       const url = new URL(req.url, 'http://localhost');
       const repository = getRepo();
@@ -96,7 +119,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
         const windowDaysParam = url.searchParams.get('windowDays');
         const windowDays = windowDaysParam !== null ? Number(windowDaysParam) : 90;
         const snapshot = await repository.loadWorkspace(Number.isFinite(windowDays) ? windowDays : 90);
-        sendJson(res, 200, serializeSnapshot(snapshot));
+        respond(200, serializeSnapshot(snapshot), 'workspace');
         return;
       }
 
@@ -130,7 +153,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
           if (fromDateStr) fromDate = parseLocalDate(fromDateStr);
           if (toDateStr) toDate = parseLocalDate(toDateStr);
         } catch {
-          sendJson(res, 400, { error: 'Invalid date query format. Expected YYYY-MM-DD.' });
+          respond(400, { error: 'Invalid date query format. Expected YYYY-MM-DD.' }, 'invalid-date');
           return;
         }
 
@@ -139,7 +162,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
           toDate,
           accountId,
         });
-        sendJson(res, 200, { transactions: txs.map(serializeTransaction) });
+        respond(200, { transactions: txs.map(serializeTransaction) }, `${txs.length} txs`);
         return;
       }
 
@@ -149,11 +172,11 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
           rawBody = await readJsonBody(req);
         } catch (err) {
           if (err instanceof BodyTooLargeError) {
-            sendJson(res, 413, { error: 'Payload too large (limit is 1MB)' });
+            respond(413, { error: 'Payload too large (limit is 1MB)' }, 'payload-too-large');
             return;
           }
           if (err instanceof MalformedJsonError) {
-            sendJson(res, 400, { error: 'Malformed JSON payload' });
+            respond(400, { error: 'Malformed JSON payload' }, 'malformed-json');
             return;
           }
           throw err;
@@ -161,10 +184,18 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
 
         const parseResult = rpcRequestSchema.safeParse(rawBody);
         if (!parseResult.success) {
-          sendJson(res, 400, {
-            error: 'Invalid RPC request payload',
-            issues: parseResult.error.issues,
-          });
+          const actionName = (rawBody as Record<string, unknown>)?.action;
+          logger.warn(
+            `RPC action "${actionName}" validation failed: ${JSON.stringify(parseResult.error.issues, null, 2)}`,
+          );
+          respond(
+            400,
+            {
+              error: 'Invalid RPC request payload',
+              issues: parseResult.error.issues,
+            },
+            `validation-failed:${actionName}`,
+          );
           return;
         }
 
@@ -176,10 +207,14 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               request.payload.editingTarget as SerializedEditingTarget | null | undefined,
             );
             const result = await repository.saveTransactionDraft(draft, editingTarget);
-            sendJson(res, 200, {
-              transactions: result.transactions.map(serializeTransaction),
-              recurringRules: result.recurringRules.map(serializeRecurringRule),
-            });
+            respond(
+              200,
+              {
+                transactions: result.transactions.map(serializeTransaction),
+                recurringRules: result.recurringRules.map(serializeRecurringRule),
+              },
+              `rpc:${request.action}`,
+            );
             return;
           }
 
@@ -187,10 +222,14 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
             const target = deserializeTransaction(request.payload.target as SerializedTransaction);
             const scope = request.payload.scope as 'only-this' | 'this-and-future' | 'all' | undefined;
             const result = await repository.deleteTransactionTarget(target, scope);
-            sendJson(res, 200, {
-              transactions: result.transactions.map(serializeTransaction),
-              recurringRules: result.recurringRules.map(serializeRecurringRule),
-            });
+            respond(
+              200,
+              {
+                transactions: result.transactions.map(serializeTransaction),
+                recurringRules: result.recurringRules.map(serializeRecurringRule),
+              },
+              `rpc:${request.action}`,
+            );
             return;
           }
 
@@ -198,27 +237,35 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
             const ruleId = request.payload.ruleId;
             const effectiveDate = parseLocalDate(request.payload.effectiveDate);
             const result = await repository.cancelRecurringRule(ruleId, effectiveDate);
-            sendJson(res, 200, {
-              transactions: result.transactions.map(serializeTransaction),
-              recurringRules: result.recurringRules.map(serializeRecurringRule),
-            });
+            respond(
+              200,
+              {
+                transactions: result.transactions.map(serializeTransaction),
+                recurringRules: result.recurringRules.map(serializeRecurringRule),
+              },
+              `rpc:${request.action}`,
+            );
             return;
           }
 
           case 'deleteRecurringRule': {
             const ruleId = request.payload.ruleId;
             const result = await repository.deleteRecurringRule(ruleId);
-            sendJson(res, 200, {
-              transactions: result.transactions.map(serializeTransaction),
-              recurringRules: result.recurringRules.map(serializeRecurringRule),
-            });
+            respond(
+              200,
+              {
+                transactions: result.transactions.map(serializeTransaction),
+                recurringRules: result.recurringRules.map(serializeRecurringRule),
+              },
+              `rpc:${request.action}`,
+            );
             return;
           }
 
           case 'createAccount': {
             const account = deserializeAccount(request.payload.account as SerializedAccountConfig);
             await repository.createAccount(account);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -232,7 +279,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               ...(rawOpeningDate ? { openingDate: parseLocalDate(rawOpeningDate) } : {}),
             };
             await repository.updateAccount(id, changes);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -243,27 +290,27 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               ? parseLocalDate(request.payload.effectiveDate)
               : undefined;
             await repository.archiveAccount(id, cancelRecurrences, effectiveDate);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'restoreAccount': {
             const id = request.payload.id;
             await repository.restoreAccount(id);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'deleteAccount': {
             const id = request.payload.id;
             await repository.deleteAccount(id);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'createTransactionType': {
             await repository.createTransactionType(request.payload.type as TransactionTypeConfig);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -272,7 +319,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               request.payload.id,
               request.payload.changes as Partial<Omit<TransactionTypeConfig, 'id'>>,
             );
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -281,19 +328,19 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               request.payload.direction as 'income' | 'expense',
               request.payload.orderedIds,
             );
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'reassignAndDeleteTransactionType': {
             await repository.reassignAndDeleteTransactionType(request.payload.fromTypeId, request.payload.toTypeId);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'createPaymentMethod': {
             await repository.createPaymentMethod(request.payload.method as PaymentMethodConfig);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -302,31 +349,31 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               request.payload.id,
               request.payload.changes as Partial<Omit<PaymentMethodConfig, 'id'>>,
             );
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'reorderPaymentMethods': {
             await repository.reorderPaymentMethods(request.payload.orderedIds);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'reassignAndDeletePaymentMethod': {
             await repository.reassignAndDeletePaymentMethod(request.payload.fromMethodId, request.payload.toMethodId);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'updateReferenceIncome': {
             await repository.updateReferenceIncome(request.payload.incomeCents);
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
           case 'updateGoalsMode': {
             await repository.updateGoalsMode(request.payload.mode as 'percentage' | 'currency');
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -335,7 +382,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
               request.payload.categories as GoalCategory[],
               request.payload.typeMappings,
             );
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -347,7 +394,7 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
                 exchangeRate?: Partial<Settings['exchangeRate']>;
               },
             );
-            sendJson(res, 200, { ok: true });
+            respond(200, { ok: true }, `rpc:${request.action}`);
             return;
           }
 
@@ -355,17 +402,30 @@ export function createFinanceApiMiddleware(dbPath?: string, serverLogger?: ViteD
             const snapshot = await repository.resetSettings(
               request.payload.seedMode as 'production' | 'development' | undefined,
             );
-            sendJson(res, 200, serializeSnapshot(snapshot));
+            respond(200, serializeSnapshot(snapshot), `rpc:${request.action}`);
+            return;
+          }
+
+          default: {
+            logger.warn(`Unrecognized RPC action: "${(request as { action: string }).action}"`);
+            respond(
+              400,
+              { error: `Unrecognized RPC action: "${(request as { action: string }).action}"` },
+              'unknown-rpc-action',
+            );
             return;
           }
         }
       }
 
-      sendJson(res, 404, { error: 'Not found' });
+      respond(404, { error: 'Not found' }, 'not-found');
     } catch (error) {
-      if (serverLogger) {
-        serverLogger.error(error instanceof Error ? error.stack || error.message : String(error));
-      }
+      const durationMs = Number(process.hrtime.bigint() - startHr) / 1_000_000;
+      const roundedMs = Math.round(durationMs * 100) / 100;
+      logger.error(
+        `Unhandled error processing ${reqMethod} ${reqPath} (${roundedMs}ms):`,
+        error instanceof Error ? error.stack || error.message : String(error),
+      );
       sendJson(res, 500, { error: 'Internal server error' });
     }
   };

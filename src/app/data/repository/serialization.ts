@@ -3,6 +3,9 @@ import type { AccountConfig, Settings } from '../settings';
 import type { Transaction, TransactionDraft, EditingTarget } from '../transactions';
 import type { RecurringRule } from '../recurring';
 import type { WorkspaceSnapshot } from './types';
+import { logger } from '../../lib/logger';
+
+const serializationLogger = logger.child('Serialization');
 
 export type SerializedAccountConfig = Omit<AccountConfig, 'openingDate'> & {
   openingDate: string;
@@ -89,9 +92,13 @@ export function serializeTransaction(tx: Transaction): SerializedTransaction {
 }
 
 export function deserializeTransaction(tx: SerializedTransaction): Transaction {
+  const parsedDate = parseLocalDate(tx.date);
+  if (isNaN(parsedDate.getTime())) {
+    serializationLogger.warn(`Invalid date encountered while deserializing transaction "${tx.id}": "${tx.date}"`);
+  }
   return {
     ...tx,
-    date: parseLocalDate(tx.date),
+    date: parsedDate,
   };
 }
 
@@ -127,6 +134,11 @@ export function serializeSnapshot(snapshot: WorkspaceSnapshot): SerializedWorksp
 }
 
 export function deserializeSnapshot(raw: SerializedWorkspaceSnapshot): WorkspaceSnapshot {
+  serializationLogger.trace('Workspace snapshot deserialized', {
+    txCount: raw.transactions.length,
+    rulesCount: raw.recurringRules.length,
+    accountsCount: raw.settings.accounts.length,
+  });
   return {
     settings: {
       ...raw.settings,

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { type Transaction, type TransactionDraft, type EditingTarget } from '@/data/transactions';
 import { useFinance, findTransferLegs, findInstallmentSeries, findRecurringSeries } from './FinanceContext';
 import { useNotify } from './NotificationsContext';
+import { logger } from '@/lib/logger';
+
+const actionsLogger = logger.child('TransactionActions');
 
 function describeDraft(draft: TransactionDraft): string {
   if (draft.kind === 'transfer') {
@@ -19,6 +22,7 @@ export function useTransactionActions() {
   const [initialRecurring, setInitialRecurring] = useState(false);
 
   function openAddDialog(options?: { recurring?: boolean }) {
+    actionsLogger.debug('openAddDialog', options);
     setEditingTarget(null);
     setInitialRecurring(options?.recurring ?? false);
     setDialogOpen(true);
@@ -29,20 +33,24 @@ export function useTransactionActions() {
     const legs = findTransferLegs(transactions, transaction);
     const series = findInstallmentSeries(transactions, transaction);
     const recurringSeries = findRecurringSeries(transactions, transaction);
+    let target: EditingTarget;
     if (legs) {
-      setEditingTarget({ kind: 'transfer', outgoing: legs.outgoing, incoming: legs.incoming });
+      target = { kind: 'transfer', outgoing: legs.outgoing, incoming: legs.incoming };
     } else if (series) {
-      setEditingTarget({ kind: 'installments', series });
+      target = { kind: 'installments', series };
     } else if (recurringSeries && transaction.recurring) {
-      setEditingTarget({ kind: 'recurring', series: recurringSeries, ruleId: transaction.recurring.ruleId });
+      target = { kind: 'recurring', series: recurringSeries, ruleId: transaction.recurring.ruleId };
     } else {
-      setEditingTarget({ kind: 'single', transaction });
+      target = { kind: 'single', transaction };
     }
+    actionsLogger.info('openEditDialog', { id: transaction.id, targetKind: target.kind });
+    setEditingTarget(target);
     setDialogOpen(true);
   }
 
   function saveTransaction(draft: TransactionDraft) {
     const isEdit = editingTarget !== null;
+    actionsLogger.info('saveTransaction draft submitted', { kind: draft.kind, isEdit });
     const savePromise = saveTransactionDraft(draft, editingTarget);
 
     const desc = describeDraft(draft);
@@ -81,6 +89,7 @@ export function useTransactionActions() {
   function deleteTransaction(scope: 'only-this' | 'this-and-future' | 'all' = 'only-this') {
     if (deleteTarget) {
       const target = deleteTarget;
+      actionsLogger.info('deleteTransaction confirmed', { id: target.id, scope });
       const { undo, removedCount } = deleteTransactionTarget(target, scope);
       notify.undoable({
         id: `undo-tx-${target.id}`,

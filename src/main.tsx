@@ -4,6 +4,15 @@ import App from '@/App';
 import '@/styles/index.css';
 import { ThemeProvider } from 'next-themes';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { logger } from '@/lib/logger';
+
+// Register global error and rejection listeners for full client-side error tracing
+logger.setupGlobalHandlers();
+logger.info('Initializing FinanceTracker client application:', {
+  mode: import.meta.env.MODE,
+  isDev: import.meta.env.DEV,
+  logLevel: logger.getLevel(),
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
