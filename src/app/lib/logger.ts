@@ -134,6 +134,69 @@ function safeSerialize(val: unknown, depth = 0, seen = new WeakSet()): unknown {
   return String(val);
 }
 
+interface PendingRemoteLogEntry {
+  timestamp: string;
+  level: LogLevel;
+  namespace: string;
+  message: string;
+  data?: unknown[];
+  error?: { name: string; message: string; stack?: string };
+}
+
+let pendingRemoteEntries: PendingRemoteLogEntry[] = [];
+let remoteFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let isFlushingRemote = false;
+
+function scheduleRemoteFlush(): void {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+  if (remoteFlushTimer) return;
+  remoteFlushTimer = setTimeout(() => {
+    remoteFlushTimer = null;
+    void flushRemoteLogs();
+  }, 1500);
+}
+
+export async function flushRemoteLogs(): Promise<void> {
+  if (isFlushingRemote || pendingRemoteEntries.length === 0) return;
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+
+  const batch = pendingRemoteEntries.slice(0, 50);
+  pendingRemoteEntries = pendingRemoteEntries.slice(50);
+  isFlushingRemote = true;
+
+  try {
+    await fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: batch }),
+      keepalive: true,
+    });
+  } catch {
+    // Failsafe: avoid cascading errors or infinite loops if server is unreachable
+  } finally {
+    isFlushingRemote = false;
+    if (pendingRemoteEntries.length > 0) {
+      scheduleRemoteFlush();
+    }
+  }
+}
+
+export function downloadLogsFile(filename?: string): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const content = logger.exportLogs();
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = url;
+  a.download = filename || `finance-tracker-${timestamp}.log`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function extractErrorInfo(args: unknown[]): { name: string; message: string; stack?: string } | undefined {
   for (const arg of args) {
     if (arg instanceof Error) {
@@ -166,14 +229,24 @@ function createLoggerInstance(namespace: string): Logger {
     const errorInfo = extractErrorInfo(args);
     const serializedArgs = args.length > 0 ? (safeSerialize(args) as unknown[]) : undefined;
 
-    buffer.add({
+    const entry = {
       timestamp: new Date().toISOString(),
       level,
       namespace: namespace || 'Root',
       message,
       data: serializedArgs,
       error: errorInfo,
-    });
+    };
+
+    buffer.add(entry);
+
+    if (level === 'warn' || level === 'error') {
+      if (pendingRemoteEntries.length >= 100) {
+        pendingRemoteEntries.shift();
+      }
+      pendingRemoteEntries.push(entry);
+      scheduleRemoteFlush();
+    }
   };
 
   return {
@@ -233,6 +306,8 @@ export interface ApplicationLogger extends Logger {
   getRecentLogs(): readonly LogEntry[];
   clearLogs(): void;
   exportLogs(): string;
+  downloadLogsFile(filename?: string): void;
+  flushRemoteLogs(): Promise<void>;
   setupGlobalHandlers(): () => void;
 }
 
@@ -286,6 +361,12 @@ export const logger: ApplicationLogger = {
 
     return `${header}${lines.join('\n\n')}\n`;
   },
+  downloadLogsFile: (filename?: string): void => {
+    downloadLogsFile(filename);
+  },
+  flushRemoteLogs: (): Promise<void> => {
+    return flushRemoteLogs();
+  },
   setupGlobalHandlers: (): (() => void) => {
     if (typeof window === 'undefined') return () => {};
 
@@ -304,12 +385,18 @@ export const logger: ApplicationLogger = {
       windowLogger.error('Unhandled promise rejection:', event.reason);
     };
 
+    const handleBeforeUnload = () => {
+      void flushRemoteLogs();
+    };
+
     window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   },
 };
@@ -319,8 +406,10 @@ if (typeof window !== 'undefined') {
   (window as unknown as { __FT_LOGGER__: unknown }).__FT_LOGGER__ = {
     getRecentLogs: () => logger.getRecentLogs(),
     exportLogs: () => logger.exportLogs(),
+    downloadLogs: (filename?: string) => logger.downloadLogsFile(filename),
     clearLogs: () => logger.clearLogs(),
     setLevel: (lvl: LogLevel) => logger.setLevel(lvl),
     getLevel: () => logger.getLevel(),
+    flushLogs: () => logger.flushRemoteLogs(),
   };
 }

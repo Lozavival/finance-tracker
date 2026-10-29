@@ -331,3 +331,25 @@ export const rpcRequestSchema = z.discriminatedUnion('action', [
 ]);
 
 export type RpcRequest = z.infer<typeof rpcRequestSchema>;
+
+export const clientLogEntrySchema = z.object({
+  timestamp: z.string().optional(),
+  level: z.enum(['trace', 'debug', 'info', 'warn', 'error']),
+  namespace: z.string().default('Client'),
+  message: z.string(),
+  data: z.unknown().optional(),
+  error: z
+    .object({
+      name: z.string(),
+      message: z.string(),
+      stack: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const clientLogBatchSchema = z.object({
+  entries: z.array(clientLogEntrySchema).min(1).max(100),
+});
+
+export type ClientLogEntry = z.infer<typeof clientLogEntrySchema>;
+export type ClientLogBatch = z.infer<typeof clientLogBatchSchema>;

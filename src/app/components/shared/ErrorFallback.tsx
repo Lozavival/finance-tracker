@@ -1,4 +1,4 @@
-import { AlertTriangle, RefreshCw, Home, ClipboardCopy } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, ClipboardCopy, Download } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/primitives/card';
 import { useI18n } from '@/i18n';
@@ -30,6 +30,15 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
     }
   };
 
+  const handleDownloadLogs = () => {
+    try {
+      logger.downloadLogsFile();
+      notify.success('errors.boundary.logsDownloaded');
+    } catch (err) {
+      logger.error('Failed to download diagnostic logs:', err);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-[450px] p-6">
       <Card className="w-full max-w-md bg-card/60 backdrop-blur-xl border-border/40 shadow-2xl">
@@ -49,7 +58,7 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
           <div className="p-3 rounded-lg bg-foreground/5 border border-border/40 font-mono text-xs text-muted-foreground break-words max-h-32 overflow-y-auto">
             {error.message || 'Unknown application error'}
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -58,6 +67,15 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
             >
               <ClipboardCopy className="size-3.5" />
               <span>{t('errors.boundary.copyLogs')}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownloadLogs}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 h-8"
+            >
+              <Download className="size-3.5" />
+              <span>{t('errors.boundary.downloadLogs')}</span>
             </Button>
           </div>
         </CardContent>

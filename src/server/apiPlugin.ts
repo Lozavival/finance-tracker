@@ -21,7 +21,7 @@ import { parseLocalDate } from '../app/data/dates';
 import type { AccountConfig, PaymentMethodConfig, Settings, TransactionTypeConfig } from '../app/data/settings';
 import type { GoalCategory } from '../app/data/goals';
 import type { SupportedCurrency, SupportedLocale } from '../app/i18n/types';
-import { rpcRequestSchema, transactionSearchQuerySchema } from './rpcSchemas';
+import { clientLogBatchSchema, rpcRequestSchema, transactionSearchQuerySchema } from './rpcSchemas';
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB limit
 
@@ -163,6 +163,65 @@ export function createFinanceApiMiddleware(dbPath?: string, viteLogger?: ViteDev
           accountId,
         });
         respond(200, { transactions: txs.map(serializeTransaction) }, `${txs.length} txs`);
+        return;
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/logs') {
+        let rawBody: unknown;
+        try {
+          rawBody = await readJsonBody(req);
+        } catch (err) {
+          if (err instanceof BodyTooLargeError) {
+            respond(413, { error: 'Payload too large (limit is 1MB)' }, 'payload-too-large');
+            return;
+          }
+          if (err instanceof MalformedJsonError) {
+            respond(400, { error: 'Malformed JSON payload' }, 'malformed-json');
+            return;
+          }
+          throw err;
+        }
+
+        const parseResult = clientLogBatchSchema.safeParse(rawBody);
+        if (!parseResult.success) {
+          respond(400, { error: 'Invalid log payload', issues: parseResult.error.issues }, 'invalid-log-batch');
+          return;
+        }
+
+        const clientLogger = logger.child('client');
+        for (const entry of parseResult.data.entries) {
+          const args: unknown[] = [];
+          if (entry.data !== undefined) {
+            args.push(entry.data);
+          }
+          if (entry.error !== undefined) {
+            const err = new Error(entry.error.message);
+            err.name = entry.error.name;
+            if (entry.error.stack) {
+              err.stack = entry.error.stack;
+            }
+            args.push(err);
+          }
+
+          const msg = `[${entry.namespace}] ${entry.message}`;
+          switch (entry.level) {
+            case 'error':
+              clientLogger.error(msg, ...args);
+              break;
+            case 'warn':
+              clientLogger.warn(msg, ...args);
+              break;
+            case 'info':
+              clientLogger.info(msg, ...args);
+              break;
+            case 'debug':
+            case 'trace':
+              clientLogger.debug(msg, ...args);
+              break;
+          }
+        }
+
+        respond(200, { success: true, count: parseResult.data.entries.length }, 'logs-ingested');
         return;
       }
 

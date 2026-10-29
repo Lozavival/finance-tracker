@@ -896,6 +896,8 @@ export const pt: Translations = {
       goHome: 'Voltar ao Painel',
       copyLogs: 'Copiar Logs de Diagnóstico',
       logsCopied: 'Logs de diagnóstico copiados para a área de transferência',
+      downloadLogs: 'Baixar Arquivo de Log',
+      logsDownloaded: 'Arquivo de logs de diagnóstico baixado',
     },
   },
 };

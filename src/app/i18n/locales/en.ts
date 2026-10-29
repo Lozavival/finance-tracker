@@ -882,6 +882,8 @@ export const en = {
       goHome: 'Back to Dashboard',
       copyLogs: 'Copy Diagnostic Logs',
       logsCopied: 'Diagnostic logs copied to clipboard',
+      downloadLogs: 'Download Log File',
+      logsDownloaded: 'Diagnostic log file downloaded',
     },
   },
 };

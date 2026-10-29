@@ -169,9 +169,13 @@ src/
   - Hierarchical scoped loggers: `logger.child('Namespace')`.
   - Levels: `trace`, `debug`, `info`, `warn`, `error`, `silent` (configurable dynamically via `localStorage` key `ft_log_level` or `window.__FT_LOGGER__.setLevel`).
   - Circular Breadcrumb Buffer: Stores the last 300 log entries with timestamps, arguments, and serialized error traces. Developers or users can dump this via `window.__FT_LOGGER__.exportLogs()` or the "Copy Diagnostic Logs" button in `ErrorFallback`.
+  - Log File Export: Client can trigger a direct `.log` file download via `logger.downloadLogsFile()` or `window.__FT_LOGGER__.downloadLogs()`, also available via "Download Log File" in `ErrorFallback`.
+  - Remote Ingestion: Client automatically buffers and debounces forwarding `warn` and `error` events to `POST /api/logs` with `keepalive: true` to prevent data loss on page unload without recursive error loops.
   - Global Unhandled Traps: `logger.setupGlobalHandlers()` captures `window.onerror` and `unhandledrejection` events.
   - Zero Silent Failure: Empty catch blocks (`catch () {}` or `.catch(() => {})`) are strictly forbidden. Catch handlers must log errors or warnings with context.
-- **Server-Side Diagnostics (`src/server/logger.ts`)**:
+- **Server-Side Diagnostics & Log Files (`src/server/logger.ts`)**:
+  - Persistent Log File: Writes all server logs (`debug`, `info`, `warn`, `error`) to disk at `logs/app.log` (configurable via `LOG_FILE_PATH` / `LOG_DIR`), creating directories automatically.
+  - Log File Rotation: Automatically rolls over the log file when it exceeds 10 MB, keeping one backup (`app.log.1`) to prevent disk exhaustion.
   - Structured request tracing with millisecond duration metrics: `[api] METHOD /path -> status (durationMs)`.
   - SQLite Transaction Hooks: Atomic transactions must log `[tx:begin]`, `[tx:commit]`, and `[tx:rollback]` on error.
   - Payload Validation Warnings: Log full Zod issue details when RPC validation fails.

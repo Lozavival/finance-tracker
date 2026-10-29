@@ -2,11 +2,14 @@
  * Server-Side Logger & Diagnostic Tracing
  *
  * Provides structured logging for Vite API middleware, database operations,
- * and RPC actions with timestamping, levels, namespaces, and performance timing.
+ * and RPC actions with timestamping, levels, namespaces, performance timing,
+ * and persistent log file writing.
  */
 
 /* eslint-disable no-console */
 
+import fs from 'fs';
+import path from 'path';
 import type { ViteDevServer } from 'vite';
 
 export type ServerLogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -18,6 +21,8 @@ export interface ServerLogger {
   error(message: string, ...args: unknown[]): void;
   time(label: string): () => void;
   child(namespace: string): ServerLogger;
+  getLogFilePath(): string;
+  writeRaw(entry: string): void;
 }
 
 const SERVER_LOG_LEVEL_PRIORITY: Record<ServerLogLevel, number> = {
@@ -27,13 +32,86 @@ const SERVER_LOG_LEVEL_PRIORITY: Record<ServerLogLevel, number> = {
   error: 40,
 };
 
-function formatServerMessage(level: ServerLogLevel, namespace: string, message: string): string {
+const DEFAULT_LOG_FILE_PATH = path.resolve(process.cwd(), 'logs', 'app.log');
+const MAX_LOG_FILE_BYTES = 10 * 1024 * 1024; // 10 MB limit before rotation
+
+export function getResolvedLogFilePath(): string {
+  if (process.env.LOG_FILE_PATH) {
+    return path.resolve(process.cwd(), process.env.LOG_FILE_PATH);
+  }
+  if (process.env.LOG_DIR) {
+    return path.resolve(process.cwd(), process.env.LOG_DIR, 'app.log');
+  }
+  return DEFAULT_LOG_FILE_PATH;
+}
+
+function appendToLogFile(filePath: string, text: string): void {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Check size for rotation: keep 1 backup file
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      if (stats.size > MAX_LOG_FILE_BYTES) {
+        const backupPath = `${filePath}.1`;
+        try {
+          if (fs.existsSync(backupPath)) {
+            fs.unlinkSync(backupPath);
+          }
+          fs.renameSync(filePath, backupPath);
+        } catch {
+          // If rotation fails, continue appending
+        }
+      }
+    }
+
+    fs.appendFileSync(filePath, `${text}\n`, 'utf-8');
+  } catch {
+    // Failsafe: avoid crashing application if filesystem is restricted or full
+  }
+}
+
+function formatFileEntry(level: ServerLogLevel, namespace: string, message: string, args: unknown[]): string {
+  const timestamp = new Date().toISOString();
+  const ns = namespace ? `[${namespace}]` : '';
+  let line = `[${timestamp}] [${level.toUpperCase()}]${ns} ${message}`;
+
+  if (args.length > 0) {
+    for (const arg of args) {
+      if (arg instanceof Error) {
+        line += `\n  Error: ${arg.name}: ${arg.message}`;
+        if (arg.stack) {
+          line += `\n  Stack: ${arg.stack}`;
+        }
+      } else if (typeof arg === 'object' && arg !== null) {
+        try {
+          line += `\n  Data: ${JSON.stringify(arg)}`;
+        } catch {
+          line += `\n  Data: [Circular/Unserializable]`;
+        }
+      } else if (arg !== undefined) {
+        line += `\n  Data: ${String(arg)}`;
+      }
+    }
+  }
+
+  return line;
+}
+
+function formatServerConsoleMessage(level: ServerLogLevel, namespace: string, message: string): string {
   const timestamp = new Date().toISOString();
   const ns = namespace ? `[${namespace}]` : '';
   return `[${timestamp}] [${level.toUpperCase()}]${ns} ${message}`;
 }
 
-export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'], namespace = 'server'): ServerLogger {
+export function createServerLogger(
+  viteLogger?: ViteDevServer['config']['logger'],
+  namespace = 'server',
+  logFilePath: string = getResolvedLogFilePath(),
+): ServerLogger {
   const minLevel: ServerLogLevel = process.env.NODE_ENV === 'test' ? 'error' : 'info';
 
   const shouldLog = (level: ServerLogLevel): boolean => {
@@ -42,8 +120,9 @@ export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'
 
   const instance: ServerLogger = {
     debug(message: string, ...args: unknown[]): void {
+      appendToLogFile(logFilePath, formatFileEntry('debug', namespace, message, args));
       if (!shouldLog('debug')) return;
-      const formatted = formatServerMessage('debug', namespace, message);
+      const formatted = formatServerConsoleMessage('debug', namespace, message);
       if (viteLogger) {
         viteLogger.info(formatted);
       } else {
@@ -52,8 +131,9 @@ export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'
     },
 
     info(message: string, ...args: unknown[]): void {
+      appendToLogFile(logFilePath, formatFileEntry('info', namespace, message, args));
       if (!shouldLog('info')) return;
-      const formatted = formatServerMessage('info', namespace, message);
+      const formatted = formatServerConsoleMessage('info', namespace, message);
       if (viteLogger) {
         viteLogger.info(formatted);
       } else {
@@ -62,8 +142,9 @@ export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'
     },
 
     warn(message: string, ...args: unknown[]): void {
+      appendToLogFile(logFilePath, formatFileEntry('warn', namespace, message, args));
       if (!shouldLog('warn')) return;
-      const formatted = formatServerMessage('warn', namespace, message);
+      const formatted = formatServerConsoleMessage('warn', namespace, message);
       if (viteLogger) {
         viteLogger.warn(formatted);
       } else {
@@ -72,8 +153,9 @@ export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'
     },
 
     error(message: string, ...args: unknown[]): void {
+      appendToLogFile(logFilePath, formatFileEntry('error', namespace, message, args));
       if (!shouldLog('error')) return;
-      const formatted = formatServerMessage('error', namespace, message);
+      const formatted = formatServerConsoleMessage('error', namespace, message);
       if (viteLogger) {
         viteLogger.error(formatted);
       } else {
@@ -93,7 +175,15 @@ export function createServerLogger(viteLogger?: ViteDevServer['config']['logger'
 
     child(subNamespace: string): ServerLogger {
       const combined = namespace ? `${namespace}:${subNamespace}` : subNamespace;
-      return createServerLogger(viteLogger, combined);
+      return createServerLogger(viteLogger, combined, logFilePath);
+    },
+
+    getLogFilePath(): string {
+      return logFilePath;
+    },
+
+    writeRaw(entry: string): void {
+      appendToLogFile(logFilePath, entry);
     },
   };
 
