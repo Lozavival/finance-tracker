@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  commit-lint:
+    name: Commit Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Validate PR commits with commitlint
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+          else
+            pnpm exec commitlint --last --verbose
+          fi
+
+  code-lint:
+    name: Codebase Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Run codebase linter
+        run: pnpm run lint
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Build application
+        run: pnpm run build
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Install Playwright Chromium & dependencies
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run entire test suite
+        run: pnpm test
+
+      - name: Upload Playwright artifacts on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
+
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [commit-lint, code-lint, build, test]
+    if: always()
+    steps:
+      - name: Verify all CI checks passed
+        run: |
+          if [ "${{ needs.commit-lint.result }}" != "success" ] || \
+             [ "${{ needs.code-lint.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ]; then
+            echo "::error::One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI checks passed successfully."

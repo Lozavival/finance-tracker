@@ -17,6 +17,7 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Full Application Tests**: `npm test` (`vitest run && playwright test` running all unit, integration, component, and E2E suites)
 - **Unit & Integration Tests**: `npm run test:unit`, `npm run test:integration`, `npm run test:components`
 - **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 14 user journeys)
+- **Continuous Integration (CI)**: GitHub Actions workflow (`.github/workflows/ci.yml`) triggered on PRs to `main` or `develop`. Executes commit linting, codebase linting, application build, and the full test suite.
 
 ---
 

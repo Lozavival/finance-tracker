@@ -277,6 +277,7 @@ Finance Tracker features a dark-mode-first aesthetic with luminous cyan, violet,
 - **Strict TypeScript**: Full type coverage for transactions, accounts, statements, and state actions without implicit `any`.
 - **Git Commit Standards**: Enforced with [Conventional Commits](https://www.conventionalcommits.org/) via Husky and Commitlint (`feat:`, `fix:`, `refactor:`, `chore:`, etc.).
 - **Linting & Formatting**: Clean code standards maintained via ESLint 9 flat config and Prettier.
+- **Continuous Integration**: GitHub Actions workflow (`.github/workflows/ci.yml`) runs on PRs targeting `main` and `develop` to validate commits, lint the codebase, compile the production build, and execute the full test suite.
 
 ---
 
