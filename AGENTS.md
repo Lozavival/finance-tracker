@@ -114,6 +114,11 @@ src/
 - Keep domain engines (installments, credit card statement closing cycles, daily balance forecasting, recurring rules, analytics, search) **pure and decoupled from React components**.
 - Implement exact mathematical operations using **integer cents** throughout domain models (e.g., cent-exact split where remainder cents are allocated to the first installment; clamping payment due dates to the end of shorter months).
 - Keep production defaults (`src/app/data/defaults/`) clean and decoupled from demo/test data (`src/app/data/fixtures/`). Production default goals start empty (`EMPTY_GOALS_CONFIG`).
+- **Isolated Dev & Prod SQLite Databases**:
+  - Development mode (`npm run dev`) persists strictly to `data/finance-tracker.dev.db` (seeded with dev mock fixtures).
+  - Production mode (`npm run preview` or `NODE_ENV=production`) persists strictly to `data/finance-tracker.prod.db` (seeded with clean production defaults).
+  - Override via environment variables: `DATABASE_PATH` (global override), `DEV_DATABASE_PATH`, or `PROD_DATABASE_PATH`.
+  - Legacy Migration: If `data/finance-tracker.dev.db` does not exist but legacy `data/finance-tracker.db` exists, dev automatically checkpoints and copies developer data over, while production starts clean with zero cross-contamination.
 - **Search Invariant**: Full-text index `transactions_fts` (FTS5 trigram) is maintained strictly via SQLite triggers in `client.ts` across all insert/update/delete operations. Never write directly to `transactions_fts` from application logic. Text normalization is unified under `foldText` in `src/app/data/search.ts` (mirrored in SQLite via custom deterministic `fold` function). Full-history search is read-only and must never alter `loadedFromDateStr` or client window state.
 
 ### 2. Design System & Aesthetics

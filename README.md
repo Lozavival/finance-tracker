@@ -93,6 +93,8 @@ The user interface was originally developed from the [Lindgo – Futuristic Fint
 ### Persistence & Database Architecture
 
 - **SQLite Database with Drizzle ORM**: Persistent local storage powered by `better-sqlite3` and type-safe schema migrations via Drizzle ORM.
+- **Isolated Dev and Prod Databases**: Development server (`npm run dev`) persists strictly to `data/finance-tracker.dev.db` (seeded with developer test fixtures), while production and preview server (`npm run preview`) persist strictly to `data/finance-tracker.prod.db` (seeded with clean production defaults).
+- **Environment Variable Controls**: Override SQLite database paths via `DATABASE_PATH` (global override), `DEV_DATABASE_PATH`, or `PROD_DATABASE_PATH`.
 - **Repository Abstraction**: UI layers interact with a unified `FinanceRepository` interface (`httpRepository` backed by Vite API middleware in local development, with `inMemoryRepository` for isolated environments and testing).
 - **Clean Separation of Defaults and Fixtures**: Production defaults (`src/app/data/defaults/`) are strictly isolated from developer mock datasets (`src/app/data/fixtures/`).
 

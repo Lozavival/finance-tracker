@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { Plugin, ViteDevServer } from 'vite';
 import { createDatabaseConnection } from '../db/client';
 import { SqliteRepository } from './sqliteRepository';
-import { DEFAULT_WORKSPACE_ID, resolveDefaultSeedMode } from '../db/seedDatabase';
+import { DEFAULT_WORKSPACE_ID, resolveDefaultSeedMode, type SeedMode } from '../db/seedDatabase';
 import { createServerLogger, type ServerLogger } from './logger';
 import {
   deserializeAccount,
@@ -73,14 +73,29 @@ function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
-export function createFinanceApiMiddleware(dbPath?: string, viteLogger?: ViteDevServer['config']['logger']) {
+export interface FinanceApiMiddlewareOptions {
+  dbPath?: string;
+  mode?: SeedMode;
+}
+
+export function createFinanceApiMiddleware(
+  optionsOrDbPath?: string | FinanceApiMiddlewareOptions,
+  viteLogger?: ViteDevServer['config']['logger'],
+  explicitMode?: SeedMode,
+) {
+  const options: FinanceApiMiddlewareOptions =
+    typeof optionsOrDbPath === 'string'
+      ? { dbPath: optionsOrDbPath, mode: explicitMode }
+      : (optionsOrDbPath ?? { mode: explicitMode });
+
   let repo: SqliteRepository | null = null;
   const logger: ServerLogger = createServerLogger(viteLogger, 'api');
 
   const getRepo = (): SqliteRepository => {
     if (!repo) {
-      const conn = createDatabaseConnection(dbPath, logger);
-      repo = new SqliteRepository(conn, DEFAULT_WORKSPACE_ID, resolveDefaultSeedMode(), logger);
+      const mode = options.mode ?? resolveDefaultSeedMode();
+      const conn = createDatabaseConnection(options.dbPath, logger, mode);
+      repo = new SqliteRepository(conn, DEFAULT_WORKSPACE_ID, mode, logger);
     }
     return repo;
   };
@@ -490,17 +505,25 @@ export function createFinanceApiMiddleware(dbPath?: string, viteLogger?: ViteDev
   };
 }
 
-export function financeApiPlugin(dbPath?: string): Plugin {
+export interface FinanceApiPluginOptions {
+  dbPath?: string;
+  mode?: SeedMode;
+}
+
+export function financeApiPlugin(options?: string | FinanceApiPluginOptions): Plugin {
+  const opts = typeof options === 'string' ? { dbPath: options } : (options ?? {});
   let serverLogger: ViteDevServer['config']['logger'] | undefined;
   return {
     name: 'finance-tracker-api',
     configureServer(server) {
       serverLogger = server.config.logger;
-      server.middlewares.use(createFinanceApiMiddleware(dbPath, serverLogger));
+      const mode: SeedMode = opts.mode ?? (server.config.mode === 'production' ? 'production' : 'development');
+      server.middlewares.use(createFinanceApiMiddleware({ dbPath: opts.dbPath, mode }, serverLogger));
     },
     configurePreviewServer(server) {
       serverLogger = server.config.logger;
-      server.middlewares.use(createFinanceApiMiddleware(dbPath, serverLogger));
+      const mode: SeedMode = opts.mode ?? 'production';
+      server.middlewares.use(createFinanceApiMiddleware({ dbPath: opts.dbPath, mode }, serverLogger));
     },
   };
 }

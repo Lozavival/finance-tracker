@@ -5,6 +5,7 @@ import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema';
 import { foldText } from '../app/data/search';
 import type { ServerLogger } from '../server/logger';
+import { resolveDefaultSeedMode, type SeedMode } from './seedDatabase';
 
 export type DrizzleDb = BetterSQLite3Database<typeof schema>;
 
@@ -165,17 +166,55 @@ CREATE TRIGGER IF NOT EXISTS trg_tx_fts_update AFTER UPDATE OF description ON tr
 END;
 `;
 
-export function createDatabaseConnection(dbPath?: string, logger?: ServerLogger): DatabaseConnection {
-  const resolvedPath = dbPath ?? process.env.DATABASE_PATH ?? path.resolve(process.cwd(), 'data', 'finance-tracker.db');
+export const DEV_DATABASE_FILENAME = 'finance-tracker.dev.db';
+export const PROD_DATABASE_FILENAME = 'finance-tracker.prod.db';
+export const LEGACY_DATABASE_FILENAME = 'finance-tracker.db';
+
+export function getDatabasePathForMode(mode: SeedMode): string {
+  if (mode === 'production') {
+    return process.env.PROD_DATABASE_PATH ?? path.resolve(process.cwd(), 'data', PROD_DATABASE_FILENAME);
+  }
+  return process.env.DEV_DATABASE_PATH ?? path.resolve(process.cwd(), 'data', DEV_DATABASE_FILENAME);
+}
+
+export function resolveDatabasePath(dbPath?: string, mode?: SeedMode): string {
+  if (dbPath) {
+    return dbPath;
+  }
+  if (process.env.DATABASE_PATH) {
+    return process.env.DATABASE_PATH;
+  }
+  const resolvedMode = mode ?? resolveDefaultSeedMode();
+  return getDatabasePathForMode(resolvedMode);
+}
+
+export function createDatabaseConnection(dbPath?: string, logger?: ServerLogger, mode?: SeedMode): DatabaseConnection {
+  const resolvedMode = mode ?? resolveDefaultSeedMode();
+  const resolvedPath = resolveDatabasePath(dbPath, resolvedMode);
   const dbLogger = logger?.child('db');
 
-  dbLogger?.info(`Initializing SQLite database connection at "${resolvedPath}"`);
+  dbLogger?.info(`Initializing SQLite database connection at "${resolvedPath}" (mode: ${resolvedMode})`);
 
   if (resolvedPath !== ':memory:') {
     const dir = path.dirname(resolvedPath);
     if (!fs.existsSync(dir)) {
       dbLogger?.debug(`Creating database directory "${dir}"`);
       fs.mkdirSync(dir, { recursive: true });
+    } else if (resolvedMode === 'development' && !fs.existsSync(resolvedPath)) {
+      // If legacy un-split database exists and dev database does not yet exist,
+      // copy legacy database so the developer's pre-existing workspace data is preserved.
+      const legacyPath = path.resolve(dir, LEGACY_DATABASE_FILENAME);
+      if (legacyPath !== resolvedPath && fs.existsSync(legacyPath)) {
+        try {
+          dbLogger?.info(`Migrating existing database from "${legacyPath}" to "${resolvedPath}"`);
+          const legacySqlite = new Database(legacyPath);
+          legacySqlite.pragma('wal_checkpoint(TRUNCATE)');
+          legacySqlite.close();
+          fs.copyFileSync(legacyPath, resolvedPath);
+        } catch (copyErr) {
+          dbLogger?.warn('Failed to copy legacy database to dev database, starting fresh:', copyErr);
+        }
+      }
     }
   }
 
