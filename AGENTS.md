@@ -14,9 +14,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Formatting**: `npm run format` (`prettier`)
 - **Build**: `npm run build` (`vite build`)
 - **Preview**: `npm run preview`
-- **Full Application Tests**: `npm test` (`vitest run && playwright test` running all unit, integration, component, and E2E suites)
+- **Full Application Tests**: `npm test` (`vitest run && playwright test` running all unit, integration, component, and multi-viewport E2E suites)
 - **Unit & Integration Tests**: `npm run test:unit`, `npm run test:integration`, `npm run test:components`
-- **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 14 user journeys)
+- **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 15 user journeys across `desktop`, `tablet`, and `mobile` projects)
 - **Continuous Integration (CI)**: GitHub Actions workflow (`.github/workflows/ci.yml`) triggered on PRs to `main` or `develop`. Executes commit linting, codebase linting, application build, and the full test suite.
 
 ---
@@ -68,7 +68,7 @@ src/
 │   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
-    ├── layout/                   # App shell components (TopNavigation, GlobalSearch, Sidebar)
+    ├── layout/                   # App shell components (TopNavigation, GlobalSearch, Sidebar, MobileNavDrawer)
     ├── features/                 # Domain feature modules
     │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard, SmartInsightsContent
     │   ├── accounts/             # Account lists, balance projections & statement views
@@ -80,6 +80,7 @@ src/
     │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, HighlightedText, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
     ├── lib/
     │   ├── logger.ts             # Hierarchical client logger, breadcrumb buffer & error tracing
+    │   ├── useMediaQuery.ts      # Reactive media query and breakpoint hooks (useBreakpoint, useMediaQuery)
     │   └── utils.ts              # Global utility functions (cn class merging)
     ├── data/
     │   ├── analytics.ts          # Financial KPI calculations and spending analysis
@@ -135,6 +136,14 @@ src/
   - **Theme Accents**: `theme-cyan`, `theme-green`, `theme-blue`, `theme-orange`, `theme-purple`, `theme-red`, `theme-cyan-btn`, `theme-cyan-btn-hover` (e.g., `text-theme-cyan`, `bg-theme-cyan/15`, `border-theme-green/30`).
   - **Semantic UI Tokens**: `primary`, `primary-foreground`, `foreground`, `background`, `card`, `popover`, `muted`, `muted-foreground`, `accent`, `border`, `input`, `destructive` (e.g., `bg-card/50`, `border-border/40`, `text-destructive`).
   - **Dynamic Palette Token Namespace**: Use `--accent-*-raw`, `--accent-*-dot`, and `--accent-*-badge-*` (defined in `palette.css`). Avoid `--color-*-dot` to prevent collisions with Tailwind v4's internal `--color-*` engine.
+- **Responsive Layout & Fluid Design Invariant**:
+  - **Full Viewport Range**: Minimum supported viewport is 360px phones (`phone-compact`) up to 4K ultrawide desktop monitors with zero horizontal overflow regressions.
+  - **Container Queries Over Window Breakpoints in Widgets**: Feature cards and panels (`SpendingBreakdownCard`, `AnalyticsVisualizer`, `GoalAllocationsDonut`, etc.) reside inside the main content column next to the 256px sidebar. Never rely solely on screen media queries (`md:`, `xl:`) for internal card layout, which overflow when sidebar width reduces column space. Always use Tailwind CSS `@container` and container query breakpoints (`@xs:`, `@sm:`, `@md:`, `@lg:`, `@xl:`).
+  - **Chart Containment**: Recharts responsive containers inside flex/grid items must have `min-w-0` on their immediate wrappers to prevent SVG layout engines from measuring and retaining parent overflow dimensions.
+  - **Numerical Data & Amounts**: All financial monetary values, rates, and counts in tables and summary cards must use `tabular-nums` for alignment stability and preventing jitter or text overflow.
+  - **Dialog Viewport Clamping**: Dialogs and alert dialogs must have `max-h-[calc(100dvh-2rem)] overflow-y-auto` to prevent clipping on short or landscape mobile screens.
+  - **Responsive Topbar & Shell**: Navigation switches adaptively between the persistent desktop `Sidebar` (>=1024px) and the accessible `MobileNavDrawer` sheet (<1024px). Mobile search expands in-place without displacing navigation actions.
+  - **Zero Unintentional Horizontal Scroll**: Form controls, button strips, and filter bars must use `flex-wrap` and min-w clamping (`w-[min(...,calc(100vw-1rem))]`) to prevent expanding document `scrollWidth` and triggering mobile layout scaling.
 
 ### 3. Component Standards & Architecture
 - **Dependency Rule**: `features/*` may import from `components/`, `layout/`, `lib/`, `data/`, `state/`, and `i18n/`. `components/*` must never import from `features/*`. Cross-feature reusable widgets belong in `components/shared/`.

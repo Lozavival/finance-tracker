@@ -114,3 +114,34 @@ Requirements:
 2. Zero TypeScript errors (`tsc --noEmit`).
 3. Zero ESLint warnings (`eslint --max-warnings=0`).
 4. Vite production build succeeds.
+
+---
+
+### 8. Responsive Layout & Fluid Design Checklist (Mandatory)
+Finance Tracker supports all viewports from 360px phones (`phone-compact`) to ultrawide desktops with zero horizontal overflow regressions.
+
+#### A. Container Queries Over Window Breakpoints in Widgets
+- Feature cards, charts, and panels reside inside the main content column next to the persistent 256px sidebar.
+- Never use screen breakpoints (`md:`, `xl:`) inside card internals to switch multi-column layouts—the 256px sidebar reduces available column width to ~468px at 1280px screen width.
+- Always use Tailwind CSS `@container` and container query breakpoints (`@xs:`, `@sm:`, `@md:`, `@lg:`, `@xl:`) inside cards.
+
+#### B. Recharts & Chart Containment
+- Always wrap Recharts `ResponsiveContainer` inside a flex/grid child with `min-w-0` (or `min-h-0`). Without `min-w-0`, SVG layout calculation engines retain parent dimensions and cause persistent horizontal overflow.
+
+#### C. Tabular Numerics & Text Truncation
+- Financial amounts, rates, balances, and counts must use `tabular-nums` to ensure monospaced numerical alignment and prevent jitter during re-renders.
+- Card titles, category labels, and descriptions in dense rows must have `truncate min-w-0` to avoid pushing action buttons outside the viewport.
+
+#### D. Dialog & Popover Clamping
+- Modals (`DialogContent`, `AlertDialogContent`) must include `max-h-[calc(100dvh-2rem)] overflow-y-auto` to prevent off-screen truncation on mobile and short landscape screens.
+- Popovers and dropdowns must constrain widths using `w-[min(...,calc(100vw-1rem))]` to prevent off-canvas clipping on small viewports.
+
+#### E. Fluid Navigation & Zero Unintentional Horizontal Scroll
+- Button strips, currency filters, and option lists must include `flex-wrap` to prevent expanding document `scrollWidth` and triggering mobile layout scaling.
+- Top navigation actions must remain accessible via `MobileNavDrawer` (<1024px) and persistent `Sidebar` (>=1024px).
+- Verify multi-viewport compliance via Playwright:
+  ```bash
+  pnpm exec playwright test tests/e2e/flows/responsive-layout.spec.ts --project=desktop
+  pnpm exec playwright test --project=tablet
+  pnpm exec playwright test --project=mobile
+  ```
