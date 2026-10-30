@@ -271,12 +271,13 @@ export function AccountDetailPage({
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t('common.actions')}
                     className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-popover border-border">
+                <DropdownMenuContent align="end" className="bg-popover border-border">
                   <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                     <Pencil className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
                     {t('accounts.editAccount')}

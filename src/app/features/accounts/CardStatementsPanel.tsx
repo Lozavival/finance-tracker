@@ -45,7 +45,7 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
 
   return (
     <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 border-border">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4 min-w-0">
         <div className="flex items-center gap-3">
           <CreditCard className="w-5 h-5 text-theme-cyan shrink-0" />
           <div className="text-xl text-foreground">{t('accounts.creditCardBills')}</div>

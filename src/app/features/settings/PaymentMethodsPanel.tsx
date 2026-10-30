@@ -113,11 +113,11 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                 isDragging={reorder.draggedIndex === idx}
               >
                 <div className="flex items-center justify-between gap-3 min-w-0">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center text-theme-cyan flex-shrink-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center text-theme-cyan shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0 flex-1">
                       <span className="font-medium text-foreground truncate">{m.name}</span>
 
                       {isCard && (
@@ -128,7 +128,7 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <span className="text-xs text-muted-foreground hidden sm:inline">
                       {count === 1
                         ? t('common.singleTransaction')

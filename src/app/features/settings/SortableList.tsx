@@ -39,7 +39,7 @@ export function SortableRow<T>({
       onDrop={onDrop}
       onDragEnd={onDragEnd}
       className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
-        isDragging ? 'opacity-40 border-dashed border-cyan-400' : ''
+        isDragging ? 'opacity-40 border-dashed border-theme-cyan' : ''
       }`}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">

@@ -90,16 +90,16 @@ export function PaymentMethodDialog({ open, onOpenChange, method, onSave }: Paym
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-md">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="border-b border-border p-6 pr-14">
+      <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-md max-h-[calc(100dvh-2rem)] flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <DialogHeader className="border-b border-border p-6 pr-14 shrink-0">
             <DialogTitle>{isEditing ? t('settings.methods.editTitle') : t('settings.methods.addTitle')}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               {isEditing ? t('settings.methods.editDesc') : t('settings.methods.addDesc')}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5 p-6">
+          <div className="space-y-5 p-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             <div className="space-y-2">
               <Label className="text-foreground">{t('settings.methods.methodName')}</Label>
               <Input
@@ -129,7 +129,7 @@ export function PaymentMethodDialog({ open, onOpenChange, method, onSave }: Paym
             </div>
           </div>
 
-          <DialogFooter className="border-t border-border p-6 sm:justify-between">
+          <DialogFooter className="border-t border-border p-6 shrink-0 sm:justify-between">
             <Button
               type="button"
               variant="ghost"

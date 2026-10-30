@@ -492,9 +492,9 @@ export function TransactionFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-2xl">
-          <form onSubmit={handleSubmit}>
-            <DialogHeader className="border-b border-border p-6 pr-14">
+        <DialogContent className="gap-0 overflow-hidden border-border bg-popover p-0 text-foreground shadow-2xl sm:max-w-2xl max-h-[calc(100dvh-2rem)] flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <DialogHeader className="border-b border-border p-6 pr-14 shrink-0">
               <DialogTitle>
                 {editing ? t('transactions.editTransaction') : t('transactions.addTransaction')}
               </DialogTitle>
@@ -507,7 +507,7 @@ export function TransactionFormDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
               <DirectionToggle value={mode} onChange={handleModeChange} />
 
               <div className="grid gap-5 sm:grid-cols-2">
@@ -795,7 +795,7 @@ export function TransactionFormDialog({
               )}
             </div>
 
-            <DialogFooter className="border-t border-border p-6 sm:justify-between">
+            <DialogFooter className="border-t border-border p-6 shrink-0 sm:justify-between">
               <Button
                 type="button"
                 variant="ghost"

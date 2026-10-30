@@ -68,29 +68,29 @@ export function MonthPicker({
   const displayMonthYear = formattedMonthYear.charAt(0).toUpperCase() + formattedMonthYear.slice(1);
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2 max-w-full', className)}>
       {!isCurrentMonth && (
         <Button
           variant="outline"
           size="sm"
           onClick={handleCurrentMonth}
           disabled={!currentMonthEnabled}
-          className="h-9 px-3 gap-1.5 text-xs font-medium rounded-lg border-border hover:border-cyan-500/40 bg-transparent text-muted-foreground hover:text-theme-cyan transition-colors"
+          className="h-9 px-3 gap-1.5 text-xs font-medium rounded-lg border-border hover:border-theme-cyan/40 bg-transparent text-muted-foreground hover:text-theme-cyan transition-colors shrink-0"
           aria-label={t('common.backToCurrentMonth')}
           title={t('common.backToCurrentMonth')}
         >
-          <RotateCcw className="w-3.5 h-3.5 text-theme-cyan" />
+          <RotateCcw className="w-3.5 h-3.5 text-theme-cyan shrink-0" />
           <span>{t('common.backToCurrentMonth')}</span>
         </Button>
       )}
 
-      <div className="flex items-center rounded-lg border border-border bg-foreground/5 p-0.5 shrink-0">
+      <div className="flex items-center rounded-lg border border-border bg-foreground/5 p-0.5 shrink-0 max-w-full">
         <Button
           variant="ghost"
           size="icon"
           onClick={handlePrev}
           disabled={prevDisabled}
-          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10 disabled:opacity-30 disabled:pointer-events-none"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10 disabled:opacity-30 disabled:pointer-events-none shrink-0"
           aria-label={t('common.previousMonth')}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -100,11 +100,11 @@ export function MonthPicker({
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
-              className="h-8 px-3 gap-2 text-sm font-medium text-foreground hover:bg-foreground/10 hover:text-theme-cyan transition-colors"
+              className="h-8 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-foreground hover:bg-foreground/10 hover:text-theme-cyan transition-colors min-w-0 max-w-full"
             >
-              <Calendar className="w-4 h-4 text-theme-cyan" />
-              <span>{displayMonthYear}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+              <Calendar className="w-4 h-4 text-theme-cyan shrink-0" />
+              <span className="truncate">{displayMonthYear}</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[min(280px,calc(100vw-1rem))] bg-popover/95 backdrop-blur-xl border-border p-4 shadow-xl rounded-2xl z-50">
