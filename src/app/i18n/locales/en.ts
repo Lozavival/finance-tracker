@@ -61,6 +61,9 @@ export const en = {
     backToCurrentMonth: 'Back to current month',
   },
   nav: {
+    primary: 'Primary Navigation',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
     dashboard: 'Dashboard',
     transactions: 'Transactions',
     accounts: 'Accounts',
@@ -79,6 +82,8 @@ export const en = {
     seeAllSingle: 'See 1 transaction result for "{query}"',
     error: 'Search is unavailable right now',
     occurrences: '{count}×',
+    open: 'Open search',
+    close: 'Close search',
     recurringSeries: 'Recurring series',
     installmentSeries: 'Installment group',
     shortcutHint: 'Press {key} to search',

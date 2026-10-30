@@ -63,6 +63,9 @@ export const pt: Translations = {
     backToCurrentMonth: 'Voltar para o mês atual',
   },
   nav: {
+    primary: 'Navegação principal',
+    openMenu: 'Abrir menu',
+    closeMenu: 'Fechar menu',
     dashboard: 'Painel',
     transactions: 'Transações',
     accounts: 'Contas',
@@ -81,6 +84,8 @@ export const pt: Translations = {
     seeAllSingle: 'Ver 1 transação para "{query}"',
     error: 'A busca está indisponível no momento',
     occurrences: '{count}×',
+    open: 'Abrir busca',
+    close: 'Fechar busca',
     recurringSeries: 'Série recorrente',
     installmentSeries: 'Grupo de parcelas',
     shortcutHint: 'Pressione {key} para buscar',

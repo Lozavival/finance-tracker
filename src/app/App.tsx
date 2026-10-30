@@ -40,9 +40,9 @@ function AppLayout() {
       <TopNavigation />
       <Sidebar />
 
-      <main className="ml-64 mt-16 relative">
+      <main className="lg:ml-64 pt-16 relative min-w-0">
         <OfflineBanner />
-        <div className="p-8">
+        <div className="@container/main mx-auto w-full max-w-screen-2xl p-4 sm:p-6 lg:p-8">
           <ErrorBoundary
             key={location.pathname}
             fallback={(error, reset) => <ErrorFallback error={error} resetErrorBoundary={reset} />}

@@ -42,11 +42,12 @@ export function NotificationCenter() {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           title={t('nav.notifications')}
           aria-label={t('nav.notifications')}
-          className="relative p-2 rounded-lg bg-foreground/5 border border-border hover:border-theme-cyan/50 hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] transition-all duration-300 cursor-pointer"
+          className="relative size-9 rounded-lg bg-foreground/5 border border-border hover:border-theme-cyan/50 hover:shadow-[0_0_15px_var(--shadow-glow-cyan)] transition-all shrink-0"
         >
           <Bell className="size-5 text-muted-foreground" />
           {totalUnreadCount > 0 && (
@@ -60,13 +61,13 @@ export function NotificationCenter() {
               {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
             </span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
 
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-96 max-h-[85vh] flex flex-col p-4 bg-popover/95 backdrop-blur-xl border-border/40 shadow-2xl rounded-2xl overflow-hidden"
+        className="w-[min(24rem,calc(100vw-1rem))] max-h-[85vh] flex flex-col p-4 bg-popover/95 backdrop-blur-xl border-border/40 shadow-2xl rounded-2xl overflow-hidden"
       >
         <div className="flex flex-col flex-1 min-h-0 space-y-3">
           {/* Header */}
