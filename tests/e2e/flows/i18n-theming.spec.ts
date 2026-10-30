@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetTestDatabase, navigateTo } from '../helpers/e2e-helper';
+import { resetTestDatabase, navigateTo, openPrimaryNav, closePrimaryNav } from '../helpers/e2e-helper';
 
 test.describe('Flow 10: Bilingual Localization & Theme Persistence', () => {
   test.beforeEach(async ({ request }) => {
@@ -19,10 +19,11 @@ test.describe('Flow 10: Bilingual Localization & Theme Persistence', () => {
     await ptToggle.click();
 
     // 3. Verify sidebar navigation labels change to Portuguese
-    const nav = page.getByRole('navigation');
+    const nav = await openPrimaryNav(page);
     await expect(nav.getByRole('button', { name: /painel/i })).toBeVisible();
     await expect(nav.getByRole('button', { name: /transações/i })).toBeVisible();
     await expect(nav.getByRole('button', { name: /contas/i })).toBeVisible();
+    await closePrimaryNav(page);
 
     // 4. Switch theme to Light via TopNavigation dropdown
     const themeBtn = page.getByRole('button', { name: /toggle theme|alternar tema/i });
@@ -38,9 +39,11 @@ test.describe('Flow 10: Bilingual Localization & Theme Persistence', () => {
 
     // 7. Verify Portuguese language and Light theme persist across reload
     await expect(html).toHaveClass(/light/);
-    await expect(nav.getByRole('button', { name: /painel/i })).toBeVisible();
-    await expect(nav.getByRole('button', { name: /transações/i })).toBeVisible();
-    await expect(nav.getByRole('button', { name: /contas/i })).toBeVisible();
+    const navAfterReload = await openPrimaryNav(page);
+    await expect(navAfterReload.getByRole('button', { name: /painel/i })).toBeVisible();
+    await expect(navAfterReload.getByRole('button', { name: /transações/i })).toBeVisible();
+    await expect(navAfterReload.getByRole('button', { name: /contas/i })).toBeVisible();
+    await closePrimaryNav(page);
 
     // 8. Revert back to Dark theme and English for cleanliness
     await themeBtn.click();
@@ -50,6 +53,8 @@ test.describe('Flow 10: Bilingual Localization & Theme Persistence', () => {
     await navigateTo(page, '/settings');
     await page.getByRole('tab', { name: /preferências|preferences/i }).click();
     await page.getByRole('button', { name: /english/i }).click();
-    await expect(nav.getByRole('button', { name: /dashboard/i })).toBeVisible();
+    const finalNav = await openPrimaryNav(page);
+    await expect(finalNav.getByRole('button', { name: /dashboard/i })).toBeVisible();
+    await closePrimaryNav(page);
   });
 });
