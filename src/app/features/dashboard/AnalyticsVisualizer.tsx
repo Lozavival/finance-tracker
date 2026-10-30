@@ -107,11 +107,11 @@ export function AnalyticsVisualizer({
   };
 
   return (
-    <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-cyan/5 transition-all duration-300">
+    <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-cyan/5 transition-all duration-300">
       {/* Visualizer Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col @lg:flex-row @lg:items-center @lg:justify-between gap-4 mb-6">
         {/* Tab switch */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-foreground/5 border border-border/60">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-foreground/5 border border-border/60">
           <Button
             type="button"
             variant="ghost"

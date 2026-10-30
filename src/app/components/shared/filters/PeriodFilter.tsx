@@ -53,7 +53,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
           size="sm"
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
             draft.kind === 'up-to-today'
-              ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+              ? 'border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan hover:bg-theme-cyan/20'
               : 'text-foreground'
           }`}
           onClick={() => setDraft({ kind: 'up-to-today' })}
@@ -66,7 +66,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
           size="sm"
           className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
             draft.kind === 'all'
-              ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+              ? 'border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan hover:bg-theme-cyan/20'
               : 'text-foreground'
           }`}
           onClick={() => setDraft({ kind: 'all' })}
@@ -84,7 +84,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
             size="sm"
             className={`rounded-full flex-1 border-border bg-foreground/5 hover:bg-foreground/10 ${
               draft.kind === 'preset' && draft.days === days
-                ? 'border-cyan-500/40 bg-cyan-500/10 text-theme-cyan hover:bg-cyan-500/20'
+                ? 'border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan hover:bg-theme-cyan/20'
                 : 'text-foreground'
             }`}
             onClick={() => setDraft({ kind: 'preset', days })}

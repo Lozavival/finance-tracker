@@ -179,24 +179,25 @@ export function TransactionsPage({ transactions: propTransactions }: Transaction
           </div>
           <div className="text-muted-foreground">{t('transactions.subtitle')}</div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button
             variant="outline"
+            aria-label={t('transactions.recurringRules')}
             onClick={() => setRecurringRulesOpen(true)}
             className="border-border bg-foreground/5 hover:bg-foreground/10 text-foreground"
           >
-            <Repeat className="mr-2 h-4 w-4 text-theme-cyan" />
-            {t('transactions.recurringRules')}
+            <Repeat className="sm:mr-2 h-4 w-4 text-theme-cyan shrink-0" />
+            <span className="hidden sm:inline">{t('transactions.recurringRules')}</span>
           </Button>
-          <Button variant="cyan" onClick={() => openAddDialog()}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('transactions.addTransaction')}
+          <Button variant="cyan" aria-label={t('transactions.addTransaction')} onClick={() => openAddDialog()}>
+            <Plus className="sm:mr-2 h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">{t('transactions.addTransaction')}</span>
           </Button>
         </div>
       </div>
 
       <Card className="gap-0 backdrop-blur-xl overflow-hidden">
-        <div className="p-6 flex flex-col gap-4">
+        <div className="p-4 sm:p-6 flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <SearchFilter value={searchQuery} onChange={handleSearchChange} />
             <PeriodFilter value={period} onChange={setPeriod} />

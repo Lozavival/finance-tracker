@@ -1,12 +1,12 @@
 import { useState } from 'react';
+import { SlidersHorizontal, Tags, CreditCard, Bell } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { PreferencesPanel } from './PreferencesPanel';
 import { TransactionTypesPanel } from './TransactionTypesPanel';
 import { PaymentMethodsPanel } from './PaymentMethodsPanel';
-import { PreferencesPanel } from './PreferencesPanel';
 import { NotificationsPanel } from './NotificationsPanel';
 import { type Transaction } from '@/data/transactions';
 import { useFinance } from '@/state/FinanceContext';
-import { Tags, CreditCard, SlidersHorizontal, Bell } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
 type SettingsPageProps = {
@@ -17,7 +17,7 @@ type SettingsPageProps = {
 export function SettingsPage({
   transactions: propTransactions,
   onTransactionsChange: propOnTransactionsChange,
-}: SettingsPageProps) {
+}: SettingsPageProps = {}) {
   const finance = useFinance();
   const transactions = propTransactions ?? finance.transactions;
   const onTransactionsChange = propOnTransactionsChange ?? ((txs: Transaction[]) => finance.setTransactions(txs));
@@ -37,34 +37,38 @@ export function SettingsPage({
         value={activeTab}
         onValueChange={val => setActiveTab(val as 'preferences' | 'types' | 'methods' | 'notifications')}
       >
-        <TabsList className="bg-foreground/5 border border-border p-1 h-auto rounded-lg">
+        <TabsList className="bg-foreground/5 border border-border p-1 h-auto rounded-lg max-w-full overflow-x-auto justify-start flex-nowrap">
           <TabsTrigger
             value="preferences"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
+            aria-label={t('settings.tabPreferences')}
+            className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan shrink-0"
           >
-            <SlidersHorizontal className="w-4 h-4" />
-            {t('settings.tabPreferences')}
+            <SlidersHorizontal className="size-4 shrink-0" />
+            <span className="hidden sm:inline">{t('settings.tabPreferences')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="types"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
+            aria-label={t('settings.tabTypes')}
+            className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan shrink-0"
           >
-            <Tags className="w-4 h-4" />
-            {t('settings.tabTypes')}
+            <Tags className="size-4 shrink-0" />
+            <span className="hidden sm:inline">{t('settings.tabTypes')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="methods"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
+            aria-label={t('settings.tabMethods')}
+            className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan shrink-0"
           >
-            <CreditCard className="w-4 h-4" />
-            {t('settings.tabMethods')}
+            <CreditCard className="size-4 shrink-0" />
+            <span className="hidden sm:inline">{t('settings.tabMethods')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="notifications"
-            className="flex items-center gap-2 py-2 px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan"
+            aria-label={t('settings.tabNotifications')}
+            className="flex items-center gap-2 py-2 px-3 sm:px-4 rounded-md text-sm data-[state=active]:bg-theme-cyan/20 data-[state=active]:text-theme-cyan shrink-0"
           >
-            <Bell className="w-4 h-4" />
-            {t('settings.tabNotifications')}
+            <Bell className="size-4 shrink-0" />
+            <span className="hidden sm:inline">{t('settings.tabNotifications')}</span>
           </TabsTrigger>
         </TabsList>
 

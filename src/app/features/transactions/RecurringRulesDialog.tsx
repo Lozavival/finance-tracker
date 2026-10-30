@@ -133,7 +133,7 @@ export function RecurringRulesDialog({ open, onOpenChange, onAddNew }: Recurring
 
                       <div className="text-right shrink-0">
                         <div
-                          className={`text-base font-bold tracking-tight ${
+                          className={`text-base font-bold tracking-tight tabular-nums ${
                             isIncome ? 'text-theme-green' : 'text-foreground'
                           }`}
                         >

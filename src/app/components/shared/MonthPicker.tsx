@@ -107,7 +107,7 @@ export function MonthPicker({
               <ChevronDown className="w-3.5 h-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[280px] bg-popover/95 backdrop-blur-xl border-border p-4 shadow-xl rounded-2xl z-50">
+          <PopoverContent className="w-[min(280px,calc(100vw-1rem))] bg-popover/95 backdrop-blur-xl border-border p-4 shadow-xl rounded-2xl z-50">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/60">
               <Button
                 variant="ghost"

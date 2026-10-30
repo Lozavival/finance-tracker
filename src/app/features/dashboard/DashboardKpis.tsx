@@ -46,7 +46,7 @@ export function DashboardKpisSection({ kpis, alerts }: DashboardKpisProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 @2xl/main:grid-cols-2 @5xl/main:grid-cols-4 gap-4 sm:gap-6">
       {/* 1. Total Net Balance */}
       <Card
         className="p-6 bg-foreground/5 backdrop-blur-xl border border-theme-cyan/30 
@@ -299,7 +299,7 @@ export function DashboardKpisSection({ kpis, alerts }: DashboardKpisProps) {
         <PopoverContent
           align="end"
           sideOffset={8}
-          className="w-[calc(100vw-2rem)] sm:w-[440px] max-h-[500px] overflow-y-auto p-4 bg-popover/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl space-y-3 z-50"
+          className="w-[calc(100vw-2rem)] sm:w-[min(440px,calc(100vw-2rem))] max-h-[min(500px,75dvh)] overflow-y-auto p-4 bg-popover/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl space-y-3 z-50"
         >
           <SmartInsightsContent alerts={alerts} onDismiss={handleDismiss} onClose={() => setPopoverOpen(false)} />
         </PopoverContent>

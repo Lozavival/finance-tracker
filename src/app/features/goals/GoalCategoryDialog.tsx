@@ -164,7 +164,7 @@ export function GoalCategoryDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ColorPicker value={color} onChange={setColor} label={t('goals.colorTheme')} />
             <IconPicker value={icon} onChange={setIcon} label={t('goals.categoryIcon')} />
           </div>
@@ -215,9 +215,9 @@ export function GoalCategoryDialog({
                     <div
                       key={tr.id}
                       onClick={() => handleToggleType(tr.id)}
-                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all border text-xs select-none ${
+                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all border text-xs select-none gap-2 ${
                         isSelected
-                          ? 'bg-cyan-500/10 border-cyan-400/40 text-foreground'
+                          ? 'bg-theme-cyan/10 border-theme-cyan/40 text-foreground'
                           : 'bg-foreground/[0.02] border-transparent hover:bg-foreground/5 text-muted-foreground'
                       }`}
                     >
@@ -228,7 +228,7 @@ export function GoalCategoryDialog({
 
                       {otherCat && !isSelected && (
                         <span
-                          className="text-[11px] text-muted-foreground truncate max-w-[130px]"
+                          className="text-[11px] text-muted-foreground truncate min-w-0 flex-1 text-right"
                           title={t('goals.mappedTo', { name: otherCat.name })}
                         >
                           {t('goals.mappedTo', { name: otherCat.name })}
@@ -236,11 +236,11 @@ export function GoalCategoryDialog({
                       )}
                       {isSelected && isMappedToOther && (
                         <span
-                          className="text-[11px] text-amber-500 font-medium truncate max-w-[140px] flex items-center gap-1"
+                          className="text-[11px] text-theme-orange font-medium truncate min-w-0 flex-1 text-right flex items-center justify-end gap-1"
                           title={t('goals.reassignFrom', { name: otherCat?.name || '' })}
                         >
                           <ArrowRightLeft className="w-3 h-3 flex-shrink-0" />
-                          <span>{t('goals.reassignFrom', { name: otherCat?.name || '' })}</span>
+                          <span className="truncate">{t('goals.reassignFrom', { name: otherCat?.name || '' })}</span>
                         </span>
                       )}
                     </div>

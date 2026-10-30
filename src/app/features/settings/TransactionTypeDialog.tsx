@@ -252,7 +252,7 @@ export function TransactionTypeDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <ColorPicker value={color} onChange={setColor} label={t('settings.types.badgeColor')} />
               <IconPicker value={icon} onChange={setIcon} label={t('common.icon')} />
             </div>

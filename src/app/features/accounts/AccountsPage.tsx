@@ -438,7 +438,7 @@ export function AccountsPage({
       )}
 
       {/* Totals Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 @sm/main:grid-cols-2 @4xl/main:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.totalBalance')}</div>
           {hasRate && convertedTotals ? (
@@ -528,7 +528,7 @@ export function AccountsPage({
       </div>
 
       {/* Currency Filter Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
           variant={currencyFilter === 'all' ? 'cyan' : 'outline'}
@@ -556,7 +556,7 @@ export function AccountsPage({
       </div>
 
       {/* Active Accounts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 @2xl/main:grid-cols-2 @5xl/main:grid-cols-3 gap-6">
         {activeCards}
         <button
           type="button"
@@ -610,7 +610,9 @@ export function AccountsPage({
           </div>
 
           {showArchived && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">{archivedCards}</div>
+            <div className="grid grid-cols-1 @2xl/main:grid-cols-2 @5xl/main:grid-cols-3 gap-6 pt-2">
+              {archivedCards}
+            </div>
           )}
         </div>
       )}

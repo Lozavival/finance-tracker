@@ -76,7 +76,7 @@ export function DashboardPage({ transactions: propTransactions }: DashboardPageP
               )}
             </div>
 
-            <div className="flex items-center p-0.5 rounded-xl bg-foreground/5 border border-border/60">
+            <div className="flex flex-wrap items-center p-0.5 rounded-xl bg-foreground/5 border border-border/60">
               {kpis.hasRate && (
                 <Button
                   type="button"
@@ -122,14 +122,18 @@ export function DashboardPage({ transactions: propTransactions }: DashboardPageP
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <AnalyticsVisualizer
-            transactions={transactions}
-            goalsConfig={settings.goals}
-            today={today}
-            currencyScope={effectiveScope}
-          />
-          <SpendingBreakdownCard transactions={transactions} today={today} currencyScope={effectiveScope} />
+        <div className="grid grid-cols-1 @6xl/main:grid-cols-2 gap-6">
+          <div className="min-w-0">
+            <AnalyticsVisualizer
+              transactions={transactions}
+              goalsConfig={settings.goals}
+              today={today}
+              currencyScope={effectiveScope}
+            />
+          </div>
+          <div className="min-w-0">
+            <SpendingBreakdownCard transactions={transactions} today={today} currencyScope={effectiveScope} />
+          </div>
         </div>
       </div>
 

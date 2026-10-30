@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, CalendarClock, Receipt, History } from 'lucide-react';
 import { Card } from '@/components/primitives/card';
+import { Button } from '@/components/primitives/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { CategoryChip } from '@/components/shared/CategoryChip';
 import { formatSignedValue, type Transaction } from '@/data/transactions';
@@ -60,25 +61,27 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 @4xl/main:grid-cols-2 gap-6">
       {/* 1. Recent Transactions Card */}
-      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-cyan/5 transition-all duration-300 flex flex-col justify-between">
+      <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-cyan/5 transition-all duration-300 flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <History className="size-4 text-theme-cyan" />
-              <h2 className="text-base font-semibold text-foreground tracking-tight">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <History className="size-4 text-theme-cyan shrink-0" />
+              <h2 className="text-base font-semibold text-foreground tracking-tight truncate">
                 {t('dashboard.recentTransactions')}
               </h2>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/transactions')}
-              className="inline-flex items-center gap-1 text-xs font-medium text-theme-cyan hover:underline cursor-pointer"
+              className="h-7 px-2 text-xs font-medium text-theme-cyan hover:text-theme-cyan hover:bg-theme-cyan/10 shrink-0 gap-1"
             >
               <span>{t('dashboard.viewAllTransactions')}</span>
               <ArrowRight className="size-3" />
-            </button>
+            </Button>
           </div>
 
           <div className="overflow-x-auto">
@@ -99,22 +102,24 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
                       key={tx.id}
                       className="border-b border-border/40 hover:bg-foreground/5 transition-colors group"
                     >
-                      <TableCell className="text-xs text-muted-foreground py-2.5">{formatShort(tx.date)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground py-2.5 whitespace-nowrap">
+                        {formatShort(tx.date)}
+                      </TableCell>
                       <TableCell className="text-xs font-medium text-foreground py-2.5">
-                        <div className="inline-flex items-center gap-1.5 truncate max-w-44">
-                          <span className="truncate">{tx.description}</span>
+                        <div className="flex items-center gap-1.5 min-w-0 max-w-xs">
+                          <span className="truncate min-w-0">{tx.description}</span>
                           {tx.installment && (
-                            <span className="text-[10px] rounded bg-foreground/10 px-1 py-0.2 text-muted-foreground shrink-0">
+                            <span className="text-[10px] rounded bg-foreground/10 px-1 py-0.5 text-muted-foreground shrink-0">
                               {formatInstallmentLabel(tx.installment)}
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="py-2.5">
+                      <TableCell className="py-2.5 whitespace-nowrap">
                         <CategoryChip typeConfig={typeConfig} label={tx.typeId} size="sm" />
                       </TableCell>
                       <TableCell
-                        className={`text-xs font-semibold text-right py-2.5 ${
+                        className={`text-xs font-semibold text-right py-2.5 whitespace-nowrap tabular-nums ${
                           tx.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
                         }`}
                       >
@@ -130,16 +135,16 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
       </Card>
 
       {/* 2. Upcoming Obligations Card */}
-      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-orange/5 transition-all duration-300 flex flex-col justify-between">
+      <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border/60 hover:shadow-xl hover:shadow-theme-orange/5 transition-all duration-300 flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="size-4 text-theme-orange" />
-              <h2 className="text-base font-semibold text-foreground tracking-tight">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <CalendarClock className="size-4 text-theme-orange shrink-0" />
+              <h2 className="text-base font-semibold text-foreground tracking-tight truncate">
                 {t('dashboard.upcomingObligations')}
               </h2>
             </div>
-            <span className="text-xs text-muted-foreground">{t('transactions.upcoming30')}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t('transactions.upcoming30')}</span>
           </div>
 
           {upcomingObligations.length > 0 ? (
@@ -148,22 +153,24 @@ export function ActivityAndObligations({ transactions, today }: ActivityAndOblig
                 return (
                   <div
                     key={ob.id}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-foreground/[0.03] border border-border/40 hover:border-theme-orange/30 transition-all text-xs"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-foreground/[0.03] border border-border/40 hover:border-theme-orange/30 transition-all text-xs gap-2"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-border/60 flex items-center justify-center text-muted-foreground shrink-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="size-8 rounded-lg bg-foreground/5 border border-border/60 flex items-center justify-center text-muted-foreground shrink-0">
                         <Receipt className="size-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-semibold text-foreground truncate">{ob.title}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground truncate">
                           {formatShort(ob.date)} {ob.accountName ? `• ${ob.accountName}` : ''}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0 text-right">
-                      <span className="font-bold text-foreground">{formatCents(ob.amount, ob.currency)}</span>
+                      <span className="font-bold text-foreground tabular-nums whitespace-nowrap">
+                        {formatCents(ob.amount, ob.currency)}
+                      </span>
                       {renderDueBadge(ob.daysRemaining)}
                     </div>
                   </div>

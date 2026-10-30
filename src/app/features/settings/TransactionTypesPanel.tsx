@@ -133,7 +133,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                 <div className="flex items-center gap-2.5 min-w-0">
                   <CategoryChip typeConfig={t} size="md" />
                   {t.system && (
-                    <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-theme-purple/20 text-theme-purple border border-theme-purple/30">
                       {translate('settings.systemBadge')}
                     </span>
                   )}
@@ -141,7 +141,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                     !t.system &&
                     (linkedGoal ? (
                       <span
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1.5 max-w-[150px] truncate"
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1.5 min-w-0 max-w-full truncate"
                         style={{
                           backgroundColor: COLOR_CONFIG[linkedGoal.color]?.badgeBg,
                           color: COLOR_CONFIG[linkedGoal.color]?.textColor,

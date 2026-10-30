@@ -68,7 +68,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
       </div>
 
       {/* Top 3 KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 @2xl/main:grid-cols-3 gap-4 sm:gap-6">
         {/* Your Income */}
         <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_25px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-4">
@@ -135,13 +135,14 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             <p className="text-xs text-muted-foreground mt-0.5">{t('goals.distributionDesc')}</p>
           </div>
 
-          <button
+          <Button
+            variant="ghost"
             onClick={onAdjustGoals}
-            className="group flex items-center gap-1.5 text-sm font-medium text-theme-cyan hover:text-theme-cyan/80 transition-colors"
+            className="group flex items-center gap-1.5 text-sm font-medium text-theme-cyan hover:text-theme-cyan hover:bg-theme-cyan/10 transition-colors"
           >
             <span>{t('goals.adjustGoals')}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-          </button>
+          </Button>
         </div>
 
         {/* Categories Grid */}
@@ -160,7 +161,7 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 @2xl/main:grid-cols-2 @5xl/main:grid-cols-3 gap-6">
             {budget.categories.map(summary => {
               const { category, budgeted, spent, remaining, percentageUsed, txCount, transactions: catTxs } = summary;
               const colorConfig = COLOR_CONFIG[category.color] ?? COLOR_CONFIG.blue;

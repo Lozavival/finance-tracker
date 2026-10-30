@@ -251,7 +251,7 @@ export function GoalsConfigPanel({
         </div>
 
         {/* TWO-COLUMN GRID: Allocation Overview vs Budget Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 @4xl/main:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: Donut Chart & Reset Defaults */}
           <GoalAllocationsDonut
             categories={localCategories}
@@ -260,7 +260,7 @@ export function GoalsConfigPanel({
           />
 
           {/* RIGHT COLUMN: Controle de Orçamento (Sliders & Inputs) */}
-          <Card className="lg:col-span-7 p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all rounded-2xl shadow-sm space-y-6">
+          <Card className="@4xl/main:col-span-7 min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all rounded-2xl shadow-sm space-y-6">
             <GoalCategoryAllocationSliders
               categories={localCategories}
               settings={settings}

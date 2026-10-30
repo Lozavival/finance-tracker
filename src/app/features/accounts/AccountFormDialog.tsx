@@ -157,7 +157,8 @@ export function AccountFormDialog({
         dueDay: 5,
       });
     }
-  }, [open, account, settings, getDefaultMethodsForKind, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, account?.id]);
 
   function handleNameChange(val: string) {
     setName(val);

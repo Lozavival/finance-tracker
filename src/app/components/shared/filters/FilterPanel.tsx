@@ -28,7 +28,10 @@ export function FilterPanel({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent align="start" className="w-80 border-border bg-popover text-foreground p-0">
+      <PopoverContent
+        align="start"
+        className="w-[min(20rem,calc(100vw-1rem))] border-border bg-popover text-foreground p-0"
+      >
         <div className="p-4">
           <div role="heading" aria-level={3} className="mb-4 text-sm font-medium leading-none text-foreground">
             {title}

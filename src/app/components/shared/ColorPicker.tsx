@@ -38,7 +38,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
             <span>{getColorLabel(selectedConfig.id, selectedConfig.label)}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-3 bg-popover border-border shadow-xl">
+        <PopoverContent className="w-[min(16rem,calc(100vw-1rem))] p-3 bg-popover border-border shadow-xl">
           <div className="text-xs font-medium text-muted-foreground mb-2">{t('common.selectColor')}</div>
           <div className="grid grid-cols-4 gap-2">
             {COLOR_OPTIONS.map(c => {

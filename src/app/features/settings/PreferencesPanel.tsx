@@ -228,7 +228,7 @@ export function PreferencesPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 @2xl/main:grid-cols-3 gap-6">
         {/* Appearance / Theme Selection Card */}
         <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center gap-3 mb-4">
@@ -394,7 +394,7 @@ export function PreferencesPanel() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -421,7 +421,7 @@ export function PreferencesPanel() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-border/40">
+          <div className="grid grid-cols-1 @md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-border/40">
             {/* Current Status */}
             <div className="space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -509,7 +509,7 @@ export function PreferencesPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 @4xl/main:grid-cols-4 gap-4 mt-4">
           <div className="p-4 rounded-lg bg-foreground/5 border border-border">
             <div className="text-xs text-muted-foreground mb-1">{t('settings.previewCurrency')}</div>
             <div className="text-xl font-bold text-theme-cyan tracking-tight">{formatCurrency(124592.5)}</div>

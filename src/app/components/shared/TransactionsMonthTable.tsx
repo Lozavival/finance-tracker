@@ -52,17 +52,23 @@ export function TransactionsMonthTable({
   const today = getToday();
 
   return (
-    <div className="overflow-x-auto">
+    <div className="w-full overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
-            <TableHead className="text-muted-foreground">{t('transactions.tableDate')}</TableHead>
+            <TableHead className="text-muted-foreground whitespace-nowrap">{t('transactions.tableDate')}</TableHead>
             <TableHead className="text-muted-foreground">{t('transactions.tableDescription')}</TableHead>
             <TableHead className="text-muted-foreground">{t('transactions.tableCategory')}</TableHead>
-            {showAccount && <TableHead className="text-muted-foreground">{t('transactions.tableAccount')}</TableHead>}
-            <TableHead className="text-muted-foreground">{t('transactions.tablePayment')}</TableHead>
-            <TableHead className="text-muted-foreground text-right">{t('transactions.tableAmount')}</TableHead>
-            <TableHead>
+            {showAccount && (
+              <TableHead className="text-muted-foreground whitespace-nowrap">
+                {t('transactions.tableAccount')}
+              </TableHead>
+            )}
+            <TableHead className="text-muted-foreground whitespace-nowrap">{t('transactions.tablePayment')}</TableHead>
+            <TableHead className="text-muted-foreground text-right whitespace-nowrap">
+              {t('transactions.tableAmount')}
+            </TableHead>
+            <TableHead className="w-12">
               <span className="sr-only">{t('common.actions')}</span>
             </TableHead>
           </TableRow>
@@ -96,7 +102,7 @@ export function TransactionsMonthTable({
                       {formatRowDate(transaction.date, locale)}
                     </TableCell>
                     <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
-                      <div className="flex items-center gap-2 min-w-0 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+                      <div className="flex items-center gap-2 min-w-0 max-w-xs md:max-w-sm lg:max-w-md">
                         <HighlightedText
                           text={transaction.description}
                           tokens={highlightTokens}
@@ -127,7 +133,7 @@ export function TransactionsMonthTable({
                       {methodConfig?.name ?? '—'}
                     </TableCell>
                     <TableCell
-                      className={`text-right whitespace-nowrap ${
+                      className={`text-right whitespace-nowrap tabular-nums ${
                         transaction.direction === 'income' ? 'text-theme-green' : 'text-theme-red'
                       }`}
                     >
@@ -147,7 +153,7 @@ export function TransactionsMonthTable({
                             aria-label={`Actions for ${transaction.description}`}
                             className="text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                           >
-                            <MoreVertical />
+                            <MoreVertical className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover border-border text-foreground">
@@ -177,7 +183,7 @@ export function TransactionsMonthTable({
         </TableBody>
       </Table>
       {remainingCount > 0 && (
-        <div className="border-t border-border/50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-foreground/5">
+        <div className="border-t border-border/50 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-foreground/5">
           <span className="text-xs text-muted-foreground">
             {t('transactions.showingTransactions', {
               shown: pagedTransactions.length,

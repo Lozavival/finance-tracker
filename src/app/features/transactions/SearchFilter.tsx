@@ -14,7 +14,7 @@ export function SearchFilter({ value, onChange, className }: SearchFilterProps) 
   const { t } = useI18n();
 
   return (
-    <div className={`relative flex items-center min-w-[220px] max-w-[320px] ${className ?? ''}`}>
+    <div className={`relative flex items-center w-full sm:w-auto sm:min-w-56 sm:max-w-80 ${className ?? ''}`}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-cyan pointer-events-none" />
       <Input
         type="text"

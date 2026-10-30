@@ -358,32 +358,40 @@ export function AccountDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 @sm/main:grid-cols-2 @4xl/main:grid-cols-4 gap-4">
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.currentBalance')}</div>
-          <div className="text-2xl text-foreground">{formatCents(fullForecast.current, activePocket)}</div>
+          <div className="text-2xl text-foreground tabular-nums truncate">
+            {formatCents(fullForecast.current, activePocket)}
+          </div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingIn')}</div>
-          <div className="text-2xl text-theme-green">+{formatCents(fullForecast.upcomingIn, activePocket)}</div>
+          <div className="text-2xl text-theme-green tabular-nums truncate">
+            +{formatCents(fullForecast.upcomingIn, activePocket)}
+          </div>
         </Card>
         <Card className="p-4 bg-foreground/5 border-border">
           <div className="text-sm text-muted-foreground mb-1">{t('accounts.upcomingOut')}</div>
-          <div className="text-2xl text-theme-red">{formatCents(fullForecast.upcomingOut, activePocket)}</div>
+          <div className="text-2xl text-theme-red tabular-nums truncate">
+            {formatCents(fullForecast.upcomingOut, activePocket)}
+          </div>
         </Card>
         <Card className="p-4 bg-theme-cyan/10 border-theme-cyan/30">
           <div className="text-sm text-theme-cyan mb-1">{t('accounts.projected')}</div>
-          <div className="text-2xl text-theme-cyan">{formatCents(fullForecast.projected, activePocket)}</div>
+          <div className="text-2xl text-theme-cyan tabular-nums truncate">
+            {formatCents(fullForecast.projected, activePocket)}
+          </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 bg-foreground/5 border-border lg:col-span-2">
+      <div className="grid grid-cols-1 @4xl/main:grid-cols-3 gap-6">
+        <Card className="p-4 sm:p-6 bg-foreground/5 border-border @4xl/main:col-span-2 min-w-0">
           <div className="text-xl text-foreground mb-4">{t('accounts.balanceProjection')}</div>
           <BalanceProjectionChart series={series} today={finance.today} currency={activePocket} />
         </Card>
 
-        <Card className="p-6 bg-foreground/5 border-border">
+        <Card className="p-4 sm:p-6 bg-foreground/5 border-border min-w-0">
           <div className="text-xl text-foreground mb-4">{t('accounts.upcoming')}</div>
           <UpcomingList
             upcoming={fullForecast.upcoming}
@@ -396,10 +404,10 @@ export function AccountDetailPage({
 
       <CardStatementsPanel accountId={accountId} statements={finance.statements} />
 
-      <Card className="p-6 bg-foreground/5 border-border">
+      <Card className="p-4 sm:p-6 bg-foreground/5 border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
           <div className="text-xl text-foreground">{t('accounts.transactions')}</div>
-          <div className="w-[200px]">
+          <div className="w-full sm:w-52">
             <PeriodFilter value={period} onChange={setPeriod} />
           </div>
         </div>

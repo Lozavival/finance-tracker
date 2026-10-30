@@ -44,10 +44,10 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
   const currentIndex = stmtIndex === -1 ? 0 : stmtIndex;
 
   return (
-    <Card className="p-6 bg-foreground/5 border-border">
+    <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 border-border">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
-          <CreditCard className="w-5 h-5 text-theme-cyan" />
+          <CreditCard className="w-5 h-5 text-theme-cyan shrink-0" />
           <div className="text-xl text-foreground">{t('accounts.creditCardBills')}</div>
         </div>
         {accountStatements.length > 0 && stmt && (
@@ -86,7 +86,7 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
 
       {accountStatements.length > 0 && stmt ? (
         <div className="p-4 border border-border/50 rounded-lg">
-          <div className="flex justify-between items-start mb-4 gap-4">
+          <div className="flex flex-col @sm:flex-row @sm:items-start justify-between mb-4 gap-3 @sm:gap-4">
             <div className="min-w-0 flex-1">
               <div className="text-foreground font-medium mb-1 truncate">
                 {formatMonthYear(stmt.closingDate, locale)}
@@ -98,8 +98,8 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
                 })}
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <div className="text-lg text-foreground font-medium">{formatCents(stmt.total)}</div>
+            <div className="@sm:text-right shrink-0">
+              <div className="text-lg text-foreground font-medium tabular-nums">{formatCents(stmt.total)}</div>
               <Badge
                 variant={stmt.status === 'paid' ? 'emerald' : stmt.status === 'open' ? 'cyan' : 'amber'}
                 className="mt-1"

@@ -45,7 +45,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-72 p-3 bg-popover border-border shadow-xl z-50"
+          className="w-[min(18rem,calc(100vw-1rem))] p-3 bg-popover border-border shadow-xl z-50"
           onWheel={e => e.stopPropagation()}
           onTouchMove={e => e.stopPropagation()}
         >
