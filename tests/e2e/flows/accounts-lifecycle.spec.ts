@@ -59,6 +59,7 @@ test.describe('Flow 6: Account Management Lifecycle', () => {
 
     // 6. Test Protection: Try to delete Bank of America (has transactions)
     const boaCard = page.locator('.p-6').filter({ hasText: 'Bank of America' }).first();
+    await boaCard.scrollIntoViewIfNeeded();
     await boaCard.locator('button').click();
     await page.getByRole('menuitem', { name: /delete/i }).click();
 

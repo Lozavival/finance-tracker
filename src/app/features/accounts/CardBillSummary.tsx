@@ -27,12 +27,12 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
 
   if (!stmt) {
     return (
-      <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6">
-        <div className="flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-theme-cyan" />
-          <span className="text-foreground">{account.card.name}</span>
+      <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6 gap-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <CreditCard className="w-4 h-4 text-theme-cyan shrink-0" />
+          <span className="text-foreground truncate">{account.card.name}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
             <div className="text-foreground font-medium">{formatCents(0)}</div>
             <div className="text-xs text-muted-foreground">{t('accounts.noOpenBill')}</div>
@@ -49,12 +49,12 @@ export function CardBillSummary({ accountId, account: propAccount, statements }:
   }
 
   return (
-    <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6">
-      <div className="flex items-center gap-2">
-        <CreditCard className="w-4 h-4 text-theme-cyan" />
-        <span className="text-foreground">{stmt.cardName}</span>
+    <div className="flex items-center justify-between text-sm py-3 border-y border-border/50 mb-4 bg-foreground/5 -mx-6 px-6 gap-3">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <CreditCard className="w-4 h-4 text-theme-cyan shrink-0" />
+        <span className="text-foreground truncate">{stmt.cardName}</span>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 shrink-0">
         <div className="text-right">
           <div className="text-foreground font-medium flex items-center gap-2">
             {formatCents(stmt.total)}

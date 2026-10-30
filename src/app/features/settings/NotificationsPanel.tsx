@@ -95,7 +95,7 @@ export function NotificationsPanel() {
                 {isThreshold && isEnabled && (
                   <div className="ml-4 pl-4 border-l-2 border-theme-cyan/30 py-2 space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-medium text-foreground">
                           {t('notifications.preferences.budgetWarningThreshold')}
                         </p>

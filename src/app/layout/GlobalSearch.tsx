@@ -190,11 +190,11 @@ export function GlobalSearch() {
                           {account.initials}
                         </div>
                         <div className="min-w-0 flex flex-col">
-                          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:text-theme-cyan transition-colors truncate">
-                            <HighlightedText text={account.name} tokens={accTokens} />
+                          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:text-theme-cyan transition-colors min-w-0">
+                            <HighlightedText text={account.name} tokens={accTokens} className="truncate min-w-0" />
                             <Badge
                               variant="outline"
-                              className="border-border bg-foreground/10 text-muted-foreground text-[10px] px-1.5 py-0 h-4"
+                              className="border-border bg-foreground/10 text-muted-foreground text-[10px] px-1.5 py-0 h-4 shrink-0"
                             >
                               {account.kind}
                             </Badge>
@@ -241,8 +241,8 @@ export function GlobalSearch() {
                           <CategoryChip typeConfig={typeConfig} label={tx.typeId} />
                         </div>
                         <div className="min-w-0 flex flex-col">
-                          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:text-theme-cyan transition-colors truncate">
-                            <HighlightedText text={tx.description} tokens={tokens} />
+                          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:text-theme-cyan transition-colors min-w-0">
+                            <HighlightedText text={tx.description} tokens={tokens} className="truncate min-w-0" />
                             {group.kind === 'recurring' && (
                               <Badge
                                 variant="outline"

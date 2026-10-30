@@ -177,37 +177,37 @@ export function AccountsPage({
     return (
       <Card
         key={acc.id}
-        className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all cursor-pointer group"
+        className="p-6 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/30 transition-all cursor-pointer group overflow-hidden"
         onClick={() => handleSelect(acc.id)}
       >
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex items-center gap-3">
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm flex-shrink-0"
               style={{ backgroundColor: getAccountColor(details.color) }}
             >
               {details.initials}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
+                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors truncate">
                   {details.name}
                 </span>
                 {isMultiCurrency && (
                   <Badge
                     variant="outline"
-                    className="border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan text-[10px] px-1.5 py-0"
+                    className="border-theme-cyan/40 bg-theme-cyan/10 text-theme-cyan text-[10px] px-1.5 py-0 shrink-0"
                   >
                     {t('accounts.multiCurrencyBadge')}
                   </Badge>
                 )}
                 {!isMultiCurrency && (
-                  <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 text-muted-foreground shrink-0">
                     {primaryCurr}
                   </Badge>
                 )}
               </div>
-              <div className="text-muted-foreground text-sm">
+              <div className="text-muted-foreground text-sm truncate">
                 {details.kind === 'Checking'
                   ? t('accounts.dialog.checking')
                   : details.kind === 'Savings'
@@ -218,50 +218,50 @@ export function AccountsPage({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="text-right mr-1">
-              {isMultiCurrency ? (
-                <div className="space-y-0.5">
-                  {accCurrencies.map(c => {
-                    const l = finance.ledgers[`${acc.id}:${c}`] ?? finance.ledgers[acc.id];
-                    const fc = getAccountForecast(l, finance.today, horizonEnd);
-                    return (
-                      <div key={c} className="text-foreground text-sm font-medium">
-                        {formatCents(fc.current, c)}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-foreground text-xl font-medium">{formatCents(forecast.current, primaryCurr)}</div>
-              )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10 shrink-0"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover border-border">
+              <DropdownMenuItem onClick={e => handleOpenEdit(acc, e)}>
+                <Pencil className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
+                {t('accounts.editAccount')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={e => handleOpenArchive(acc, e)}>
+                <Archive className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                {t('accounts.archiveAccount')}
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={e => handleOpenDelete(acc, e)}>
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                {t('accounts.deleteAccount')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Account Balance Row */}
+        <div className="mb-3">
+          {isMultiCurrency ? (
+            <div className="space-y-0.5">
+              {accCurrencies.map(c => {
+                const l = finance.ledgers[`${acc.id}:${c}`] ?? finance.ledgers[acc.id];
+                const fc = getAccountForecast(l, finance.today, horizonEnd);
+                return (
+                  <div key={c} className="text-foreground text-sm font-medium">
+                    {formatCents(fc.current, c)}
+                  </div>
+                );
+              })}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover border-border">
-                <DropdownMenuItem onClick={e => handleOpenEdit(acc, e)}>
-                  <Pencil className="mr-2 h-3.5 w-3.5 text-theme-cyan" />
-                  {t('accounts.editAccount')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={e => handleOpenArchive(acc, e)}>
-                  <Archive className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                  {t('accounts.archiveAccount')}
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onClick={e => handleOpenDelete(acc, e)}>
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  {t('accounts.deleteAccount')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          ) : (
+            <div className="text-foreground text-xl font-medium">{formatCents(forecast.current, primaryCurr)}</div>
+          )}
         </div>
 
         <div className="mb-2">
@@ -318,30 +318,30 @@ export function AccountsPage({
     return (
       <Card
         key={acc.id}
-        className="p-6 bg-foreground/[0.03] backdrop-blur-xl border border-dashed border-border/80 hover:border-theme-cyan/40 transition-all opacity-85 hover:opacity-100 cursor-pointer group"
+        className="p-6 bg-foreground/[0.03] backdrop-blur-xl border border-dashed border-border/80 hover:border-theme-cyan/40 transition-all opacity-85 hover:opacity-100 cursor-pointer group overflow-hidden"
         onClick={() => handleSelect(acc.id)}
       >
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex justify-between items-start gap-2 mb-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm flex-shrink-0 grayscale opacity-80"
               style={{ backgroundColor: getAccountColor(details.color) }}
             >
               {details.initials}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors">
+                <span className="text-foreground font-medium group-hover:text-theme-cyan transition-colors truncate">
                   {details.name}
                 </span>
                 <Badge
                   variant="outline"
-                  className="border-theme-orange/40 bg-theme-orange/10 text-theme-orange text-[10px] px-1.5 py-0"
+                  className="border-theme-orange/40 bg-theme-orange/10 text-theme-orange text-[10px] px-1.5 py-0 shrink-0"
                 >
                   {t('accounts.archivedBadge')}
                 </Badge>
               </div>
-              <div className="text-muted-foreground text-sm">
+              <div className="text-muted-foreground text-sm truncate">
                 {details.kind === 'Checking'
                   ? t('accounts.dialog.checking')
                   : details.kind === 'Savings'
@@ -352,11 +352,11 @@ export function AccountsPage({
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-muted-foreground text-lg font-medium">
-              {formatCents(forecast.current, primaryCurr)}
-            </div>
-          </div>
+        </div>
+
+        {/* Archived Balance Row */}
+        <div className="mb-4">
+          <div className="text-muted-foreground text-lg font-medium">{formatCents(forecast.current, primaryCurr)}</div>
         </div>
 
         <div className="pt-4 border-t border-border/50 flex items-center justify-between gap-2 mt-4">

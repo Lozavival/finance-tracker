@@ -156,7 +156,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                         <span className="truncate">{linkedGoal.name}</span>
                       </span>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden md:inline">
+                      <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden xl:inline">
                         {translate('settings.noGoalLinked')}
                       </span>
                     ))}

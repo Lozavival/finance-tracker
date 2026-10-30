@@ -86,9 +86,11 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
 
       {accountStatements.length > 0 && stmt ? (
         <div className="p-4 border border-border/50 rounded-lg">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="text-foreground font-medium mb-1">{formatMonthYear(stmt.closingDate, locale)}</div>
+          <div className="flex justify-between items-start mb-4 gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-foreground font-medium mb-1 truncate">
+                {formatMonthYear(stmt.closingDate, locale)}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {t('accounts.billClosesDue', {
                   closingDate: formatFull(stmt.closingDate, locale),
@@ -96,7 +98,7 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
                 })}
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="text-lg text-foreground font-medium">{formatCents(stmt.total)}</div>
               <Badge
                 variant={stmt.status === 'paid' ? 'emerald' : stmt.status === 'open' ? 'cyan' : 'amber'}
@@ -116,7 +118,7 @@ export function CardStatementsPanel({ accountId, statements }: CardStatementsPan
               {stmt.items.map(item => (
                 <div key={item.id} className="flex justify-between py-1">
                   <div className="flex min-w-0 items-center gap-3 pr-4">
-                    <span className="text-muted-foreground">{formatShort(item.date, locale)}</span>
+                    <span className="text-muted-foreground shrink-0">{formatShort(item.date, locale)}</span>
                     <span className="truncate text-muted-foreground">{item.description}</span>
                   </div>
 

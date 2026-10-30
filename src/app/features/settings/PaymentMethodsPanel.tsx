@@ -121,7 +121,7 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                       <span className="font-medium text-foreground truncate">{m.name}</span>
 
                       {isCard && (
-                        <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-theme-cyan/20 text-theme-cyan border border-theme-cyan/30">
+                        <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-theme-cyan/20 text-theme-cyan border border-theme-cyan/30 shrink-0">
                           {t('settings.methods.creditCardBilling')}
                         </span>
                       )}

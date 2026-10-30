@@ -96,14 +96,14 @@ export function GoalCategoryAllocationSliders({
               <div key={cat.id} className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   {/* Category Name & Actions */}
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: c?.dotColor ?? 'var(--accent-blue-dot)' }}
                     />
-                    <span className="font-semibold text-sm text-foreground truncate">{cat.name}</span>
+                    <span className="font-semibold text-sm text-foreground truncate min-w-0">{cat.name}</span>
 
-                    <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity shrink-0">
                       <button
                         type="button"
                         onClick={() => onEditCategory(cat)}
@@ -125,7 +125,7 @@ export function GoalCategoryAllocationSliders({
 
                   {/* Input Box: Percentage vs Currency Mode */}
                   {isCurrencyMode ? (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <span className="text-xs text-muted-foreground font-semibold">{currencySymbol}</span>
                       <Input
                         type="number"
@@ -138,7 +138,7 @@ export function GoalCategoryAllocationSliders({
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Input
                         type="number"
                         min={0}

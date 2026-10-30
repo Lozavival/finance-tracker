@@ -177,17 +177,17 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
               return (
                 <Card
                   key={category.id}
-                  className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group"
+                  className="p-5 bg-foreground/5 backdrop-blur-xl border border-border hover:border-theme-cyan/40 hover:shadow-[0_0_20px_var(--shadow-glow-cyan)] transition-all duration-300 rounded-2xl flex flex-col justify-between group overflow-hidden"
                 >
                   <div>
                     {/* Category Card Header */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-start gap-2.5 min-w-0">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
                         <span
                           className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm mt-1"
                           style={{ backgroundColor: colorConfig.dotColor }}
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <span className="font-semibold text-foreground text-sm truncate block">{category.name}</span>
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             {linkedTypes.length > 0 ? (
@@ -225,17 +225,19 @@ export function BudgetOverview({ transactions, goalsConfig, onAdjustGoals }: Bud
 
                     {/* Dual Info Boxes: Spent vs Budgeted */}
                     <div className="grid grid-cols-2 rounded-xl bg-foreground/[0.03] dark:bg-foreground/[0.05] border border-border/60 p-3 divide-x divide-border/60 mb-4">
-                      <div className="pr-3">
-                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
+                      <div className="pr-3 min-w-0">
+                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase truncate">
                           {t('goals.spent')}
                         </div>
-                        <div className="text-base font-bold text-foreground mt-0.5">{formatCents(spent)}</div>
+                        <div className="text-base font-bold text-foreground mt-0.5 truncate">{formatCents(spent)}</div>
                       </div>
-                      <div className="pl-3">
-                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
+                      <div className="pl-3 min-w-0">
+                        <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase truncate">
                           {t('goals.budgeted')}
                         </div>
-                        <div className="text-base font-bold text-foreground mt-0.5">{formatCents(budgeted)}</div>
+                        <div className="text-base font-bold text-foreground mt-0.5 truncate">
+                          {formatCents(budgeted)}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -18,7 +18,9 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
   const displayText = typeConfig?.name ?? (label ? formatTypeFallback(label) : 'Unknown');
 
   if (!typeConfig) {
-    return <span className={`inline-flex items-center text-muted-foreground ${className}`}>{displayText}</span>;
+    return (
+      <span className={`inline-flex items-center shrink-0 text-muted-foreground ${className}`}>{displayText}</span>
+    );
   }
 
   const colorMeta = COLOR_CONFIG[typeConfig.color] ?? COLOR_CONFIG.slate;
@@ -26,7 +28,7 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-colors ${
+      className={`inline-flex items-center shrink-0 gap-1.5 rounded-full font-medium transition-colors ${
         size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm'
       } ${className}`}
       style={{
@@ -37,7 +39,7 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
         color: colorMeta.textColor,
       }}
     >
-      {showIcon && <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />}
+      {showIcon && <Icon className={size === 'sm' ? 'w-3 h-3 shrink-0' : 'w-4 h-4 shrink-0'} />}
       <span>{displayText}</span>
     </span>
   );

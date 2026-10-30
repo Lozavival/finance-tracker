@@ -96,15 +96,19 @@ export function TransactionsMonthTable({
                       {formatRowDate(transaction.date, locale)}
                     </TableCell>
                     <TableCell className="text-foreground group-hover:text-theme-cyan transition-colors align-middle">
-                      <div className="inline-flex items-center gap-2">
-                        <HighlightedText text={transaction.description} tokens={highlightTokens} />
+                      <div className="flex items-center gap-2 min-w-0 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+                        <HighlightedText
+                          text={transaction.description}
+                          tokens={highlightTokens}
+                          className="truncate min-w-0"
+                        />
                         {transaction.installment && (
-                          <span className="text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
+                          <span className="shrink-0 text-xs rounded-md bg-foreground/10 px-1.5 py-0.5 text-muted-foreground">
                             {formatInstallmentLabel(transaction.installment)}
                           </span>
                         )}
                         {transaction.recurring && (
-                          <span className="inline-flex items-center gap-1 text-xs rounded-md bg-theme-cyan/15 border border-theme-cyan/30 px-1.5 py-0.5 text-theme-cyan font-medium">
+                          <span className="shrink-0 inline-flex items-center gap-1 text-xs rounded-md bg-theme-cyan/15 border border-theme-cyan/30 px-1.5 py-0.5 text-theme-cyan font-medium">
                             <Repeat className="w-3 h-3 shrink-0" />
                             <span>{formatRecurringLabel(transaction.recurring, t('transactions.repeatMonthly'))}</span>
                           </span>
