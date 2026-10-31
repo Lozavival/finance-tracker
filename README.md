@@ -188,7 +188,7 @@ The user interface was originally developed from the [Lindgo – Futuristic Fint
 
 ### Prerequisites
 
-- **Node.js**: `v20.x` or `v22.x` (recommended)
+- **Node.js**: `v22.x` (enforced via `.nvmrc`, `.node-version`, and `.mise.toml`)
 - **Package Manager**: [pnpm](https://pnpm.io/) (`>= 10.0.0`) or [npm](https://www.npmjs.com/)
 
 ### Installation
@@ -237,6 +237,24 @@ pnpm preview
 npm run preview
 ```
 
+### Desktop Application (Electron)
+
+Run the desktop application natively:
+
+```bash
+pnpm electron:dev
+# or
+npm run electron:dev
+```
+
+Generate a standalone executable bundle (`.AppImage` and `.deb` in `release/`):
+
+```bash
+pnpm electron:dist
+# or
+npm run electron:dist
+```
+
 ---
 
 ## Available Scripts
@@ -245,7 +263,10 @@ npm run preview
 | :--- | :--- |
 | `pnpm dev` | Starts the Vite development server with hot reload |
 | `pnpm build` | Compiles TypeScript and builds the production bundle in `dist/` |
+| `pnpm build:electron` | Bundles the Electron main process into `dist-electron/main.cjs` |
 | `pnpm preview` | Serves the production build locally for verification |
+| `pnpm electron:dev` | Builds frontend and Electron main, then launches the desktop application |
+| `pnpm electron:dist` | Packages the application into standalone desktop executables (`release/`) |
 | `pnpm test` | Runs all application tests (Vitest unit, integration, components + Playwright E2E) |
 | `pnpm test:unit` | Runs unit tests via Vitest (`tests/unit`) |
 | `pnpm test:integration` | Runs integration tests via Vitest (`tests/integration`) |

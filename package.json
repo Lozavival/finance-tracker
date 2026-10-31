@@ -3,10 +3,14 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "main": "dist-electron/main.cjs",
   "scripts": {
     "build": "vite build",
+    "build:electron": "vite build --config vite.electron.config.ts",
     "dev": "vite dev",
     "preview": "vite preview",
+    "electron:dev": "npm run build && npm run build:electron && electron .",
+    "electron:dist": "npm run build && npm run build:electron && electron-builder",
     "test": "vitest run && playwright test",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
@@ -90,6 +94,8 @@
     "@vitejs/plugin-react": "4.7.0",
     "@vitest/coverage-v8": "^5.0.5",
     "drizzle-kit": "^0.31.11",
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^9.20.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
@@ -118,7 +124,7 @@
   },
   "packageManager": "pnpm@10.34.3",
   "engines": {
-    "node": ">=18.19.0",
+    "node": ">=22.0.0",
     "pnpm": ">=10.0.0"
   },
   "pnpm": {

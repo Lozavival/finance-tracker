@@ -14,6 +14,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Formatting**: `npm run format` (`prettier`)
 - **Build**: `npm run build` (`vite build`)
 - **Preview**: `npm run preview`
+- **Electron Main Build**: `npm run build:electron` (`vite build --config vite.electron.config.ts`)
+- **Electron Desktop Run**: `npm run electron:dev`
+- **Electron Package / Dist**: `npm run electron:dist` (`electron-builder`)
 - **Full Application Tests**: `npm test` (`vitest run && playwright test` running all unit, integration, component, and multi-viewport E2E suites)
 - **Unit & Integration Tests**: `npm run test:unit`, `npm run test:integration`, `npm run test:components`
 - **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 15 user journeys across `desktop`, `tablet`, and `mobile` projects)
@@ -49,6 +52,8 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 The application is structured into domain-driven modules inside `src/`:
 
 ```
+electron/
+└── main.ts                       # Desktop window, loopback HTTP server & lifecycle management
 src/
 ├── main.tsx                      # Application entry point
 ├── styles/

@@ -10,7 +10,7 @@ import globals from 'globals';
 export default [
   {
     /* Global ignores (replaces .eslintignore) */
-    ignores: ['dist/', 'node_modules/', '.husky/'],
+    ignores: ['dist/', 'dist-electron/', 'release/', 'node_modules/', '.husky/'],
   },
   js.configs.recommended,
   {
