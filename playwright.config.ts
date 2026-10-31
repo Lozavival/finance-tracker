@@ -43,8 +43,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'DATABASE_PATH="data/finance-tracker.e2e.db" PORT=8444 node_modules/.bin/vite --port 8444',
+    command: 'node_modules/.bin/vite --port 8444 --logLevel silent',
     port: 8444,
+    env: {
+      NODE_ENV: 'test',
+      DATABASE_PATH: 'data/finance-tracker.e2e.db',
+      PORT: '8444',
+    },
+    stdout: 'ignore',
+    stderr: 'pipe',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },

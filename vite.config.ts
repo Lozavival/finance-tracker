@@ -6,6 +6,11 @@ import { financeApiPlugin } from './src/server/apiPlugin';
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), financeApiPlugin()],
+  build: {
+    modulePreload: {
+      polyfill: true,
+    },
+  },
   resolve: {
     alias: {
       '@/styles': path.resolve(__dirname, './src/styles'),

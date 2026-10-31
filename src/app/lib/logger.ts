@@ -72,6 +72,18 @@ class LogBuffer {
 const buffer = new LogBuffer();
 
 function resolveInitialLogLevel(): LogLevel {
+  const isTest =
+    (typeof process !== 'undefined' &&
+      (process.env?.NODE_ENV === 'test' ||
+        Boolean(process.env?.VITEST) ||
+        Boolean(process.env?.PLAYWRIGHT_TEST) ||
+        Boolean(process.env?.E2E))) ||
+    (typeof import.meta !== 'undefined' && Boolean(import.meta.env?.MODE === 'test'));
+
+  if (isTest) {
+    return 'silent';
+  }
+
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(STORAGE_LOG_LEVEL_KEY);

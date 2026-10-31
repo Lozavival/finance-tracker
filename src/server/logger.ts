@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ViteDevServer } from 'vite';
 
-export type ServerLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type ServerLogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 export interface ServerLogger {
   debug(message: string, ...args: unknown[]): void;
@@ -30,6 +30,7 @@ const SERVER_LOG_LEVEL_PRIORITY: Record<ServerLogLevel, number> = {
   info: 20,
   warn: 30,
   error: 40,
+  silent: 100,
 };
 
 const DEFAULT_LOG_FILE_PATH = path.resolve(process.cwd(), 'logs', 'app.log');
@@ -112,7 +113,13 @@ export function createServerLogger(
   namespace = 'server',
   logFilePath: string = getResolvedLogFilePath(),
 ): ServerLogger {
-  const minLevel: ServerLogLevel = process.env.NODE_ENV === 'test' ? 'error' : 'info';
+  const minLevel: ServerLogLevel =
+    process.env.NODE_ENV === 'test' ||
+    Boolean(process.env.VITEST) ||
+    Boolean(process.env.PLAYWRIGHT_TEST) ||
+    Boolean(process.env.E2E)
+      ? 'silent'
+      : 'info';
 
   const shouldLog = (level: ServerLogLevel): boolean => {
     return SERVER_LOG_LEVEL_PRIORITY[level] >= SERVER_LOG_LEVEL_PRIORITY[minLevel];
