@@ -127,6 +127,11 @@ describe('Dev and Prod Database Separation Integration', () => {
       // Reset settings in Dev
       await devRepo.resetSettings('development');
 
+      // Attempting to reset Prod with 'development' seedMode must be strictly rejected
+      await expect(prodRepo.resetSettings('development')).rejects.toThrow(
+        /Cannot seed development fixtures into a production database/,
+      );
+
       // Verify Prod still has its 1 real account!
       const prodSnapshot2 = await prodRepo.loadWorkspace();
       expect(prodSnapshot2.settings.accounts.length).toBe(1);

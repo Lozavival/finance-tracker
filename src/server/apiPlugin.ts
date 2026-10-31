@@ -90,12 +90,12 @@ export function createFinanceApiMiddleware(
 
   let repo: SqliteRepository | null = null;
   const logger: ServerLogger = createServerLogger(viteLogger, 'api');
+  const effectiveMode: SeedMode = options.mode ?? resolveDefaultSeedMode();
 
   const getRepo = (): SqliteRepository => {
     if (!repo) {
-      const mode = options.mode ?? resolveDefaultSeedMode();
-      const conn = createDatabaseConnection(options.dbPath, logger, mode);
-      repo = new SqliteRepository(conn, DEFAULT_WORKSPACE_ID, mode, logger);
+      const conn = createDatabaseConnection(options.dbPath, logger, effectiveMode);
+      repo = new SqliteRepository(conn, DEFAULT_WORKSPACE_ID, effectiveMode, logger);
     }
     return repo;
   };
@@ -473,9 +473,16 @@ export function createFinanceApiMiddleware(
           }
 
           case 'resetSettings': {
-            const snapshot = await repository.resetSettings(
-              request.payload.seedMode as 'production' | 'development' | undefined,
-            );
+            const requestedSeedMode = request.payload.seedMode as 'production' | 'development' | undefined;
+            if (effectiveMode === 'production' && requestedSeedMode === 'development') {
+              respond(
+                403,
+                { error: 'Cannot seed development fixtures into production database' },
+                `rpc:${request.action}`,
+              );
+              return;
+            }
+            const snapshot = await repository.resetSettings(requestedSeedMode);
             respond(200, serializeSnapshot(snapshot), `rpc:${request.action}`);
             return;
           }

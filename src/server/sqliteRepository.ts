@@ -1506,6 +1506,11 @@ export class SqliteRepository implements FinanceRepository {
 
   resetSettings(seedMode: 'production' | 'development' = this.seedMode): Promise<WorkspaceSnapshot> {
     this.logger?.warn(`resetSettings requested with seedMode "${seedMode}" for workspace "${this.workspaceId}"`);
+    if (this.seedMode === 'production' && seedMode === 'development') {
+      const err = new Error('Cannot seed development fixtures into a production database');
+      this.logger?.error('resetSettings rejected:', err);
+      return Promise.reject(err);
+    }
     resetAndSeedWorkspace(this.conn, seedMode, this.workspaceId, this.logger);
     return this.loadWorkspace(90);
   }
