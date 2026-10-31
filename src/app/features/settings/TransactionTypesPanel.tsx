@@ -128,78 +128,75 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
               onDrop={reorderState.handleDrop(idx)}
               onDragEnd={reorderState.handleDragEnd}
               isDragging={reorderState.draggedIndex === idx}
-            >
-              <div className="flex items-center justify-between gap-3 min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
-                  <CategoryChip typeConfig={t} size="md" className="max-w-full" />
-                  {t.system && (
-                    <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-theme-purple/20 text-theme-purple border border-theme-purple/30 shrink-0">
-                      {translate('settings.systemBadge')}
-                    </span>
-                  )}
-                  {direction === 'expense' &&
-                    !t.system &&
-                    (linkedGoal ? (
-                      <span
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1.5 min-w-0 max-w-full truncate shrink-0"
-                        style={{
-                          backgroundColor: COLOR_CONFIG[linkedGoal.color]?.badgeBg,
-                          color: COLOR_CONFIG[linkedGoal.color]?.textColor,
-                          borderColor: COLOR_CONFIG[linkedGoal.color]?.badgeBorder,
-                        }}
-                        title={translate('settings.types.linkedGoalTitle', { name: linkedGoal.name })}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: COLOR_CONFIG[linkedGoal.color]?.dotColor }}
-                        />
-                        <span className="truncate">{linkedGoal.name}</span>
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden xl:inline shrink-0">
-                        {translate('settings.noGoalLinked')}
-                      </span>
-                    ))}
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <span className="text-xs text-muted-foreground hidden sm:inline">
+              actions={
+                <>
+                  <span className="text-xs text-muted-foreground hidden sm:inline mr-2">
                     {count === 1
                       ? translate('common.singleTransaction')
                       : translate('common.transactionsCount', { count: String(count) })}
                   </span>
 
-                  <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setDialogState({
+                        open: true,
+                        typeConfig: t,
+                        defaultDirection: direction,
+                      })
+                    }
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                    title={translate('settings.types.editType')}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  {!t.system && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        setDialogState({
-                          open: true,
-                          typeConfig: t,
-                          defaultDirection: direction,
-                        })
-                      }
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-                      title={translate('settings.types.editType')}
+                      onClick={() => setDeleteTarget(t)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      title={translate('settings.types.deleteType')}
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
-                    {!t.system && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteTarget(t)}
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        title={translate('settings.types.deleteType')}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  )}
+                </>
+              }
+            >
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+                <CategoryChip typeConfig={t} size="md" className="max-w-full" />
+                {t.system && (
+                  <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-theme-purple/20 text-theme-purple border border-theme-purple/30 shrink-0">
+                    {translate('settings.systemBadge')}
+                  </span>
+                )}
+                {direction === 'expense' &&
+                  !t.system &&
+                  (linkedGoal ? (
+                    <span
+                      className="text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1.5 min-w-0 max-w-full truncate shrink-0"
+                      style={{
+                        backgroundColor: COLOR_CONFIG[linkedGoal.color]?.badgeBg,
+                        color: COLOR_CONFIG[linkedGoal.color]?.textColor,
+                        borderColor: COLOR_CONFIG[linkedGoal.color]?.badgeBorder,
+                      }}
+                      title={translate('settings.types.linkedGoalTitle', { name: linkedGoal.name })}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: COLOR_CONFIG[linkedGoal.color]?.dotColor }}
+                      />
+                      <span className="truncate">{linkedGoal.name}</span>
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/40 hidden xl:inline shrink-0">
+                      {translate('settings.noGoalLinked')}
+                    </span>
+                  ))}
               </div>
             </SortableRow>
           );

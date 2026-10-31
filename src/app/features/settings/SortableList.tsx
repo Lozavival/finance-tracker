@@ -14,6 +14,7 @@ type SortableItemProps<T> = {
   onDrop: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
   children: React.ReactNode;
+  actions?: React.ReactNode;
   isDragging?: boolean;
 };
 
@@ -27,6 +28,7 @@ export function SortableRow<T>({
   onDrop,
   onDragEnd,
   children,
+  actions,
   isDragging = false,
 }: SortableItemProps<T>) {
   const { t } = useI18n();
@@ -38,13 +40,13 @@ export function SortableRow<T>({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
         isDragging ? 'opacity-40 border-dashed border-theme-cyan' : ''
       }`}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
-          className="cursor-grab active:cursor-grabbing text-muted-foreground group-hover:text-foreground p-1 hover:bg-foreground/10 rounded transition-colors"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground group-hover:text-foreground p-1 hover:bg-foreground/10 rounded transition-colors shrink-0"
           title={t('common.dragToReorder')}
         >
           <GripVertical className="w-4 h-4" />
@@ -52,7 +54,8 @@ export function SortableRow<T>({
         <div className="min-w-0 flex-1">{children}</div>
       </div>
 
-      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 flex-shrink-0">
+      <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 shrink-0 ml-7 sm:ml-0">
+        {actions}
         <Button
           type="button"
           variant="ghost"

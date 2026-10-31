@@ -111,54 +111,51 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                 onDrop={reorder.handleDrop(idx)}
                 onDragEnd={reorder.handleDragEnd}
                 isDragging={reorder.draggedIndex === idx}
-              >
-                <div className="flex items-center justify-between gap-3 min-w-0">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center text-theme-cyan shrink-0">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0 flex-1">
-                      <span className="font-medium text-foreground truncate">{m.name}</span>
-
-                      {isCard && (
-                        <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-theme-cyan/20 text-theme-cyan border border-theme-cyan/30 shrink-0">
-                          {t('settings.methods.creditCardBilling')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                actions={
+                  <>
+                    <span className="text-xs text-muted-foreground hidden sm:inline mr-2">
                       {count === 1
                         ? t('common.singleTransaction')
                         : t('common.transactionsCount', { count: String(count) })}
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDialogState({ open: true, method: m })}
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+                      title={t('settings.methods.editTitle')}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    {!isCard && m.id !== 'cash' && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => setDialogState({ open: true, method: m })}
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-                        title={t('settings.methods.editTitle')}
+                        onClick={() => setDeleteTarget(m)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        title={t('settings.methods.deleteMethod')}
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
-                      {!isCard && m.id !== 'cash' && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteTarget(m)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          title={t('settings.methods.deleteMethod')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                    </div>
+                    )}
+                  </>
+                }
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-border flex items-center justify-center text-theme-cyan shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                    <span className="font-medium text-foreground truncate">{m.name}</span>
+
+                    {isCard && (
+                      <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-theme-cyan/20 text-theme-cyan border border-theme-cyan/30 shrink-0">
+                        {t('settings.methods.creditCardBilling')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </SortableRow>
