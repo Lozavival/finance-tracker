@@ -1,5 +1,5 @@
 import { app, BrowserWindow, shell, ipcMain, nativeTheme } from 'electron';
-import { spawn, execSync, type ChildProcess } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { DEV_DATABASE_FILENAME, PROD_DATABASE_FILENAME } from '../src/db/client';
@@ -139,70 +139,6 @@ function setupLoggingDirectory(): void {
 function startEmbeddedServer(dbPath: string, mode: SeedMode): Promise<EmbeddedServerHandle> {
   const distDir = getDistDir();
 
-  if (!app.isPackaged) {
-    // Development mode: spawn system Node process to run server.cjs.
-    // This uses the system Node 22 ABI (127), which matches node_modules better-sqlite3,
-    // avoiding the Electron ABI (150) mismatch without needing electron-rebuild.
-    return new Promise((resolve, reject) => {
-      const serverScript = path.resolve(__dirname, 'server.cjs');
-      const nodeBin = process.env.NODE_BINARY ?? 'node';
-
-      const child: ChildProcess = spawn(
-        nodeBin,
-        [serverScript, `--mode=${mode}`, `--dbPath=${dbPath}`, `--distDir=${distDir}`, '--port=0'],
-        {
-          cwd: process.cwd(),
-          env: { ...process.env, FORCE_COLOR: '1' },
-          stdio: ['ignore', 'pipe', 'inherit'],
-        },
-      );
-
-      let resolved = false;
-      const timeout = setTimeout(() => {
-        if (!resolved) {
-          child.kill();
-          reject(new Error('Timed out waiting for embedded development server to start (15s)'));
-        }
-      }, 15000);
-
-      child.stdout?.on('data', (chunk: Buffer) => {
-        const text = chunk.toString('utf-8');
-        process.stdout.write(text);
-        const match = text.match(/FINANCE_TRACKER_PORT=(\d+)/);
-        if (match && !resolved) {
-          resolved = true;
-          clearTimeout(timeout);
-          resolve({
-            port: parseInt(match[1], 10),
-            close: () => {
-              try {
-                child.kill('SIGTERM');
-              } catch {
-                // ignore
-              }
-            },
-          });
-        }
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeout);
-        if (!resolved) {
-          reject(err);
-        }
-      });
-
-      child.on('exit', (code) => {
-        clearTimeout(timeout);
-        if (!resolved) {
-          reject(new Error(`Embedded development server exited prematurely with code ${code}`));
-        }
-      });
-    });
-  }
-
-  // Packaged mode: electron-builder has compiled better-sqlite3 for Electron ABI (150).
-  // Run directly in-process.
   return startServer({
     dbPath,
     mode,

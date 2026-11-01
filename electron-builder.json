@@ -6,9 +6,11 @@
   "directories": {
     "output": "release"
   },
+  "npmRebuild": false,
   "files": [
     "dist/**/*",
-    "dist-electron/**/*"
+    "dist-electron/**/*",
+    "node_modules/better-sqlite3/**/*"
   ],
   "asar": true,
   "asarUnpack": [
@@ -25,6 +27,7 @@
         "arch": ["x64"]
       }
     ],
+    "maintainer": "Lozavival <contact@financetracker.local>",
     "category": "Office"
   }
 }
