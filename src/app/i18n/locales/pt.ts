@@ -75,6 +75,10 @@ export const pt: Translations = {
     toggleTheme: 'Alternar tema',
     notifications: 'Notificações',
     language: 'Idioma',
+    minimizeWindow: 'Minimizar janela',
+    maximizeWindow: 'Maximizar janela',
+    restoreWindow: 'Restaurar janela',
+    closeWindow: 'Fechar janela',
   },
   search: {
     noOmniResults: 'Nenhuma conta ou transação corresponde a "{query}"',

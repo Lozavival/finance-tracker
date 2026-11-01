@@ -9,7 +9,7 @@
     "build:electron": "vite build --config vite.electron.config.ts",
     "dev": "vite dev",
     "preview": "vite preview",
-    "electron:dev": "npm run build && npm run build:electron && electron .",
+    "electron:dev": "npm run build && npm run build:electron && electron . --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto",
     "electron:dist": "npm run build && npm run build:electron && electron-builder",
     "test": "vitest run && playwright test",
     "test:unit": "vitest run tests/unit",

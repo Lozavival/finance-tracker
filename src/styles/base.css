@@ -76,3 +76,14 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Electron desktop window drag regions */
+.app-drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}

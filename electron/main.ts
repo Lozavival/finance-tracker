@@ -1,12 +1,81 @@
-import { app, BrowserWindow, shell } from 'electron';
-import http from 'node:http';
+import { app, BrowserWindow, shell, ipcMain, nativeTheme } from 'electron';
+import { spawn, execSync, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createFinanceApiMiddleware } from '../src/server/apiPlugin';
-import { PROD_DATABASE_FILENAME } from '../src/db/client';
+import { DEV_DATABASE_FILENAME, PROD_DATABASE_FILENAME } from '../src/db/client';
+import type { SeedMode } from '../src/db/seedDatabase';
+import { startServer } from './server';
+
+// On Linux Wayland (e.g. GNOME), ensure client-side window decorations (title bar / controls) are enabled
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
+  app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
+}
 
 let mainWindow: BrowserWindow | null = null;
-let activeServer: http.Server | null = null;
+
+interface EmbeddedServerHandle {
+  port: number;
+  close: () => void;
+}
+
+let activeServerHandle: EmbeddedServerHandle | null = null;
+
+function detectSystemTheme(): 'dark' | 'light' {
+  if (nativeTheme.shouldUseDarkColors) {
+    return 'dark';
+  }
+
+  // On Linux (GNOME/Ubuntu), theme changes or portals may not automatically
+  // reflect in Chromium's nativeTheme. Query gsettings directly as a robust fallback.
+  if (process.platform === 'linux') {
+    try {
+      const colorScheme = execSync('gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null', {
+        encoding: 'utf-8',
+        timeout: 1000,
+      })
+        .trim()
+        .replace(/['"]/g, '');
+
+      if (colorScheme === 'prefer-dark') {
+        return 'dark';
+      }
+      if (colorScheme === 'prefer-light') {
+        return 'light';
+      }
+    } catch {
+      // Ignore fallback error
+    }
+
+    try {
+      const gtkTheme = execSync('gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null', {
+        encoding: 'utf-8',
+        timeout: 1000,
+      })
+        .trim()
+        .replace(/['"]/g, '')
+        .toLowerCase();
+
+      if (gtkTheme.includes('dark')) {
+        return 'dark';
+      }
+    } catch {
+      // Ignore fallback error
+    }
+  }
+
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
+
+function broadcastThemeChange(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const currentTheme = detectSystemTheme();
+    mainWindow.webContents.send('system-theme-updated', currentTheme);
+    if (nativeTheme.themeSource === 'system') {
+      mainWindow.setBackgroundColor(currentTheme === 'dark' ? '#07090e' : '#f8fafc');
+    }
+  }
+}
 
 function getDistDir(): string {
   const direct = path.resolve(__dirname, '../dist');
@@ -20,12 +89,37 @@ function getDistDir(): string {
   return direct;
 }
 
-function getDatabasePath(): string {
+function resolveMode(): SeedMode {
+  if (process.env.SEED_MODE === 'production' || process.env.SEED_MODE === 'development') {
+    return process.env.SEED_MODE;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 'production';
+  }
+  // When running unpackaged (e.g. `pnpm electron:dev`), default strictly to development
+  if (!app.isPackaged) {
+    return 'development';
+  }
+  return 'production';
+}
+
+function getDatabasePath(mode: SeedMode): string {
   if (process.env.DATABASE_PATH) {
     return process.env.DATABASE_PATH;
   }
-  if (!app.isPackaged && !process.env.PROD_DATABASE_PATH) {
-    return path.resolve(__dirname, '../data', PROD_DATABASE_FILENAME);
+  if (mode === 'development') {
+    if (process.env.DEV_DATABASE_PATH) {
+      return process.env.DEV_DATABASE_PATH;
+    }
+    return path.resolve(process.cwd(), 'data', DEV_DATABASE_FILENAME);
+  }
+
+  // Production mode
+  if (process.env.PROD_DATABASE_PATH) {
+    return process.env.PROD_DATABASE_PATH;
+  }
+  if (!app.isPackaged) {
+    return path.resolve(process.cwd(), 'data', PROD_DATABASE_FILENAME);
   }
   const userDir = path.join(app.getPath('userData'), 'data');
   if (!fs.existsSync(userDir)) {
@@ -38,110 +132,122 @@ function setupLoggingDirectory(): void {
   if (process.env.LOG_DIR || process.env.LOG_FILE_PATH) {
     return;
   }
-  const logDir = app.isPackaged
-    ? path.join(app.getPath('userData'), 'logs')
-    : path.resolve(__dirname, '../logs');
+  const logDir = app.isPackaged ? path.join(app.getPath('userData'), 'logs') : path.resolve(process.cwd(), 'logs');
   process.env.LOG_DIR = logDir;
 }
 
-function startEmbeddedServer(dbPath: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const apiMiddleware = createFinanceApiMiddleware({
-      dbPath,
-      mode: 'production',
+function startEmbeddedServer(dbPath: string, mode: SeedMode): Promise<EmbeddedServerHandle> {
+  const distDir = getDistDir();
+
+  if (!app.isPackaged) {
+    // Development mode: spawn system Node process to run server.cjs.
+    // This uses the system Node 22 ABI (127), which matches node_modules better-sqlite3,
+    // avoiding the Electron ABI (150) mismatch without needing electron-rebuild.
+    return new Promise((resolve, reject) => {
+      const serverScript = path.resolve(__dirname, 'server.cjs');
+      const nodeBin = process.env.NODE_BINARY ?? 'node';
+
+      const child: ChildProcess = spawn(
+        nodeBin,
+        [serverScript, `--mode=${mode}`, `--dbPath=${dbPath}`, `--distDir=${distDir}`, '--port=0'],
+        {
+          cwd: process.cwd(),
+          env: { ...process.env, FORCE_COLOR: '1' },
+          stdio: ['ignore', 'pipe', 'inherit'],
+        },
+      );
+
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          child.kill();
+          reject(new Error('Timed out waiting for embedded development server to start (15s)'));
+        }
+      }, 15000);
+
+      child.stdout?.on('data', (chunk: Buffer) => {
+        const text = chunk.toString('utf-8');
+        process.stdout.write(text);
+        const match = text.match(/FINANCE_TRACKER_PORT=(\d+)/);
+        if (match && !resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          resolve({
+            port: parseInt(match[1], 10),
+            close: () => {
+              try {
+                child.kill('SIGTERM');
+              } catch {
+                // ignore
+              }
+            },
+          });
+        }
+      });
+
+      child.on('error', (err) => {
+        clearTimeout(timeout);
+        if (!resolved) {
+          reject(err);
+        }
+      });
+
+      child.on('exit', (code) => {
+        clearTimeout(timeout);
+        if (!resolved) {
+          reject(new Error(`Embedded development server exited prematurely with code ${code}`));
+        }
+      });
     });
-    const distDir = getDistDir();
+  }
 
-    const mimeTypes: Record<string, string> = {
-      '.html': 'text/html; charset=utf-8',
-      '.js': 'text/javascript; charset=utf-8',
-      '.css': 'text/css; charset=utf-8',
-      '.json': 'application/json; charset=utf-8',
-      '.svg': 'image/svg+xml',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.ico': 'image/x-icon',
-      '.woff': 'font/woff',
-      '.woff2': 'font/woff2',
-      '.ttf': 'font/ttf',
-      '.wasm': 'application/wasm',
-    };
-
-    const server = http.createServer((req, res) => {
-      // API routing
-      if (req.url && (req.url.startsWith('/api/') || req.url === '/api')) {
-        void apiMiddleware(req, res, () => {
-          res.statusCode = 404;
-          res.end(JSON.stringify({ error: 'Not found' }));
-        });
-        return;
-      }
-
-      // Static assets
-      const cleanPath = (req.url ?? '/').split('?')[0].split('#')[0];
-      let filePath = path.join(distDir, cleanPath === '/' ? 'index.html' : cleanPath);
-
-      // Prevent directory traversal
-      if (!filePath.startsWith(distDir)) {
-        res.statusCode = 403;
-        res.end('Forbidden');
-        return;
-      }
-
-      // Fallback to index.html for client-side SPA routing
-      if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        filePath = path.join(distDir, 'index.html');
-      }
-
-      if (!fs.existsSync(filePath)) {
-        res.statusCode = 404;
-        res.end('Not Found');
-        return;
-      }
-
-      const ext = path.extname(filePath).toLowerCase();
-      const contentType = mimeTypes[ext] ?? 'application/octet-stream';
-      res.setHeader('Content-Type', contentType);
-
-      if (req.method === 'HEAD') {
-        res.end();
-        return;
-      }
-
-      fs.createReadStream(filePath).pipe(res);
-    });
-
-    server.on('error', (err) => {
-      reject(err);
-    });
-
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      if (!address || typeof address === 'string') {
-        reject(new Error('Failed to resolve server port'));
-        return;
-      }
-      activeServer = server;
-      resolve(address.port);
-    });
-  });
+  // Packaged mode: electron-builder has compiled better-sqlite3 for Electron ABI (150).
+  // Run directly in-process.
+  return startServer({
+    dbPath,
+    mode,
+    distDir,
+    port: 0,
+  }).then(({ port, server }) => ({
+    port,
+    close: () => {
+      server.close();
+    },
+  }));
 }
 
 async function createWindow(port: number): Promise<void> {
+  const preloadPath = path.join(__dirname, 'preload.cjs');
+  const initialTheme = detectSystemTheme();
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1024,
     minHeight: 680,
-    backgroundColor: '#07090e',
+    backgroundColor: initialTheme === 'dark' ? '#07090e' : '#f8fafc',
     title: 'Finance Tracker',
+    frame: false,
+    titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     webPreferences: {
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
+      sandbox: false,
     },
+  });
+
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window-maximized-state', true);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window-maximized-state', false);
+  });
+
+  mainWindow.on('focus', () => {
+    broadcastThemeChange();
   });
 
   // Open external links in user's default browser
@@ -159,6 +265,47 @@ async function createWindow(port: number): Promise<void> {
   });
 }
 
+// Window control IPC handlers
+ipcMain.handle('window-minimize', () => {
+  mainWindow?.minimize();
+});
+
+ipcMain.handle('window-maximize', () => {
+  if (!mainWindow) return false;
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+    return false;
+  }
+  mainWindow.maximize();
+  return true;
+});
+
+ipcMain.handle('window-close', () => {
+  mainWindow?.close();
+});
+
+ipcMain.handle('window-is-maximized', () => {
+  return mainWindow?.isMaximized() ?? false;
+});
+
+// Theme detection & synchronization IPC handlers
+ipcMain.handle('get-system-theme', () => {
+  return detectSystemTheme();
+});
+
+ipcMain.handle('set-theme-source', (_event, source: 'system' | 'light' | 'dark') => {
+  nativeTheme.themeSource = source;
+  const current = source === 'system' ? detectSystemTheme() : source;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setBackgroundColor(current === 'dark' ? '#07090e' : '#f8fafc');
+  }
+  return current;
+});
+
+nativeTheme.on('updated', () => {
+  broadcastThemeChange();
+});
+
 const singleInstanceLock = app.requestSingleInstanceLock();
 
 if (!singleInstanceLock) {
@@ -173,27 +320,31 @@ if (!singleInstanceLock) {
     }
   });
 
-  app.whenReady().then(async () => {
-    setupLoggingDirectory();
-    const dbPath = getDatabasePath();
-    const port = await startEmbeddedServer(dbPath);
-    await createWindow(port);
+  app
+    .whenReady()
+    .then(async () => {
+      setupLoggingDirectory();
+      const mode = resolveMode();
+      const dbPath = getDatabasePath(mode);
+      activeServerHandle = await startEmbeddedServer(dbPath, mode);
+      await createWindow(activeServerHandle.port);
 
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        void createWindow(port);
-      }
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0 && activeServerHandle) {
+          void createWindow(activeServerHandle.port);
+        }
+      });
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('Failed to initialize Electron application:', err);
+      app.quit();
     });
-  }).catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error('Failed to initialize Electron application:', err);
-    app.quit();
-  });
 
   app.on('window-all-closed', () => {
-    if (activeServer) {
-      activeServer.close();
-      activeServer = null;
+    if (activeServerHandle) {
+      activeServerHandle.close();
+      activeServerHandle = null;
     }
     if (process.platform !== 'darwin') {
       app.quit();
@@ -201,9 +352,9 @@ if (!singleInstanceLock) {
   });
 
   app.on('before-quit', () => {
-    if (activeServer) {
-      activeServer.close();
-      activeServer = null;
+    if (activeServerHandle) {
+      activeServerHandle.close();
+      activeServerHandle = null;
     }
   });
 }

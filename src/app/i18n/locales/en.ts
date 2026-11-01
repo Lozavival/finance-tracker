@@ -73,6 +73,10 @@ export const en = {
     toggleTheme: 'Toggle theme',
     notifications: 'Notifications',
     language: 'Language',
+    minimizeWindow: 'Minimize window',
+    maximizeWindow: 'Maximize window',
+    restoreWindow: 'Restore window',
+    closeWindow: 'Close window',
   },
   search: {
     noOmniResults: 'No accounts or transactions match "{query}"',

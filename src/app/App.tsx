@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { TopNavigation } from '@/layout/TopNavigation';
 import { Sidebar } from '@/layout/Sidebar';
+import { ElectronThemeSync } from '@/layout/ElectronThemeSync';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { TransactionsPage } from '@/features/transactions/TransactionsPage';
 import { AccountsPage } from '@/features/accounts/AccountsPage';
@@ -37,6 +38,7 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <ElectronThemeSync />
       <TopNavigation />
       <Sidebar />
 

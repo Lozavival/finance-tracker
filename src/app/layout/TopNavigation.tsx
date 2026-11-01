@@ -13,6 +13,7 @@ import {
 import { NotificationCenter } from './NotificationCenter';
 import { GlobalSearch } from './GlobalSearch';
 import { MobileNavDrawer } from './MobileNavDrawer';
+import { WindowControls } from './WindowControls';
 
 export function TopNavigation() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -25,20 +26,35 @@ export function TopNavigation() {
   }, []);
 
   const currentTheme = mounted ? (theme ?? 'system') : 'system';
+  const noDragStyle = { WebkitAppRegion: 'no-drag' } as React.CSSProperties;
+
+  const handleHeaderDoubleClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('app-drag-region')) {
+      void window.electronAPI?.maximize();
+    }
+  };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-background/80 backdrop-blur-xl border-b border-border">
-      <div className="flex items-center justify-between h-full px-3 sm:px-6 gap-2 sm:gap-4">
+    <header
+      className="fixed top-0 left-0 right-0 z-40 h-16 bg-background/80 backdrop-blur-xl border-b border-border select-none app-drag-region"
+      style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      onDoubleClick={handleHeaderDoubleClick}
+    >
+      <div className="flex items-center justify-between h-full px-3 sm:px-6 gap-2 sm:gap-4 app-drag-region">
         {/* Left Section: Mobile Nav Drawer toggle on < lg */}
-        <div className="flex items-center gap-2 shrink-0">{!isDesktop && <MobileNavDrawer />}</div>
+        <div className="flex items-center gap-2 shrink-0 app-no-drag" style={noDragStyle}>
+          {!isDesktop && <MobileNavDrawer />}
+        </div>
 
-        {/* Search Bar - flex centered */}
-        <div className="flex-1 min-w-0 flex justify-center max-w-xl mx-auto">
-          <GlobalSearch />
+        {/* Search Bar - flex centered with draggable padding */}
+        <div className="flex-1 min-w-0 flex justify-center max-w-xl mx-auto app-drag-region pointer-events-none">
+          <div className="w-full pointer-events-auto app-no-drag" style={noDragStyle}>
+            <GlobalSearch />
+          </div>
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10 app-no-drag" style={noDragStyle}>
           {/* Notification Bell */}
           <NotificationCenter />
 
@@ -81,6 +97,9 @@ export function TopNavigation() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Desktop Window Controls (Minimize / Maximize / Close) */}
+          <WindowControls />
         </div>
       </div>
     </header>
