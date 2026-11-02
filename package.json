@@ -13,6 +13,8 @@
     "preview": "vite preview",
     "electron:dev": "npm run build && npm run build:electron && electron . --enable-features=WaylandWindowDecorations --ozone-platform-hint=auto",
     "electron:dist": "npm run build && npm run build:electron && electron-builder",
+    "electron:dist:win": "npm run build && npm run build:electron && electron-builder --win",
+    "electron:dist:all": "npm run build && npm run build:electron && electron-builder -lw",
     "test": "vitest run && playwright test",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",

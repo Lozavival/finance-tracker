@@ -56,16 +56,18 @@ export function startServer(options: ServerOptions = {}): Promise<{ port: number
       }
 
       const cleanPath = (req.url ?? '/').split('?')[0].split('#')[0];
-      let filePath = path.join(distDir, cleanPath === '/' ? 'index.html' : cleanPath);
+      const relativePath = cleanPath === '/' ? 'index.html' : cleanPath.replace(/^\/+/, '');
+      const resolvedDistDir = path.resolve(distDir);
+      let filePath = path.resolve(resolvedDistDir, relativePath);
 
-      if (!filePath.startsWith(distDir)) {
+      if (!filePath.startsWith(resolvedDistDir)) {
         res.statusCode = 403;
         res.end('Forbidden');
         return;
       }
 
       if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        filePath = path.join(distDir, 'index.html');
+        filePath = path.join(resolvedDistDir, 'index.html');
       }
 
       if (!fs.existsSync(filePath)) {
