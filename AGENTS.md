@@ -45,6 +45,9 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
   - **Whitespace**: No hard tabs (`\t`) anywhere; no trailing whitespace in header, body, or footer.
   - **Execution**: Pass multiple `-m` flags (e.g., `git commit -m "<header>" -m "<body>"`) so Git generates clean paragraph breaks.
 
+### Documentation Generation (`app-doc-generation` Skill)
+- **Always activate when creating or updating app documentation**: When writing, updating, or standardizing architecture, flow, interface, state, or specification documentation artifacts (`docs/overview.md`, `docs/flows.md`, `docs/interfaces.md`, `docs/states.md`, `docs/spec.md`), consult and follow the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill to maintain structural consistency, checklist validation, and reference template alignment.
+
 ---
 
 ## Architecture & Code Structure
@@ -222,4 +225,4 @@ An agent must propose or apply updates to `AGENTS.md` whenever:
 - **Keep it Actionable & Concise**: Document strict invariants, operational checklists, and prescriptive dos/don'ts. Avoid narrative bloat or redundant explanations.
 - **Keep the File Tree Accurate**: Whenever new directories or architectural components are introduced (or removed), immediately update the `Architecture & Code Structure` tree in this document.
 - **Preserve Ground Truth**: Rules in `AGENTS.md` take precedence during development. Never weaken architectural constraints (such as strict typing or zero hardcoded colors) without explicit user instruction.
-- **Synchronize with Specialized Skills**: When modifying workflows or verification steps, ensure complementary skills (such as `ui-code-review`, `server-code-review`, and `commit-message-generator`) remain aligned with `AGENTS.md`.
+- **Synchronize with Specialized Skills**: When modifying workflows or verification steps, ensure complementary skills (such as `ui-code-review`, `server-code-review`, `commit-message-generator`, and `app-doc-generation`) remain aligned with `AGENTS.md`.

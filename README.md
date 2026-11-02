@@ -299,6 +299,7 @@ Finance Tracker features a dark-mode-first aesthetic with luminous cyan, violet,
 - **Git Commit Standards**: Enforced with [Conventional Commits](https://www.conventionalcommits.org/) via Husky and Commitlint (`feat:`, `fix:`, `refactor:`, `chore:`, etc.).
 - **Linting & Formatting**: Clean code standards maintained via ESLint 9 flat config and Prettier.
 - **Continuous Integration**: GitHub Actions workflow (`.github/workflows/ci.yml`) runs on PRs targeting `main` and `develop` to validate commits, lint the codebase, compile the production build, and execute the full test suite.
+- **Documentation Standards**: Application architecture, user flows, interfaces, state models, and business specifications are maintained under `docs/` using standardized templates and validated checklists via the `app-doc-generation` agent skill.
 
 ---
 
