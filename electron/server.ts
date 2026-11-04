@@ -87,14 +87,33 @@ export function startServer(options: ServerOptions = {}): Promise<{ port: number
       fs.createReadStream(filePath).pipe(res);
     });
 
-    server.on('error', reject);
+    const basePort = options.port ?? (process.env.PORT ? parseInt(process.env.PORT, 10) : 24180);
+    let attemptPort = basePort;
 
-    const targetPort = options.port ?? (process.env.PORT ? parseInt(process.env.PORT, 10) : 0);
-    server.listen(targetPort, '127.0.0.1', () => {
-      const address = server.address();
-      const port = typeof address === 'object' && address ? address.port : 8443;
-      resolve({ port, server });
-    });
+    const tryListen = () => {
+      const errorHandler = (err: NodeJS.ErrnoException) => {
+        server.removeListener('listening', listenSuccessHandler);
+        if (err.code === 'EADDRINUSE' && attemptPort < basePort + 10) {
+          attemptPort++;
+          tryListen();
+        } else {
+          reject(err);
+        }
+      };
+
+      const listenSuccessHandler = () => {
+        server.removeListener('error', errorHandler);
+        const address = server.address();
+        const port = typeof address === 'object' && address ? address.port : attemptPort;
+        resolve({ port, server });
+      };
+
+      server.once('error', errorHandler);
+      server.once('listening', listenSuccessHandler);
+      server.listen(attemptPort, '127.0.0.1');
+    };
+
+    tryListen();
   });
 }
 

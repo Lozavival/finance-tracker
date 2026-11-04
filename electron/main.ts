@@ -1,5 +1,5 @@
 import { app, BrowserWindow, shell, ipcMain, nativeTheme } from 'electron';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { DEV_DATABASE_FILENAME, PROD_DATABASE_FILENAME } from '../src/db/client';
@@ -21,46 +21,57 @@ interface EmbeddedServerHandle {
 
 let activeServerHandle: EmbeddedServerHandle | null = null;
 
+let currentThemePreference: 'system' | 'light' | 'dark' = 'system';
+
 function detectSystemTheme(): 'dark' | 'light' {
   if (nativeTheme.shouldUseDarkColors) {
     return 'dark';
   }
 
   // On Linux (GNOME/Ubuntu), theme changes or portals may not automatically
-  // reflect in Chromium's nativeTheme. Query gsettings directly as a robust fallback.
+  // reflect in Chromium's nativeTheme. Query gsettings as a fallback.
   if (process.platform === 'linux') {
     try {
-      const colorScheme = execSync('gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null', {
+      const colorSchemeRes = spawnSync('gsettings', ['get', 'org.gnome.desktop.interface', 'color-scheme'], {
         encoding: 'utf-8',
         timeout: 1000,
-      })
-        .trim()
-        .replace(/['"]/g, '');
+      });
 
-      if (colorScheme === 'prefer-dark') {
-        return 'dark';
+      if (colorSchemeRes.status === 0 && colorSchemeRes.stdout) {
+        const colorScheme = colorSchemeRes.stdout.trim().replace(/['"]/g, '');
+        if (colorScheme === 'prefer-dark') {
+          return 'dark';
+        }
+        if (colorScheme === 'prefer-light') {
+          return 'light';
+        }
+      } else if (colorSchemeRes.error) {
+        // eslint-disable-next-line no-console
+        console.warn('gsettings color-scheme query failed:', colorSchemeRes.error.message);
       }
-      if (colorScheme === 'prefer-light') {
-        return 'light';
-      }
-    } catch {
-      // Ignore fallback error
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to query GNOME color-scheme via gsettings:', err instanceof Error ? err.message : String(err));
     }
 
     try {
-      const gtkTheme = execSync('gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null', {
+      const gtkThemeRes = spawnSync('gsettings', ['get', 'org.gnome.desktop.interface', 'gtk-theme'], {
         encoding: 'utf-8',
         timeout: 1000,
-      })
-        .trim()
-        .replace(/['"]/g, '')
-        .toLowerCase();
+      });
 
-      if (gtkTheme.includes('dark')) {
-        return 'dark';
+      if (gtkThemeRes.status === 0 && gtkThemeRes.stdout) {
+        const gtkTheme = gtkThemeRes.stdout.trim().replace(/['"]/g, '').toLowerCase();
+        if (gtkTheme.includes('dark')) {
+          return 'dark';
+        }
+      } else if (gtkThemeRes.error) {
+        // eslint-disable-next-line no-console
+        console.warn('gsettings gtk-theme query failed:', gtkThemeRes.error.message);
       }
-    } catch {
-      // Ignore fallback error
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to query GNOME gtk-theme via gsettings:', err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -69,11 +80,12 @@ function detectSystemTheme(): 'dark' | 'light' {
 
 function broadcastThemeChange(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
+    if (currentThemePreference !== 'system') {
+      return;
+    }
     const currentTheme = detectSystemTheme();
     mainWindow.webContents.send('system-theme-updated', currentTheme);
-    if (nativeTheme.themeSource === 'system') {
-      mainWindow.setBackgroundColor(currentTheme === 'dark' ? '#07090e' : '#f8fafc');
-    }
+    mainWindow.setBackgroundColor(currentTheme === 'dark' ? '#07090e' : '#f8fafc');
   }
 }
 
@@ -128,6 +140,50 @@ function getDatabasePath(mode: SeedMode): string {
   return path.join(userDir, PROD_DATABASE_FILENAME);
 }
 
+export interface DesktopPreferences {
+  theme?: 'system' | 'light' | 'dark';
+  locale?: string;
+  currency?: string;
+}
+
+const DEFAULT_DESKTOP_PORT = 24180;
+
+function getPreferencesFilePath(): string {
+  return path.join(app.getPath('userData'), 'preferences.json');
+}
+
+function loadDesktopPreferences(): DesktopPreferences {
+  try {
+    const file = getPreferencesFilePath();
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
+      if (typeof parsed === 'object' && parsed !== null) {
+        return parsed as DesktopPreferences;
+      }
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to load desktop preferences from disk:', err);
+  }
+  return {};
+}
+
+function saveDesktopPreferences(prefs: Partial<DesktopPreferences>): void {
+  try {
+    const file = getPreferencesFilePath();
+    const existing = loadDesktopPreferences();
+    const merged = { ...existing, ...prefs };
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(file, JSON.stringify(merged, null, 2), 'utf-8');
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to save desktop preferences to disk:', err);
+  }
+}
+
 function setupLoggingDirectory(): void {
   if (process.env.LOG_DIR || process.env.LOG_FILE_PATH) {
     return;
@@ -138,12 +194,13 @@ function setupLoggingDirectory(): void {
 
 function startEmbeddedServer(dbPath: string, mode: SeedMode): Promise<EmbeddedServerHandle> {
   const distDir = getDistDir();
+  const targetPort = process.env.PORT ? parseInt(process.env.PORT, 10) : DEFAULT_DESKTOP_PORT;
 
   return startServer({
     dbPath,
     mode,
     distDir,
-    port: 0,
+    port: targetPort,
   }).then(({ port, server }) => ({
     port,
     close: () => {
@@ -154,14 +211,18 @@ function startEmbeddedServer(dbPath: string, mode: SeedMode): Promise<EmbeddedSe
 
 async function createWindow(port: number): Promise<void> {
   const preloadPath = path.join(__dirname, 'preload.cjs');
-  const initialTheme = detectSystemTheme();
+  const prefs = loadDesktopPreferences();
+  currentThemePreference = (prefs.theme as 'system' | 'light' | 'dark') || 'system';
+  nativeTheme.themeSource = currentThemePreference;
+  const effectiveTheme =
+    currentThemePreference === 'system' ? detectSystemTheme() : currentThemePreference;
 
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1024,
     minHeight: 680,
-    backgroundColor: initialTheme === 'dark' ? '#07090e' : '#f8fafc',
+    backgroundColor: effectiveTheme === 'dark' ? '#07090e' : '#f8fafc',
     title: 'Finance Tracker',
     frame: false,
     titleBarStyle: 'hidden',
@@ -183,7 +244,9 @@ async function createWindow(port: number): Promise<void> {
   });
 
   mainWindow.on('focus', () => {
-    broadcastThemeChange();
+    if (currentThemePreference === 'system') {
+      broadcastThemeChange();
+    }
   });
 
   // Open external links in user's default browser
@@ -230,16 +293,34 @@ ipcMain.handle('get-system-theme', () => {
 });
 
 ipcMain.handle('set-theme-source', (_event, source: 'system' | 'light' | 'dark') => {
+  currentThemePreference = source;
+  saveDesktopPreferences({ theme: source });
   nativeTheme.themeSource = source;
-  const current = source === 'system' ? detectSystemTheme() : source;
+  const effective = source === 'system' ? detectSystemTheme() : source;
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setBackgroundColor(current === 'dark' ? '#07090e' : '#f8fafc');
+    mainWindow.setBackgroundColor(effective === 'dark' ? '#07090e' : '#f8fafc');
   }
-  return current;
+  return effective;
+});
+
+ipcMain.handle('get-desktop-preferences', () => {
+  return loadDesktopPreferences();
+});
+
+ipcMain.handle('set-desktop-preference', (_event, key: string, value: unknown) => {
+  if (key === 'locale' && typeof value === 'string') {
+    saveDesktopPreferences({ locale: value });
+  } else if (key === 'currency' && typeof value === 'string') {
+    saveDesktopPreferences({ currency: value });
+  } else if (key === 'theme' && (value === 'system' || value === 'light' || value === 'dark')) {
+    saveDesktopPreferences({ theme: value });
+  }
 });
 
 nativeTheme.on('updated', () => {
-  broadcastThemeChange();
+  if (currentThemePreference === 'system') {
+    broadcastThemeChange();
+  }
 });
 
 const singleInstanceLock = app.requestSingleInstanceLock();

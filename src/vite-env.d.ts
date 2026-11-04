@@ -1,5 +1,11 @@
 /// <reference types="vite/client" />
 
+interface DesktopPreferences {
+  theme?: 'system' | 'light' | 'dark';
+  locale?: string;
+  currency?: string;
+}
+
 interface ElectronWindowAPI {
   isElectron: boolean;
   minimize: () => Promise<void>;
@@ -10,6 +16,8 @@ interface ElectronWindowAPI {
   getSystemTheme: () => Promise<'dark' | 'light'>;
   setThemeSource: (theme: 'system' | 'light' | 'dark') => Promise<'dark' | 'light'>;
   onSystemThemeChange: (callback: (theme: 'dark' | 'light') => void) => () => void;
+  getDesktopPreferences: () => Promise<DesktopPreferences>;
+  setDesktopPreference: (key: string, value: unknown) => Promise<void>;
 }
 
 interface Window {

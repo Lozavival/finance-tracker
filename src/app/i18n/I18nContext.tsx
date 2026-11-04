@@ -102,6 +102,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         i18nLogger.warn('Failed to write locale preference to localStorage:', err);
       }
       document.documentElement.lang = newLocale;
+
+      if (window.electronAPI?.isElectron) {
+        void window.electronAPI.setDesktopPreference?.('locale', newLocale);
+      }
     }
   }, []);
 
@@ -114,6 +118,34 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         i18nLogger.warn('Failed to write currency preference to localStorage:', err);
       }
+
+      if (window.electronAPI?.isElectron) {
+        void window.electronAPI.setDesktopPreference?.('currency', newCurrency);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+      void window.electronAPI.getDesktopPreferences?.().then(prefs => {
+        if (prefs?.locale && SUPPORTED_LOCALES.some(l => l.code === prefs.locale)) {
+          setLocaleState(prefs.locale as SupportedLocale);
+          try {
+            localStorage.setItem(STORAGE_LOCALE_KEY, prefs.locale);
+          } catch (err) {
+            i18nLogger.warn('Failed to mirror desktop locale preference to localStorage:', err);
+          }
+          document.documentElement.lang = prefs.locale;
+        }
+        if (prefs?.currency && SUPPORTED_CURRENCIES.some(c => c.code === prefs.currency)) {
+          setCurrencyState(prefs.currency as SupportedCurrency);
+          try {
+            localStorage.setItem(STORAGE_CURRENCY_KEY, prefs.currency);
+          } catch (err) {
+            i18nLogger.warn('Failed to mirror desktop currency preference to localStorage:', err);
+          }
+        }
+      });
     }
   }, []);
 

@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+export interface DesktopPreferences {
+  theme?: 'system' | 'light' | 'dark';
+  locale?: string;
+  currency?: string;
+}
+
 export interface ElectronWindowAPI {
   isElectron: boolean;
   minimize: () => Promise<void>;
@@ -10,6 +16,8 @@ export interface ElectronWindowAPI {
   getSystemTheme: () => Promise<'dark' | 'light'>;
   setThemeSource: (theme: 'system' | 'light' | 'dark') => Promise<'dark' | 'light'>;
   onSystemThemeChange: (callback: (theme: 'dark' | 'light') => void) => () => void;
+  getDesktopPreferences: () => Promise<DesktopPreferences>;
+  setDesktopPreference: (key: string, value: unknown) => Promise<void>;
 }
 
 const electronAPI: ElectronWindowAPI = {
@@ -38,6 +46,8 @@ const electronAPI: ElectronWindowAPI = {
       ipcRenderer.removeListener('system-theme-updated', listener);
     };
   },
+  getDesktopPreferences: () => ipcRenderer.invoke('get-desktop-preferences'),
+  setDesktopPreference: (key: string, value: unknown) => ipcRenderer.invoke('set-desktop-preference', key, value),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
