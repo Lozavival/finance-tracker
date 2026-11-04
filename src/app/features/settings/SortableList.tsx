@@ -40,7 +40,7 @@ export function SortableRow<T>({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
+      className={`flex flex-col @lg:flex-row @lg:items-center justify-between gap-2.5 @lg:gap-3 p-3 rounded-lg border border-border/60 bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all group ${
         isDragging ? 'opacity-40 border-dashed border-theme-cyan' : ''
       }`}
     >
@@ -54,7 +54,7 @@ export function SortableRow<T>({
         <div className="min-w-0 flex-1">{children}</div>
       </div>
 
-      <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 shrink-0 ml-7 sm:ml-0">
+      <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 shrink-0 ml-7 @lg:ml-0">
         {actions}
         <Button
           type="button"

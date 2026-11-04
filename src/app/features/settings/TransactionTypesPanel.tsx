@@ -109,7 +109,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
     reorderState: ReturnType<typeof useReorder<TransactionTypeConfig>>,
   ) {
     return (
-      <div className="space-y-2">
+      <div className="@container space-y-2">
         {types.map((t, idx) => {
           const count = typeCounts.get(t.id) || 0;
           const linkedGoalCatId = settings.goals?.typeMappings?.[t.id];
@@ -130,7 +130,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
               isDragging={reorderState.draggedIndex === idx}
               actions={
                 <>
-                  <span className="text-xs text-muted-foreground hidden sm:inline mr-2">
+                  <span className="text-xs text-muted-foreground hidden @md:inline mr-2">
                     {count === 1
                       ? translate('common.singleTransaction')
                       : translate('common.transactionsCount', { count: String(count) })}
@@ -207,10 +207,10 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 @5xl/main:grid-cols-2 gap-6">
         {/* Income Types Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <div className="text-lg font-medium text-foreground">{translate('settings.typesIncomeTitle')}</div>
               <div className="text-xs text-muted-foreground">{translate('settings.typesIncomeDesc')}</div>
@@ -225,7 +225,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                   defaultDirection: 'income',
                 })
               }
-              className="text-xs"
+              className="text-xs self-start sm:self-auto shrink-0"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {translate('settings.addIncomeType')}
@@ -236,8 +236,8 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
         </Card>
 
         {/* Expense Types Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <div className="text-lg font-medium text-foreground">{translate('settings.typesExpenseTitle')}</div>
               <div className="text-xs text-muted-foreground">{translate('settings.typesExpenseDesc')}</div>
@@ -252,7 +252,7 @@ export function TransactionTypesPanel({ transactions, onTransactionsChange }: Tr
                   defaultDirection: 'expense',
                 })
               }
-              className="text-xs"
+              className="text-xs self-start sm:self-auto shrink-0"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {translate('settings.addExpenseType')}

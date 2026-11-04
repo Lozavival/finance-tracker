@@ -75,8 +75,8 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
-        <div className="flex items-center justify-between mb-4">
+      <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <div className="text-lg font-medium text-foreground">{t('settings.methodsTitle')}</div>
             <div className="text-xs text-muted-foreground">{t('settings.methodsDesc')}</div>
@@ -85,14 +85,14 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
             variant="cyan"
             size="sm"
             onClick={() => setDialogState({ open: true, method: null })}
-            className="text-xs"
+            className="text-xs self-start sm:self-auto shrink-0"
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             {t('settings.addPaymentMethod')}
           </Button>
         </div>
 
-        <div className="space-y-2">
+        <div className="@container space-y-2">
           {settings.paymentMethods.map((m, idx) => {
             const count = methodCounts.get(m.id) || 0;
             const Icon = getIcon(m.icon);
@@ -113,7 +113,7 @@ export function PaymentMethodsPanel({ transactions, onTransactionsChange }: Paym
                 isDragging={reorder.draggedIndex === idx}
                 actions={
                   <>
-                    <span className="text-xs text-muted-foreground hidden sm:inline mr-2">
+                    <span className="text-xs text-muted-foreground hidden @md:inline mr-2">
                       {count === 1
                         ? t('common.singleTransaction')
                         : t('common.transactionsCount', { count: String(count) })}

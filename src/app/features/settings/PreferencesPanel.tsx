@@ -228,16 +228,16 @@ export function PreferencesPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 @2xl/main:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 @5xl/main:grid-cols-3 gap-6">
         {/* Appearance / Theme Selection Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-theme-purple/15 text-theme-purple">
+            <div className="p-2 rounded-lg bg-theme-purple/15 text-theme-purple shrink-0">
               <SunMoon className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-lg font-medium text-foreground">{t('settings.themeLabel')}</div>
-              <div className="text-xs text-muted-foreground">{t('settings.themeDesc')}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-medium text-foreground truncate">{t('settings.themeLabel')}</div>
+              <div className="text-xs text-muted-foreground truncate">{t('settings.themeDesc')}</div>
             </div>
           </div>
 
@@ -252,24 +252,24 @@ export function PreferencesPanel() {
                   onPressedChange={() => setTheme(opt.id)}
                   variant="outline"
                   aria-label={opt.label}
-                  className={`w-full flex items-center justify-between p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer ${
+                  className={`w-full flex items-center justify-between gap-3 p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer overflow-hidden ${
                     isSelected
                       ? 'border-theme-purple/60 bg-theme-purple/10 text-theme-purple data-[state=on]:bg-theme-purple/10 data-[state=on]:text-theme-purple'
                       : 'border-border bg-foreground/5 text-foreground hover:border-theme-purple/40 hover:text-foreground'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded bg-foreground/10 flex items-center justify-center text-foreground">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="w-7 h-7 rounded bg-foreground/10 flex items-center justify-center text-foreground shrink-0">
                       <Icon className="w-4 h-4" />
                     </span>
-                    <div className="text-left">
-                      <div className="font-medium text-foreground">{opt.label}</div>
-                      <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-medium text-foreground truncate">{opt.label}</div>
+                      <div className="text-xs text-muted-foreground truncate">{opt.desc}</div>
                     </div>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center shrink-0">
                     <span
-                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                         isSelected ? 'border-theme-purple bg-theme-purple' : 'border-muted-foreground'
                       }`}
                     >
@@ -283,14 +283,14 @@ export function PreferencesPanel() {
         </Card>
 
         {/* Language Selection Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-theme-cyan/15 text-theme-cyan">
+            <div className="p-2 rounded-lg bg-theme-cyan/15 text-theme-cyan shrink-0">
               <Globe className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-lg font-medium text-foreground">{t('settings.languageLabel')}</div>
-              <div className="text-xs text-muted-foreground">{t('settings.languageDesc')}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-medium text-foreground truncate">{t('settings.languageLabel')}</div>
+              <div className="text-xs text-muted-foreground truncate">{t('settings.languageDesc')}</div>
             </div>
           </div>
 
@@ -304,22 +304,22 @@ export function PreferencesPanel() {
                   onPressedChange={() => setLocale(loc.code as SupportedLocale)}
                   variant="outline"
                   aria-label={loc.label}
-                  className={`w-full flex items-center justify-between p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer ${
+                  className={`w-full flex items-center justify-between gap-3 p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer overflow-hidden ${
                     isSelected
                       ? 'border-theme-cyan/60 bg-theme-cyan/10 text-theme-cyan data-[state=on]:bg-theme-cyan/10 data-[state=on]:text-theme-cyan'
                       : 'border-border bg-foreground/5 text-foreground hover:border-theme-cyan/40 hover:text-foreground'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    {loc.flag && <span className="text-base">{loc.flag}</span>}
-                    <div className="text-left">
-                      <div className="font-medium">{loc.nativeLabel}</div>
-                      <div className="text-xs text-muted-foreground">{loc.label}</div>
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    {loc.flag && <span className="text-base shrink-0">{loc.flag}</span>}
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-medium truncate">{loc.nativeLabel}</div>
+                      <div className="text-xs text-muted-foreground truncate">{loc.label}</div>
                     </div>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center shrink-0">
                     <span
-                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                         isSelected ? 'border-theme-cyan bg-theme-cyan' : 'border-muted-foreground'
                       }`}
                     >
@@ -333,14 +333,14 @@ export function PreferencesPanel() {
         </Card>
 
         {/* Currency Selection Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-theme-green/15 text-theme-green">
+            <div className="p-2 rounded-lg bg-theme-green/15 text-theme-green shrink-0">
               <DollarSign className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-lg font-medium text-foreground">{t('settings.currencyLabel')}</div>
-              <div className="text-xs text-muted-foreground">{t('settings.currencyDesc')}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-medium text-foreground truncate">{t('settings.currencyLabel')}</div>
+              <div className="text-xs text-muted-foreground truncate">{t('settings.currencyDesc')}</div>
             </div>
           </div>
 
@@ -354,21 +354,21 @@ export function PreferencesPanel() {
                   onPressedChange={() => setCurrency(curr.code as SupportedCurrency)}
                   variant="outline"
                   aria-label={curr.label}
-                  className={`w-full flex items-center justify-between p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer ${
+                  className={`w-full flex items-center justify-between gap-3 p-3 h-auto rounded-lg border text-sm transition-all duration-200 cursor-pointer overflow-hidden ${
                     isSelected
                       ? 'border-theme-green/60 bg-theme-green/10 text-theme-green data-[state=on]:bg-theme-green/10 data-[state=on]:text-theme-green'
                       : 'border-border bg-foreground/5 text-foreground hover:border-theme-green/40 hover:text-foreground'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded bg-foreground/10 flex items-center justify-center font-bold text-xs text-foreground">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="w-7 h-7 rounded bg-foreground/10 flex items-center justify-center font-bold text-xs text-foreground shrink-0">
                       {curr.symbol}
                     </span>
-                    <span className="font-medium">{curr.label}</span>
+                    <span className="font-medium truncate">{curr.label}</span>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center shrink-0">
                     <span
-                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                         isSelected ? 'border-theme-green bg-theme-green' : 'border-muted-foreground'
                       }`}
                     >
@@ -382,7 +382,7 @@ export function PreferencesPanel() {
         </Card>
 
         {/* Exchange Rate Management Card */}
-        <Card className="p-6 bg-foreground/5 backdrop-blur-xl border border-border md:col-span-3">
+        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border @5xl/main:col-span-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-theme-blue/15 text-theme-blue">

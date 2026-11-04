@@ -111,7 +111,10 @@ test.describe('Flow 15: Responsive Layout & Multi-Viewport Verification', () => 
     await navigateTo(page, '/accounts');
 
     // Navigate to detail page of first account
-    const firstAccount = page.locator('.cursor-pointer').filter({ hasText: /checking|corrente/i }).first();
+    const firstAccount = page
+      .locator('.cursor-pointer')
+      .filter({ hasText: /checking|corrente/i })
+      .first();
     await firstAccount.click();
     await page.waitForURL(/\/accounts\/.+/);
 
@@ -170,9 +173,71 @@ test.describe('Flow 15: Responsive Layout & Multi-Viewport Verification', () => 
     await expectNoHorizontalOverflow(page);
 
     // Verify credit card billing badge does not collide with action buttons
-    const cardMethodRow = page.locator('.group').filter({ hasText: /credit card|cartão de crédito/i }).first();
+    const cardMethodRow = page
+      .locator('.group')
+      .filter({ hasText: /credit card|cartão de crédito/i })
+      .first();
     await expect(cardMethodRow).toBeVisible();
     const editBtn = cardMethodRow.getByRole('button', { name: /edit|editar/i });
     await expect(editBtn).toBeVisible();
+  });
+
+  test('transaction types list items and badges fit without overlapping buttons at 1100px and 1200px viewports', async ({
+    page,
+  }) => {
+    for (const width of [1100, 1200]) {
+      await page.setViewportSize({ width, height: 800 });
+      await navigateTo(page, '/settings');
+
+      // Switch to Transaction Types tab
+      await page.getByRole('tab', { name: /transaction types|types|categorias/i }).click();
+      await expectNoHorizontalOverflow(page);
+
+      // Verify that category chips do not collide with action buttons in any sortable row
+      const rows = page.locator('.group').filter({ has: page.getByRole('button', { name: /edit|editar/i }) });
+      const rowCount = await rows.count();
+      expect(rowCount).toBeGreaterThan(0);
+
+      for (let i = 0; i < rowCount; i++) {
+        const row = rows.nth(i);
+        const editBtn = row.getByRole('button', { name: /edit|editar/i });
+        const chip = row.locator('span[title]').first();
+
+        const editBox = await editBtn.boundingBox();
+        const chipBox = await chip.boundingBox();
+
+        if (editBox && chipBox) {
+          // If they share the same horizontal band (Y ranges overlap), chip right edge must not extend into edit button
+          const yOverlap = Math.max(
+            0,
+            Math.min(editBox.y + editBox.height, chipBox.y + chipBox.height) - Math.max(editBox.y, chipBox.y),
+          );
+          if (yOverlap > 4) {
+            expect(chipBox.x + chipBox.width).toBeLessThanOrEqual(editBox.x + 1);
+          }
+        }
+      }
+
+      // 2. Preferences tab: Verify theme/language/currency toggles stay fully within card boundaries
+      await page.getByRole('tab', { name: /preferences|preferências/i }).click();
+      await expectNoHorizontalOverflow(page);
+
+      const toggles = page.locator('button[aria-pressed]');
+      const toggleCount = await toggles.count();
+      expect(toggleCount).toBeGreaterThan(0);
+
+      for (let i = 0; i < toggleCount; i++) {
+        const toggle = toggles.nth(i);
+        const toggleBox = await toggle.boundingBox();
+        const radioIndicator = toggle.locator('span.rounded-full').first();
+        const indicatorBox = await radioIndicator.boundingBox();
+
+        if (toggleBox && indicatorBox) {
+          // Radio circle indicator must be strictly inside the toggle button bounds
+          expect(indicatorBox.x + indicatorBox.width).toBeLessThanOrEqual(toggleBox.x + toggleBox.width + 1);
+          expect(indicatorBox.x).toBeGreaterThanOrEqual(toggleBox.x);
+        }
+      }
+    }
   });
 });

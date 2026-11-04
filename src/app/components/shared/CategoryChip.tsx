@@ -19,7 +19,12 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
 
   if (!typeConfig) {
     return (
-      <span className={`inline-flex items-center shrink-0 text-muted-foreground ${className}`}>{displayText}</span>
+      <span
+        className={`inline-flex items-center min-w-0 max-w-full text-muted-foreground ${className}`}
+        title={displayText}
+      >
+        <span className="truncate">{displayText}</span>
+      </span>
     );
   }
 
@@ -28,7 +33,7 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
 
   return (
     <span
-      className={`inline-flex items-center shrink-0 gap-1.5 rounded-full font-medium transition-colors ${
+      className={`inline-flex items-center min-w-0 max-w-full gap-1.5 rounded-full font-medium transition-colors ${
         size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm'
       } ${className}`}
       style={{
@@ -38,9 +43,10 @@ export function CategoryChip({ typeConfig, label, size = 'sm', showIcon = true, 
         borderStyle: 'solid',
         color: colorMeta.textColor,
       }}
+      title={displayText}
     >
       {showIcon && <Icon className={size === 'sm' ? 'w-3 h-3 shrink-0' : 'w-4 h-4 shrink-0'} />}
-      <span>{displayText}</span>
+      <span className="truncate">{displayText}</span>
     </span>
   );
 }
