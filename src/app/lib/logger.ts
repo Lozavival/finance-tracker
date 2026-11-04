@@ -90,8 +90,9 @@ function resolveInitialLogLevel(): LogLevel {
       if (stored && stored in LOG_LEVEL_PRIORITY) {
         return stored as LogLevel;
       }
-    } catch {
+    } catch (err) {
       // Storage access blocked or restricted
+      console.warn('Unable to access localStorage for initial log level:', err);
     }
   }
 
@@ -183,8 +184,9 @@ export async function flushRemoteLogs(): Promise<void> {
       body: JSON.stringify({ entries: batch }),
       keepalive: true,
     });
-  } catch {
+  } catch (err) {
     // Failsafe: avoid cascading errors or infinite loops if server is unreachable
+    console.warn('Failed to flush remote log entries to /api/logs:', err);
   } finally {
     isFlushingRemote = false;
     if (pendingRemoteEntries.length > 0) {
@@ -330,8 +332,9 @@ export const logger: ApplicationLogger = {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_LOG_LEVEL_KEY, level);
-      } catch {
+      } catch (err) {
         // Storage access blocked or restricted
+        console.warn('Failed to persist log level in localStorage:', err);
       }
     }
     rootLogger.info(`Log level changed to "${level}"`);
@@ -358,7 +361,8 @@ export const logger: ApplicationLogger = {
       if (entry.data && entry.data.length > 0) {
         try {
           line += `\n  Data: ${JSON.stringify(entry.data)}`;
-        } catch {
+        } catch (err) {
+          console.warn('Failed to serialize log entry data:', err);
           line += `\n  Data: [Unable to serialize]`;
         }
       }

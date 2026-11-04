@@ -63,15 +63,17 @@ function appendToLogFile(filePath: string, text: string): void {
             fs.unlinkSync(backupPath);
           }
           fs.renameSync(filePath, backupPath);
-        } catch {
-          // If rotation fails, continue appending
+        } catch (rotErr) {
+          // If rotation fails, log warning and continue appending
+          process.stderr.write(`[ServerLogger] Failed to rotate log file to ${backupPath}: ${String(rotErr)}\n`);
         }
       }
     }
 
     fs.appendFileSync(filePath, `${text}\n`, 'utf-8');
-  } catch {
-    // Failsafe: avoid crashing application if filesystem is restricted or full
+  } catch (writeErr) {
+    // Failsafe: log to stderr to avoid crashing application if filesystem is restricted or full
+    process.stderr.write(`[ServerLogger] Failed to write log entry to ${filePath}: ${String(writeErr)}\n`);
   }
 }
 
@@ -90,8 +92,8 @@ function formatFileEntry(level: ServerLogLevel, namespace: string, message: stri
       } else if (typeof arg === 'object' && arg !== null) {
         try {
           line += `\n  Data: ${JSON.stringify(arg)}`;
-        } catch {
-          line += `\n  Data: [Circular/Unserializable]`;
+        } catch (serErr) {
+          line += `\n  Data: [Circular/Unserializable: ${String(serErr)}]`;
         }
       } else if (arg !== undefined) {
         line += `\n  Data: ${String(arg)}`;

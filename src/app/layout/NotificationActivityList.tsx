@@ -4,6 +4,9 @@ import { ScrollArea } from '@/components/primitives/scroll-area';
 import { useI18n, type TranslationKey } from '@/i18n';
 import { type ActivityEntry } from '@/data/notifications';
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from '@/lib/logger';
+
+const activityLogger = logger.child('NotificationActivity');
 
 interface NotificationActivityListProps {
   activity: ActivityEntry[];
@@ -32,7 +35,8 @@ export function NotificationActivityList({ activity, onClear }: NotificationActi
     if (isNaN(d.getTime())) return '';
     try {
       return formatDistanceToNow(d, { addSuffix: true, locale: dateLocale });
-    } catch {
+    } catch (err) {
+      activityLogger.warn('Failed to format relative time for activity notification:', { isoString, error: err });
       return '';
     }
   }

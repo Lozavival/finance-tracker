@@ -33,7 +33,13 @@ export function formatCents(cents: number, currency: SupportedCurrency = 'USD', 
       style: 'currency',
       currency,
     }).format(cents / 100);
-  } catch {
+  } catch (err) {
+    currencyLogger.warn('Intl.NumberFormat failed in formatCents, using fallback formatting:', {
+      cents,
+      currency,
+      locale,
+      error: err,
+    });
     const symbol = currency === 'BRL' ? 'R$' : '$';
     return `${symbol}${(cents / 100).toFixed(2)}`;
   }

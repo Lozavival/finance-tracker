@@ -18,6 +18,9 @@ export type InstallmentInfo = {
 
 import { type SupportedCurrency } from '@/i18n/types';
 import { convertCents, formatCents } from './currency';
+import { logger } from '../lib/logger';
+
+const txLogger = logger.child('Transactions');
 
 export type Transaction = {
   id: string;
@@ -138,7 +141,13 @@ export function formatCurrency(amount: number, currency: SupportedCurrency = 'US
       style: 'currency',
       currency,
     }).format(amount);
-  } catch {
+  } catch (err) {
+    txLogger.warn('Intl.NumberFormat failed in formatCurrency, using fallback formatting:', {
+      amount,
+      currency,
+      locale,
+      error: err,
+    });
     const symbol = currency === 'BRL' ? 'R$' : '$';
     return `${symbol}${amount.toFixed(2)}`;
   }

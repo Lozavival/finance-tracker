@@ -167,7 +167,8 @@ export function createFinanceApiMiddleware(
         try {
           if (fromDateStr) fromDate = parseLocalDate(fromDateStr);
           if (toDateStr) toDate = parseLocalDate(toDateStr);
-        } catch {
+        } catch (err) {
+          logger.warn('Failed to parse date parameters in fetchTransactions:', { fromDateStr, toDateStr, error: err });
           respond(400, { error: 'Invalid date query format. Expected YYYY-MM-DD.' }, 'invalid-date');
           return;
         }

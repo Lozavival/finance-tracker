@@ -219,8 +219,8 @@ export function PreferencesPanel() {
         { id: 'workspace-reset' },
       );
       await p;
-    } catch {
-      // handled in context
+    } catch (err) {
+      prefsLogger.error('Failed to reset workspace:', err);
     } finally {
       setResetMode(null);
     }
