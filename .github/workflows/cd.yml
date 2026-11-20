@@ -1,0 +1,116 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    name: Ensure Release Tag Exists
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      tag_name: ${{ steps.get_version.outputs.tag_name }}
+      is_prerelease: ${{ steps.get_version.outputs.is_prerelease }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version and tag name
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag if not existing
+        run: |
+          TAG="${{ steps.get_version.outputs.tag_name }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on remote/local."
+          else
+            echo "Tag $TAG does not exist. Creating and pushing tag..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+  build-release:
+    name: Build & Package Desktop (${{ matrix.os }})
+    needs: [tag-release]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup environment and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Package Electron distributions
+        run: pnpm run electron:dist
+
+      - name: Upload packaging artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ matrix.os }}
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.exe
+            release/*.blockmap
+            release/*.yml
+            release/*.yaml
+          if-no-files-found: warn
+          retention-days: 7
+
+  publish-github-release:
+    name: Create GitHub Release
+    needs: [tag-release, build-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+          merge-multiple: true
+
+      - name: Prepare release files
+        id: prepare_files
+        run: |
+          mkdir -p release-files
+          find dist-artifacts -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.exe" -o -name "*.blockmap" -o -name "*.yml" -o -name "*.yaml" \) -exec cp {} release-files/ \;
+          ls -lh release-files
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.tag-release.outputs.tag_name }}
+          files: release-files/*
+          prerelease: ${{ needs.tag-release.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          name: Release ${{ needs.tag-release.outputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -21,6 +21,24 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
 - **Unit & Integration Tests**: `npm run test:unit`, `npm run test:integration`, `npm run test:components`
 - **End-to-End Tests**: `npm run test:e2e` (`playwright test` covering all 15 user journeys across `desktop`, `tablet`, and `mobile` projects)
 - **Continuous Integration (CI)**: GitHub Actions workflow (`.github/workflows/ci.yml`) triggered on PRs to `main` or `develop`. Executes commit linting, codebase linting, application build, and the full test suite.
+- **Continuous Deployment (CD)**: GitHub Actions workflow (`.github/workflows/cd.yml`) triggered on PR merge into `main` (push to `main`). Automatically reads the version in `package.json`, creates and pushes the matching git tag (`v<version>`), builds cross-platform Electron artifacts (Linux AppImage/deb and Windows NSIS/portable), and publishes the GitHub Release (marked as pre-release for `-rc`, `-beta`, or `-alpha` versions).
+
+---
+
+## Semantic Versioning & Release Conventions
+
+Always update the application version in `package.json` according to strict **Semantic Versioning (SemVer 2.0.0)** principles:
+
+- **Format**: `MAJOR.MINOR.PATCH` (e.g. `1.0.0`) or `MAJOR.MINOR.PATCH-PRERELEASE` (e.g. `1.0.0-rc.1`).
+- **Release Strategy (`develop` -> `main`)**:
+  - `develop`: All new ongoing development and feature branches land here first.
+  - `main`: Every PR merged into `main` constitutes a formal release.
+  - When cutting a release, prepare a PR from `develop` to `main` (or a dedicated release PR) that updates `version` in `package.json`.
+- **Patch Bumps (`1.0.0` -> `1.0.1`)**: Backward-compatible bug fixes, performance improvements, or minor non-breaking UI adjustments.
+- **Minor Bumps (`1.0.0` -> `1.1.0`)**: Backward-compatible new features or capabilities (e.g. adding new reports, optional cloud/adapter sync, new account categories) where existing SQLite schemas and databases continue to operate without breaking.
+- **Major Bumps (`1.0.0` -> `2.0.0`)**: Incompatible changes, breaking schema alterations requiring destructive migration or manual reset, or public contract breaks.
+- **Pre-releases (`1.0.0-rc.1`, `1.0.0-beta.1`)**: Used prior to a major/minor milestone release for candidate testing and qualification.
+- **Release Invariant**: When preparing a release PR to `main`, bump the version in `package.json` and commit with a standard release message (e.g., `chore(release): bump version to 1.0.0-rc.1`). Upon merging the PR into `main`, the CD pipeline (`.github/workflows/cd.yml`) automatically derives the release tag (`v<version>`), pushes the tag, packages cross-platform desktop binaries, and publishes the GitHub Release.
 
 ---
 
