@@ -46,7 +46,7 @@ React 18 + Vite 6 + Tailwind CSS v4 + TypeScript personal finance and cash flow 
   - **Execution**: Pass multiple `-m` flags (e.g., `git commit -m "<header>" -m "<body>"`) so Git generates clean paragraph breaks.
 
 ### Documentation Generation (`app-doc-generation` Skill)
-- **Always activate when creating or updating app documentation**: When writing, updating, or standardizing architecture, flow, interface, state, or specification documentation artifacts (`docs/overview.md`, `docs/flows.md`, `docs/interfaces.md`, `docs/states.md`, `docs/spec.md`), consult and follow the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill to maintain structural consistency, checklist validation, and reference template alignment.
+- **Always activate when creating or updating app documentation**: When writing, updating, or standardizing flow, interface, specification, data model, or test documentation artifacts (`docs/flows.md`, `docs/interfaces.md`, `docs/spec.md`, `docs/data-model.md`, `docs/testing.md`), consult and follow the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill to maintain structural consistency, checklist validation, and reference template alignment.
 
 ---
 
@@ -207,6 +207,27 @@ src/
   - Payload Validation Warnings: Log full Zod issue details when RPC validation fails.
 - **Relative Imports in Shared Domain Engines**:
   - Modules in `src/app/data/` imported directly or indirectly by server code (e.g. `currency.ts`, `settings.ts`) must use relative paths when importing logger utilities (`../lib/logger`), as Node evaluates `vite.config.ts` prior to alias resolution.
+
+---
+
+## Feature & Bug-Fix Definition of Done (Code + Tests + Docs Protocol)
+
+Every code change—whether a new feature, enhancement, refactor, or bug fix—must treat **implementation, automated tests, and documentation** as a single atomic unit of work. A task is **not complete** until all three are synchronized:
+
+1. **Implementation & Verification**:
+   - Implement the feature or fix adhering to domain, design system, and architectural rules.
+   - Run `npm run lint` and `npm run build` to verify zero TypeScript, ESLint, or bundle regressions.
+2. **Mandatory Test Coverage (`tests/`)**:
+   - **New Features / Enhancements**: Write new unit, integration, component, or E2E tests covering the added behavior and its edge cases.
+   - **Bug Fixes**: Always add a regression test that reproduces the bug and proves the fix, and update any existing tests affected by intentional behavioral changes.
+   - Run the relevant test suites (`npm run test:unit`, `npm run test:integration`, `npm run test:components`, `npm run test:e2e`) to confirm 100% passing status.
+3. **Mandatory Living Documentation Synchronization (`docs/` & `README.md`)**:
+   - **Never allow documentation to drift behind code.** Whenever a change affects system behavior, inspect and update the corresponding documentation artifacts in the same task (consulting the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill):
+     - **[`docs/spec.md`](docs/spec.md)**: Add, update, or remove business rules (`BR-###`) whenever validation rules, calculations, thresholds, limits, or domain invariants change.
+     - **[`docs/flows.md`](docs/flows.md)**: Update step-by-step user flows (`Flow A`–`Flow U`) or `Exceptional & Edge Flows` whenever UI journeys, dialog behaviors, or state transitions change.
+     - **[`docs/interfaces.md`](docs/interfaces.md)**: Update the external interfaces table whenever environment variables, database files, HTTP endpoints/query params, Electron IPC channels, or `localStorage` keys are added or modified.
+     - **[`docs/data-model.md`](docs/data-model.md)**: Update the ER diagram, table definitions, or index specifications whenever `src/db/schema.ts` or `src/db/client.ts` (`SCHEMA_DDL`) changes.
+     - **[`docs/testing.md`](docs/testing.md)**: Update the test suite inventory and traceability tables whenever test files are added, renamed, or removed, or when test harness configurations change.
 
 ---
 

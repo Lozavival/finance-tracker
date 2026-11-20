@@ -17,6 +17,7 @@ The user interface was originally developed from the [Lindgo – Futuristic Fint
 
 ## Table of Contents
 
+- [Documentation](#documentation)
 - [Key Features](#key-features)
     - [Dashboard & Analytics](#dashboard--analytics)
     - [Transaction Management & Installments](#transaction-management--installments)
@@ -37,6 +38,18 @@ The user interface was originally developed from the [Lindgo – Futuristic Fint
 - [Design System & Theming](#design-system--theming)
 - [Code Quality & Conventions](#code-quality--conventions)
 - [Attributions & Acknowledgments](#attributions--acknowledgments)
+
+---
+
+## Documentation
+
+Comprehensive project documentation is maintained under the [`docs/`](docs/) directory:
+
+- [**Data Model & Schema**](docs/data-model.md): SQLite relational schema, entity-relationship diagram, FTS5 trigram triggers, and 90-day windowed balance rollup mechanics.
+- [**User Flows**](docs/flows.md): Step-by-step user journeys and operational flows across all application capabilities.
+- [**External Interfaces**](docs/interfaces.md): External boundaries catalog including environment variables, database files, HTTP endpoints, desktop IPC channels, and local storage keys.
+- [**Business Rules**](docs/spec.md): Formal business constraints, calculation invariants, and domain rules.
+- [**Test Suite Reference**](docs/testing.md): Multi-tiered testing architecture (`node`, `happy-dom`, Playwright multi-viewport), test helpers, and traceability matrices.
 
 ---
 
@@ -299,7 +312,7 @@ Finance Tracker features a dark-mode-first aesthetic with luminous cyan, violet,
 - **Git Commit Standards**: Enforced with [Conventional Commits](https://www.conventionalcommits.org/) via Husky and Commitlint (`feat:`, `fix:`, `refactor:`, `chore:`, etc.).
 - **Linting & Formatting**: Clean code standards maintained via ESLint 9 flat config and Prettier.
 - **Continuous Integration**: GitHub Actions workflow (`.github/workflows/ci.yml`) runs on PRs targeting `main` and `develop` to validate commits, lint the codebase, compile the production build, and execute the full test suite.
-- **Documentation Standards**: Application architecture, user flows, interfaces, state models, and business specifications are maintained under `docs/` using standardized templates and validated checklists via the `app-doc-generation` agent skill.
+- **Documentation Standards**: Application architecture, data models, user flows, external interfaces, business rules, and test suites are maintained under `docs/` using standardized templates and validated checklists via the `app-doc-generation` agent skill.
 
 ---
 
