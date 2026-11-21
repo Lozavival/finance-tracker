@@ -71,6 +71,9 @@ Always update the application version in `package.json` according to strict **Se
   - **`docs/interfaces.md` (External Boundaries)**: Catalogs all external I/O (environment variables, files, HTTP endpoints, IPC channels, storage keys).
   - **`docs/data-model.md` & `docs/testing.md` (Technical Reference)**: Document the relational database schema and automated test suite traceability.
 
+### PR Generation (`pull-request-generator` Skill)
+- **Always activate when drafting PRs**: When generating pull request titles or descriptions for feature branches, consult and follow the [pull-request-generator](.agents/skills/pull-request-generator/SKILL.md) skill to inspect branch commit logs and format standardized PR descriptions wrapped in code blocks without redundant commit lists.
+
 ---
 
 ## Architecture & Code Structure
