@@ -3,14 +3,23 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 // Global mock for fetch to prevent network calls in DOM tests
-vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-  Promise.resolve(
+vi.spyOn(globalThis, 'fetch').mockImplementation(input => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+  if (url.includes('/releases')) {
+    return Promise.resolve(
+      new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+  }
+  return Promise.resolve(
     new Response(JSON.stringify({ result: 'success', rates: { BRL: 5.5 } }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     }),
-  ),
-);
+  );
+});
 
 afterEach(() => {
   cleanup();

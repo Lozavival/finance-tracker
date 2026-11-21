@@ -100,7 +100,7 @@ src/
     │   ├── accounts/             # Account lists, balance projections & statement views
     │   ├── transactions/         # TransactionsPage, filters, SearchFilter, RecurringRulesDialog
     │   ├── goals/                # BudgetOverview, category targets, and goals panels
-    │   └── settings/             # Workspace preferences, payment methods, transaction types, NotificationsPanel
+    │   └── settings/             # Workspace preferences, AppUpdatesCard, payment methods, transaction types, NotificationsPanel
     ├── components/
     │   ├── primitives/           # Primitive UI components (Radix UI / shadcn/ui)
     │   └── shared/               # Reusable domain components (ErrorBoundary, ErrorFallback, OfflineBanner, CategoryChip, HighlightedText, DateField, OptionSelect, ColorPicker, IconPicker, transaction-dialogs/)
@@ -124,9 +124,11 @@ src/
     │   ├── repository/           # FinanceRepository interface, HTTP & in-memory implementations
     │   ├── search.ts             # Full-history search normalization, tokenization, FTS expressions & result grouping
     │   ├── settings.ts           # Workspace setting interfaces and helper methods
-    │   └── transactions.ts       # Transaction entities, types, and helper methods
+    │   ├── transactions.ts       # Transaction entities, types, and helper methods
+    │   └── updates.ts            # SemVer 2.0.0 comparator & GitHub Releases update checker engine
     ├── i18n/                     # Localization context, bilingual strings (en, pt), formatters
     └── state/
+        ├── AppUpdatesContext.tsx # Application update checker state, startup check & channel preferences
         ├── FinanceContext.tsx    # Core finance entity cache & repository synchronization
         ├── NotificationsContext.tsx # Central notification & toast dispatch (notify, activity log, sync error coalescing)
         ├── notificationStorage.ts # LocalStorage serialization for notification preferences & activity

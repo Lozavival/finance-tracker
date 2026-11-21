@@ -181,11 +181,13 @@ Comprehensive project documentation is maintained under the [`docs/`](docs/) dir
 │       │   ├── recurring.ts        # Recurring transaction projection engine
 │       │   ├── repository/         # FinanceRepository interface & HTTP/in-memory implementations
 │       │   ├── settings.ts         # Category and payment method configuration models
-│       │   └── transactions.ts     # Transaction entities, types, and helper methods
+│       │   ├── transactions.ts     # Transaction entities, types, and helper methods
+│       │   └── updates.ts          # SemVer 2.0.0 comparator & GitHub Releases update checker
 │       ├── i18n/                   # Bilingual internationalization (en-US, pt-BR)
 │       │   ├── I18nContext.tsx     # Locale and currency React context & formatters
 │       │   └── locales/            # Localization dictionary files (en.ts, pt.ts)
 │       └── state/                  # State management
+│           ├── AppUpdatesContext.tsx # Update checker state & release channel preferences
 │           ├── FinanceContext.tsx  # Central finance repository state & synchronization
 │           ├── SettingsContext.tsx # Workspace settings React context
 │           └── settingsReducer.ts  # Reducer for workspace configurations

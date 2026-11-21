@@ -350,6 +350,25 @@ This document describes the operational user journeys of the Finance Tracker app
 6. The newly seeded snapshot rehydrates client state immediately without requiring a full browser refresh.
 7. Application is ready for new use with the restored dataset.
 
+## Flow V: Checking for Application Updates and Configuring Release Channel (Desktop Mode)
+
+**When it happens:** Desktop (Electron) application starts up, or user manually checks for updates or switches their release channel preference in Settings.
+
+**Goal:** Notify the desktop user when a newer version of Finance Tracker is available on GitHub Releases according to their chosen stability channel (Full Releases Only vs. Include Pre-releases).
+
+**Implementation:** `AppUpdatesProvider.initStartupCheck` → `AppUpdatesContext.checkForUpdates` → `updates.checkForAppUpdates` → `updates.selectLatestRelease` → `NotificationsContext.notify` → `AppUpdatesCard.render`
+
+1. On desktop application startup (`window.electronAPI?.isElectron`), the update checker queries the GitHub Releases API in the background using the user's persisted release channel preference (defaulting to "Full Releases Only"). Note: Both the background check and the "Application Updates" card are omitted in the web version:
+   - If the network is offline or the API is unreachable during startup, the check fails silently without interrupting the user.
+   - If a newer release matching the channel is found, an informational toast notification with a "View Release" action appears and logs an entry in the Notification Center Activity tab.
+2. User navigates to `/settings` → "Preferences" tab and locates the "Application Updates" card.
+3. Under "Release Channel", user chooses between "Full Releases Only" (default, ignoring `-rc`, `-beta`, and `-alpha` releases) or "Include Pre-releases":
+   - Toggling the channel persists the preference immediately to local storage (and desktop preferences in Electron) and re-evaluates cached releases against the selected channel.
+4. User clicks "Check for Updates":
+   - If a newer version is available, the status badge updates to show the available version alongside a "View & Download on GitHub" button and triggers an update toast → **END**.
+   - If the current version is already the latest, the status badge displays "Up to date" and confirms with a toast → **END**.
+   - If the manual check fails due to network disconnection or API error, an inline error alert and error toast are displayed → **END**.
+
 ## Exceptional & Edge Flows
 
 - **Reconnecting After Offline Disconnection & Sync Recovery**: When network connectivity drops or the server returns errors during mutations, the application catches the error, coalesces duplicate notifications to prevent spamming, and renders an offline banner. The app continues in cached mode until network restores, re-fetching a fresh 90-day workspace snapshot.

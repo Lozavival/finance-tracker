@@ -36,6 +36,7 @@ import { useTheme } from 'next-themes';
 import { type SupportedLocale, type SupportedCurrency } from '@/i18n/types';
 import { fetchLiveExchangeRate, getExchangeRateErrorDetails } from '@/data/currency';
 import { logger } from '@/lib/logger';
+import { AppUpdatesCard } from './AppUpdatesCard';
 
 const prefsLogger = logger.child('PreferencesPanel');
 
@@ -495,6 +496,9 @@ export function PreferencesPanel() {
             </div>
           </div>
         </Card>
+
+        {/* Application Updates Card */}
+        <AppUpdatesCard />
       </div>
 
       {/* Live Preview Card */}

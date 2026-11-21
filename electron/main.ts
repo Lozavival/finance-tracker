@@ -144,6 +144,7 @@ export interface DesktopPreferences {
   theme?: 'system' | 'light' | 'dark';
   locale?: string;
   currency?: string;
+  includePrereleases?: boolean;
 }
 
 const DEFAULT_DESKTOP_PORT = 24180;
@@ -314,6 +315,8 @@ ipcMain.handle('set-desktop-preference', (_event, key: string, value: unknown) =
     saveDesktopPreferences({ currency: value });
   } else if (key === 'theme' && (value === 'system' || value === 'light' || value === 'dark')) {
     saveDesktopPreferences({ theme: value });
+  } else if (key === 'includePrereleases' && typeof value === 'boolean') {
+    saveDesktopPreferences({ includePrereleases: value });
   }
 });
 

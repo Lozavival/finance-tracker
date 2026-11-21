@@ -3,6 +3,7 @@ import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { I18nProvider } from '@/i18n';
 import { NotificationsProvider } from '@/state/NotificationsContext';
+import { AppUpdatesProvider } from '@/state/AppUpdatesContext';
 import { SettingsProvider } from '@/state/SettingsContext';
 import { FinanceProvider } from '@/state/FinanceContext';
 import { InMemoryFinanceRepository, setFinanceRepository } from '@/data/repository';
@@ -30,9 +31,11 @@ export function renderWithProviders(ui: ReactElement, options: ExtendedRenderOpt
       <MemoryRouter initialEntries={[route]}>
         <I18nProvider>
           <NotificationsProvider>
-            <SettingsProvider initialSettings={initialSettings}>
-              <FinanceProvider>{children}</FinanceProvider>
-            </SettingsProvider>
+            <AppUpdatesProvider>
+              <SettingsProvider initialSettings={initialSettings}>
+                <FinanceProvider>{children}</FinanceProvider>
+              </SettingsProvider>
+            </AppUpdatesProvider>
           </NotificationsProvider>
         </I18nProvider>
       </MemoryRouter>

@@ -133,7 +133,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         if (prefsRef.current.successToasts) {
           toast.success(t(key, opts?.params), {
             id: opts?.id,
-            duration: DEFAULT_TOAST_DURATION,
+            duration: opts?.durationMs ?? DEFAULT_TOAST_DURATION,
+            action: opts?.action
+              ? {
+                  label: opts.action.label,
+                  onClick: opts.action.onClick,
+                }
+              : undefined,
           });
         }
       },
@@ -145,7 +151,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         if (prefsRef.current.successToasts) {
           toast.info(t(key, opts?.params), {
             id: opts?.id,
-            duration: DEFAULT_TOAST_DURATION,
+            duration: opts?.durationMs ?? DEFAULT_TOAST_DURATION,
+            action: opts?.action
+              ? {
+                  label: opts.action.label,
+                  onClick: opts.action.onClick,
+                }
+              : undefined,
           });
         }
       },

@@ -11,6 +11,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage';
 import { GoalsPage } from '@/features/goals/GoalsPage';
 import { Toaster } from '@/components/primitives/sonner';
 import { NotificationsProvider } from '@/state/NotificationsContext';
+import { AppUpdatesProvider } from '@/state/AppUpdatesContext';
 import { SettingsProvider } from '@/state/SettingsContext';
 import { FinanceProvider } from '@/state/FinanceContext';
 import { I18nProvider } from '@/i18n';
@@ -71,12 +72,14 @@ export default function App() {
     <BrowserRouter>
       <I18nProvider>
         <NotificationsProvider>
-          <SettingsProvider>
-            <FinanceProvider>
-              <AppLayout />
-              <Toaster position="bottom-right" visibleToasts={3} closeButton />
-            </FinanceProvider>
-          </SettingsProvider>
+          <AppUpdatesProvider>
+            <SettingsProvider>
+              <FinanceProvider>
+                <AppLayout />
+                <Toaster position="bottom-right" visibleToasts={3} closeButton />
+              </FinanceProvider>
+            </SettingsProvider>
+          </AppUpdatesProvider>
         </NotificationsProvider>
       </I18nProvider>
     </BrowserRouter>

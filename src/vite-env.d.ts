@@ -1,9 +1,12 @@
 /// <reference types="vite/client" />
 
+declare const __APP_VERSION__: string | undefined;
+
 interface DesktopPreferences {
   theme?: 'system' | 'light' | 'dark';
   locale?: string;
   currency?: string;
+  includePrereleases?: boolean;
 }
 
 interface ElectronWindowAPI {

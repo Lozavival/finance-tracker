@@ -4,6 +4,7 @@ export interface DesktopPreferences {
   theme?: 'system' | 'light' | 'dark';
   locale?: string;
   currency?: string;
+  includePrereleases?: boolean;
 }
 
 export interface ElectronWindowAPI {
