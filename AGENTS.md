@@ -65,6 +65,11 @@ Always update the application version in `package.json` according to strict **Se
 
 ### Documentation Generation (`app-doc-generation` Skill)
 - **Always activate when creating or updating app documentation**: When writing, updating, or standardizing flow, interface, specification, data model, or test documentation artifacts (`docs/flows.md`, `docs/interfaces.md`, `docs/spec.md`, `docs/data-model.md`, `docs/testing.md`), consult and follow the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill to maintain structural consistency, checklist validation, and reference template alignment.
+- **Separation of Concerns & Tone Across Artifacts**:
+  - **`docs/flows.md` (User Journeys)**: Must strictly read as a plain, non-technical sequence of user actions and observable outcomes (`1. User clicks... 2. A dialog opens...`). Keep code identifiers confined exclusively to the `**Implementation:**` metadata line; never leak implementation mechanics, component/function/variable names, data structures, or technology details into the numbered steps or edge flows.
+  - **`docs/spec.md` (Business Rules)**: Captures formal domain constraints, calculation invariants, and validation rules (`BR-###`).
+  - **`docs/interfaces.md` (External Boundaries)**: Catalogs all external I/O (environment variables, files, HTTP endpoints, IPC channels, storage keys).
+  - **`docs/data-model.md` & `docs/testing.md` (Technical Reference)**: Document the relational database schema and automated test suite traceability.
 
 ---
 
@@ -244,7 +249,7 @@ Every code change—whether a new feature, enhancement, refactor, or bug fix—m
 3. **Mandatory Living Documentation Synchronization (`docs/` & `README.md`)**:
    - **Never allow documentation to drift behind code.** Whenever a change affects system behavior, inspect and update the corresponding documentation artifacts in the same task (consulting the [app-doc-generation](.agents/skills/app-doc-generation/SKILL.md) skill):
      - **[`docs/spec.md`](docs/spec.md)**: Add, update, or remove business rules (`BR-###`) whenever validation rules, calculations, thresholds, limits, or domain invariants change.
-     - **[`docs/flows.md`](docs/flows.md)**: Update step-by-step user flows (`Flow A`–`Flow U`) or `Exceptional & Edge Flows` whenever UI journeys, dialog behaviors, or state transitions change.
+     - **[`docs/flows.md`](docs/flows.md)**: Update step-by-step user flows (`Flow A`–`Flow W`) or `Exceptional & Edge Flows` whenever UI journeys, dialog behaviors, or state transitions change. Enforce a strict **plain sequence-of-actions tone**: describe what the user does and what the application visibly responds with in everyday product language, leaving all code symbols strictly in the `**Implementation:**` metadata line and technical/domain rules in `spec.md` or `interfaces.md`.
      - **[`docs/interfaces.md`](docs/interfaces.md)**: Update the external interfaces table whenever environment variables, database files, HTTP endpoints/query params, Electron IPC channels, or `localStorage` keys are added or modified.
      - **[`docs/data-model.md`](docs/data-model.md)**: Update the ER diagram, table definitions, or index specifications whenever `src/db/schema.ts` or `src/db/client.ts` (`SCHEMA_DDL`) changes.
      - **[`docs/testing.md`](docs/testing.md)**: Update the test suite inventory and traceability tables whenever test files are added, renamed, or removed, or when test harness configurations change.

@@ -86,7 +86,7 @@ This document describes the operational user journeys of the Finance Tracker app
 
 **When it happens:** User transfers money between two internal accounts (e.g., checking to savings, ATM cash withdrawal, or cross-currency transfer).
 
-**Goal:** Atomically generate balanced dual reciprocal legs (`expense` on source account, `income` on target account) linked by a shared `transferId`.
+**Goal:** Atomically generate balanced dual reciprocal legs (an outgoing expense on the source account and an incoming credit on the destination account) linked as a single transfer pair.
 
 **Implementation:** `useTransactionActions.openAddDialog` → `TransactionFormDialog.setTransfer` → `transactions.buildTransferLegs` → `FinanceContext.saveTransactionDraft` → `SqliteRepository.saveTransactionDraft`
 
@@ -96,10 +96,10 @@ This document describes the operational user journeys of the Finance Tracker app
 4. User enters amount to send; if source and destination use different currencies (e.g., USD to BRL), user also enters amount to receive, displaying the calculated exchange rate notice (e.g., `1 USD = R$ 5.50`).
 5. If any required amount is missing or non-positive, validation highlights the invalid field → **END**.
 6. User clicks "Transfer"; two reciprocal transactions are generated:
-   - Outgoing leg: marked as `expense`, tagged with type `transfer`.
-   - Incoming leg: marked as `income`, tagged with type `transfer`.
-   - Both legs share a unique `transferId`.
-7. The repository commits both legs inside an atomic transaction.
+   - Outgoing leg: recorded as an expense under the `transfer` category.
+   - Incoming leg: recorded as an income under the `transfer` category.
+   - Both legs are linked as a single transfer pair.
+7. Both legs are saved together in an atomic transaction.
 8. The source account balance decreases, destination account balance increases, and net worth remains unchanged.
 9. Editing or deleting either leg automatically synchronizes both reciprocal legs.
 
@@ -151,7 +151,7 @@ This document describes the operational user journeys of the Finance Tracker app
 2. The account dialog prompts for account name, account kind (`Checking`, `Savings`, `Cash`), initials, color accent, and enabled currencies (`USD`, `BRL`).
 3. User enters initial opening balance for each enabled currency pocket and the account opening date.
 4. If a credit card is attached to the account, the dialog prompts for credit card details:
-   - User specifies card name, `closingDay` (1–31), `dueDay` (1–31), and total credit limit.
+   - User specifies card name, statement closing day (1–31), payment due day (1–31), and total credit limit.
 5. If required fields are missing, the account name duplicates an existing account, or closing/due days are out of range, inline validation errors are displayed → **END**.
 6. User clicks "Add account"; local state updates and saves the record to database.
 7. The new account tile appears in `/accounts` with current balance, initials badge, and action menu.
@@ -352,22 +352,22 @@ This document describes the operational user journeys of the Finance Tracker app
 
 ## Flow V: Checking for Application Updates and Configuring Release Channel (Desktop Mode)
 
-**When it happens:** Desktop (Electron) application starts up, or user manually checks for updates or switches their release channel preference in Settings.
+**When it happens:** The desktop application starts up, or the user manually checks for updates or switches their release channel preference in Settings.
 
 **Goal:** Notify the desktop user when a newer version of Finance Tracker is available on GitHub Releases according to their chosen stability channel (Full Releases Only vs. Include Pre-releases).
 
 **Implementation:** `AppUpdatesProvider.initStartupCheck` → `AppUpdatesContext.checkForUpdates` → `updates.checkForAppUpdates` → `updates.selectLatestRelease` → `NotificationsContext.notify` → `AppUpdatesCard.render`
 
-1. On desktop application startup (`window.electronAPI?.isElectron`), the update checker queries the GitHub Releases API in the background using the user's persisted release channel preference (defaulting to "Full Releases Only"). Note: Both the background check and the "Application Updates" card are omitted in the web version:
-   - If the network is offline or the API is unreachable during startup, the check fails silently without interrupting the user.
-   - If a newer release matching the channel is found, an informational toast notification with a "View Release" action appears and logs an entry in the Notification Center Activity tab.
+1. On desktop application startup, the update checker queries for new releases in the background using the user's saved release channel preference (defaulting to "Full Releases Only"). Note: Both the background check and the "Application Updates" card are omitted in the web version:
+   - If the network is offline or the release server is unreachable during startup, the check fails silently without interrupting the user.
+   - If a newer release matching the channel is found, a notification with a "View Release" action appears and is recorded in the Notification Center Activity tab.
 2. User navigates to `/settings` → "Preferences" tab and locates the "Application Updates" card.
-3. Under "Release Channel", user chooses between "Full Releases Only" (default, ignoring `-rc`, `-beta`, and `-alpha` releases) or "Include Pre-releases":
-   - Toggling the channel persists the preference immediately to local storage (and desktop preferences in Electron) and re-evaluates cached releases against the selected channel.
+3. Under "Release Channel", user chooses between "Full Releases Only" (default, ignoring pre-release versions) or "Include Pre-releases":
+   - Switching the channel saves the preference immediately and re-evaluates available releases against the selected channel.
 4. User clicks "Check for Updates":
-   - If a newer version is available, the status badge updates to show the available version alongside a "View & Download on GitHub" button and triggers an update toast → **END**.
-   - If the current version is already the latest, the status badge displays "Up to date" and confirms with a toast → **END**.
-   - If the manual check fails due to network disconnection or API error, an inline error alert and error toast are displayed → **END**.
+   - If a newer version is available, the status badge updates to show the new version alongside a "View & Download on GitHub" button and displays an update notification → **END**.
+   - If the current version is already the latest, the status badge displays "Up to date" and confirms with a notification → **END**.
+   - If the manual check fails due to network disconnection or service error, an inline error message and error notification are displayed → **END**.
 
 ## Flow W: Navigating and Collapsing the Application Sidebar
 
@@ -380,7 +380,7 @@ This document describes the operational user journeys of the Finance Tracker app
 1. On desktop, the navigation sidebar appears expanded by default, displaying icons, page labels, and a bottom toggle button with the `Ctrl+B` / `⌘B` shortcut hint.
 2. User clicks the "Collapse sidebar" button at the bottom of the sidebar or presses `Ctrl+B` / `⌘B`:
    - The sidebar collapses into an icon-only rail, expanding the main content area and showing page name tooltips when hovering over each icon.
-   - The collapsed preference is saved automatically and persists across page reloads and application restarts.
+   - The collapsed preference is saved automatically and persists across sessions.
 3. User clicks the "Expand sidebar" button or presses `Ctrl+B` / `⌘B` again to restore the full sidebar with page labels.
 4. On smaller screens (tablet and mobile), navigation is accessed through the top-left menu button or by pressing `Ctrl+B` / `⌘B`, which opens and closes a slide-over navigation drawer; selecting a page automatically closes the drawer.
 
@@ -389,9 +389,9 @@ This document describes the operational user journeys of the Finance Tracker app
 - **Reconnecting After Offline Disconnection & Sync Recovery**: When network connectivity drops or the server returns errors during mutations, the application catches the error, coalesces duplicate notifications to prevent spamming, and renders an offline banner. The app continues in cached mode until network restores, re-fetching a fresh 90-day workspace snapshot.
 - **Debounced Remote Log Ingestion**: When unhandled exceptions or client errors occur, the client logger buffers events and debounces forwarding to the server logging endpoint. If the remote logging endpoint fails or is unreachable, the client catches the error silently to prevent recursive crash-reporting loops.
 - **Rapid Search Query Cancellation**: When users rapidly type into the search bar, preceding in-flight search requests are immediately aborted, preventing stale responses from overwriting newer search results.
-- **Corrupted LocalStorage Recovery**: When reading preferences, activity logs, or alert dismissal states from browser storage, all parsing is guarded against errors. If corrupted JSON is detected, it resets to safe production defaults and logs a warning without throwing fatal initialization exceptions.
+- **Corrupted LocalStorage Recovery**: When reading preferences, activity logs, or alert dismissal states from browser storage, all parsing is guarded against errors. If corrupted data is detected, it resets to safe production defaults and logs a warning without throwing fatal initialization exceptions.
 - **Month-End Date Clamping in Leap Years**: When recurring rules or installment purchases fall on the 29th, 30th, or 31st, month addition dynamically verifies days in the target month (e.g., Jan 31 $\rightarrow$ Feb 28 on standard years, Feb 29 on leap years, Mar 31, Apr 30), preventing illegal calendar dates.
-- **Credit Card Billing Rollover**: When credit card `dueDay` is numerically less than or equal to `closingDay` (e.g., closing day 20, due day 5), the statement closing engine automatically rolls the payment due date into the following calendar month, preventing due dates from being recorded prior to invoice closing dates.
+- **Credit Card Billing Rollover**: When a credit card's payment due day is numerically less than or equal to its statement closing day (e.g., closing day 20, due day 5), the statement closing engine automatically rolls the payment due date into the following calendar month, preventing due dates from being recorded prior to invoice closing dates.
 - **Pending Undo Flush on Page Unload**: If a user deletes a transaction and navigates away or closes the browser tab before the 6-second undo timer elapses, the page unload listener immediately cancels the timer and synchronously commits the deferred deletion so changes are not lost.
 - **System Entity Immutability Guard**: If a user or API consumer attempts to dispatch a delete action targeting protected system records (`transfer` category, `cash` payment method, or `credit-card` method), the validation layer rejects the operation.
 - **Live Rate Fallback on Fetch Failure**: When the live exchange rate fetcher fails due to timeout or network disconnection, the application retains the last confirmed exchange rate or manual override, annotating the rate status badge with an error notice without interrupting user transactions.

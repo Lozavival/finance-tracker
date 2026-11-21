@@ -21,7 +21,9 @@ Each main flow must begin with:
 ## Body Rules
 
 - Use numbered steps.
-- Describe the user-visible or system-relevant sequence, not every low-level helper call.
+- Maintain a **plain sequence-of-actions tone**: write each flow as a simple, non-technical narrative of user actions and observable application responses (e.g., "User clicks...", "A confirmation dialog opens...", "The table updates...").
+- Keep all code symbols, component names, function names, field identifiers, and technical implementation details strictly inside the `Implementation:` metadata line—never inside the numbered steps or edge flows.
+- Describe the user-visible or system-relevant sequence, not low-level mechanics, database internals, or styling details.
 - Mention branching only when it changes the behavior or outcome.
 - When a step ends the flow early, end the sentence with `→ **END**`.
 - When a step hands control to another documented flow, end the sentence with `→ Proceed to **Flow X: Flow Name**.`.
@@ -30,17 +32,17 @@ Each main flow must begin with:
 ## Edge Flow Rules
 
 - Use bullet points in `Exceptional & Edge Flows`.
-- Cover failures, race conditions, unavailable dependencies, retries, debounce behavior, and background-triggered flows when relevant.
+- Cover failures, race conditions, unavailable dependencies, retries, debounce behavior, and background-triggered flows in the same plain, product-behavior language without code identifiers.
 
 ## Update Rules
 
-- If an existing flow document already contains valid steps, preserve them.
-- Rewrite headings and metadata so every flow follows the same shape.
+- If an existing flow document already contains valid steps, preserve its wording, structure, and plain sequence-of-actions tone, making only minimal targeted edits needed for accuracy.
+- Rewrite headings and metadata only when needed so every flow follows the same shape.
 
 ## Completion Checklist
 
 - Every main flow has `When it happens:`, `Goal:`, and `Implementation:` sections.
 - The flow names are meaningful, not generic placeholders.
-- Steps reflect observable behavior and important side effects.
+- Steps read as a clean, non-technical sequence of actions and observable outcomes, with zero code identifiers or implementation jargon leaked into the prose.
 - Branches use the shared `→ **END**` and `→ Proceed to **Flow X: Flow Name**.` conventions.
 - Exceptional behavior is separated from the happy path.

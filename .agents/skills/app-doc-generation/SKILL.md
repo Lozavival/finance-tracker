@@ -1,7 +1,7 @@
 ---
 name: app-doc-generation
-description: 'Generate or update application documentation from source code. Use for flows, interfaces, states, and business rules. Works for writing docs from scratch and for bringing existing docs back to a shared gold standard.'
-argument-hint: 'Artifact: flows | interfaces | spec. Optional mode: create | update. Example: "Generate the flows artifact for the app".'
+description: 'Generate or update application documentation from source code. Use for flows, interfaces, business rules, data models, and test suites. Works for writing docs from scratch and for bringing existing docs back to a shared gold standard.'
+argument-hint: 'Artifact: flows | interfaces | spec | data-model | testing. Optional mode: create | update. Example: "Generate the flows artifact for the app".'
 user-invocable: true
 ---
 
@@ -19,6 +19,8 @@ This skill is portable across repositories:
 - `flows`
 - `interfaces`
 - `spec`
+- `data-model`
+- `testing`
 
 ## Inputs
 
@@ -54,9 +56,13 @@ This skill is portable across repositories:
 - [flows guide](./references/flows.md)
 - [interfaces guide](./references/interfaces.md)
 - [business rules guide](./references/spec.md)
+- [data model guide](./references/data-model.md)
+- [testing guide](./references/testing.md)
 
 ## Templates
 
 - [flows template](./assets/templates/flows.md)
 - [interfaces template](./assets/templates/interfaces.md)
 - [business rules template](./assets/templates/spec.md)
+- [data model template](./assets/templates/data-model.md)
+- [testing template](./assets/templates/testing.md)
