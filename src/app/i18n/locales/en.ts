@@ -64,6 +64,8 @@ export const en = {
     primary: 'Primary Navigation',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
+    collapseSidebar: 'Collapse sidebar',
+    expandSidebar: 'Expand sidebar',
     dashboard: 'Dashboard',
     transactions: 'Transactions',
     accounts: 'Accounts',

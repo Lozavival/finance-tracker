@@ -59,6 +59,27 @@ test.describe('Flow 15: Responsive Layout & Multi-Viewport Verification', () => 
     await page.setViewportSize({ width: 1280, height: 720 });
     await expect(page.locator('aside nav')).toBeVisible();
     await expect(page.getByRole('button', { name: /open menu|abrir menu/i })).toHaveCount(0);
+
+    // 3. Desktop sidebar collapse & expand via button and Ctrl+B shortcut
+    const aside = page.locator('aside');
+    await expect(aside).toHaveAttribute('data-collapsed', 'false');
+    await expect(aside).toHaveCSS('width', '256px');
+
+    const collapseBtn = aside.getByRole('button', { name: /collapse sidebar|recolher barra lateral/i });
+    await collapseBtn.click();
+    await expect(aside).toHaveAttribute('data-collapsed', 'true');
+    await expect(aside).toHaveCSS('width', '80px');
+    await expectNoHorizontalOverflow(page);
+
+    // Persists across reload
+    await page.reload();
+    await expect(aside).toHaveAttribute('data-collapsed', 'true');
+    await expect(aside).toHaveCSS('width', '80px');
+
+    // Expand via Ctrl+B shortcut
+    await page.keyboard.press('Control+b');
+    await expect(aside).toHaveAttribute('data-collapsed', 'false');
+    await expect(aside).toHaveCSS('width', '256px');
   });
 
   test('dialogs and overlays stay within bounds on 360px mobile viewports', async ({ page }) => {

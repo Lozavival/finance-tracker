@@ -1,16 +1,16 @@
-import { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/primitives/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/primitives/sheet';
 import { useI18n } from '@/i18n';
 import { SidebarNavList } from './Sidebar';
+import { useSidebar } from './SidebarContext';
 
 export function MobileNavDrawer() {
-  const [open, setOpen] = useState(false);
+  const { mobileOpen, setMobileOpen } = useSidebar();
   const { t } = useI18n();
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -28,7 +28,7 @@ export function MobileNavDrawer() {
       >
         <SheetTitle className="sr-only">{t('nav.primary')}</SheetTitle>
         <div className="pt-6 flex-1 flex flex-col overflow-y-auto">
-          <SidebarNavList onItemSelect={() => setOpen(false)} />
+          <SidebarNavList onItemSelect={() => setMobileOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>

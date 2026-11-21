@@ -369,6 +369,21 @@ This document describes the operational user journeys of the Finance Tracker app
    - If the current version is already the latest, the status badge displays "Up to date" and confirms with a toast → **END**.
    - If the manual check fails due to network disconnection or API error, an inline error alert and error toast are displayed → **END**.
 
+## Flow W: Navigating and Collapsing the Application Sidebar
+
+**When it happens:** User navigates between application sections or toggles the navigation sidebar using the bottom toggle button or the `Ctrl+B` / `⌘B` keyboard shortcut.
+
+**Goal:** Switch between application views while allowing desktop users to reclaim screen space with an icon-only sidebar and keeping mobile navigation accessible via a slide-over drawer.
+
+**Implementation:** `SidebarContext.SidebarProvider` → `Sidebar.render` / `MobileNavDrawer.render` → `AppLayout.main`
+
+1. On desktop, the navigation sidebar appears expanded by default, displaying icons, page labels, and a bottom toggle button with the `Ctrl+B` / `⌘B` shortcut hint.
+2. User clicks the "Collapse sidebar" button at the bottom of the sidebar or presses `Ctrl+B` / `⌘B`:
+   - The sidebar collapses into an icon-only rail, expanding the main content area and showing page name tooltips when hovering over each icon.
+   - The collapsed preference is saved automatically and persists across page reloads and application restarts.
+3. User clicks the "Expand sidebar" button or presses `Ctrl+B` / `⌘B` again to restore the full sidebar with page labels.
+4. On smaller screens (tablet and mobile), navigation is accessed through the top-left menu button or by pressing `Ctrl+B` / `⌘B`, which opens and closes a slide-over navigation drawer; selecting a page automatically closes the drawer.
+
 ## Exceptional & Edge Flows
 
 - **Reconnecting After Offline Disconnection & Sync Recovery**: When network connectivity drops or the server returns errors during mutations, the application catches the error, coalesces duplicate notifications to prevent spamming, and renders an offline banner. The app continues in cached mode until network restores, re-fetching a fresh 90-day workspace snapshot.

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { TopNavigation } from '@/layout/TopNavigation';
 import { Sidebar } from '@/layout/Sidebar';
+import { SidebarProvider, useSidebar } from '@/layout/SidebarContext';
 import { ElectronThemeSync } from '@/layout/ElectronThemeSync';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { TransactionsPage } from '@/features/transactions/TransactionsPage';
@@ -19,6 +20,7 @@ import { OfflineBanner } from '@/components/shared/OfflineBanner';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
 import { logger } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 
 const routerLogger = logger.child('Router');
 
@@ -32,6 +34,7 @@ function NotFoundRedirect() {
 
 function AppLayout() {
   const location = useLocation();
+  const { collapsed } = useSidebar();
 
   useEffect(() => {
     routerLogger.debug('Navigated to route:', location.pathname);
@@ -43,7 +46,12 @@ function AppLayout() {
       <TopNavigation />
       <Sidebar />
 
-      <main className="lg:ml-64 pt-16 relative min-w-0">
+      <main
+        className={cn(
+          'pt-16 relative min-w-0 transition-[margin] duration-300 ease-in-out',
+          collapsed ? 'lg:ml-20' : 'lg:ml-64',
+        )}
+      >
         <OfflineBanner />
         <div className="@container/main mx-auto w-full max-w-screen-2xl p-4 sm:p-6 lg:p-8">
           <ErrorBoundary
@@ -75,7 +83,9 @@ export default function App() {
           <AppUpdatesProvider>
             <SettingsProvider>
               <FinanceProvider>
-                <AppLayout />
+                <SidebarProvider>
+                  <AppLayout />
+                </SidebarProvider>
                 <Toaster position="bottom-right" visibleToasts={3} closeButton />
               </FinanceProvider>
             </SettingsProvider>
