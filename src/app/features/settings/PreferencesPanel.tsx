@@ -381,124 +381,6 @@ export function PreferencesPanel() {
             })}
           </div>
         </Card>
-
-        {/* Exchange Rate Management Card */}
-        <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border @5xl/main:col-span-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-theme-blue/15 text-theme-blue">
-                <ArrowLeftRight className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-lg font-medium text-foreground">{t('settings.exchangeRateTitle')}</div>
-                <div className="text-xs text-muted-foreground">{t('settings.exchangeRateDesc')}</div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleFetchLiveRate}
-                disabled={isFetchingRate}
-                className="gap-2 border-border text-foreground hover:bg-foreground/5"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRate ? 'animate-spin' : ''}`} />
-                {isFetchingRate ? t('settings.fetchingRate') : t('settings.fetchLiveRate')}
-              </Button>
-              {settings.exchangeRate?.rate !== null && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearRate}
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-3.5 h-3.5 mr-1" />
-                  {t('settings.clearRate')}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 @md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-border/40">
-            {/* Current Status */}
-            <div className="space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('common.status')}
-              </div>
-              <div className="p-4 rounded-lg bg-foreground/5 border border-border space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">
-                    {settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
-                      ? `1 USD = R$ ${settings.exchangeRate.rate.toFixed(4)}`
-                      : t('settings.rateStatusNone')}
-                  </span>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      settings.exchangeRate?.error
-                        ? 'bg-destructive/15 text-destructive border border-destructive/30'
-                        : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
-                          ? 'bg-theme-cyan/15 text-theme-cyan border border-theme-cyan/30'
-                          : 'bg-foreground/10 text-muted-foreground border border-border'
-                    }`}
-                  >
-                    {settings.exchangeRate?.error
-                      ? t('settings.rateStatusError')
-                      : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
-                        ? settings.exchangeRate.source === 'api'
-                          ? t('settings.rateStatusLive')
-                          : t('settings.rateStatusManual')
-                        : t('settings.rateStatusNone')}
-                  </span>
-                </div>
-                {settings.exchangeRate?.lastUpdated && (
-                  <div className="text-xs text-muted-foreground">
-                    {t('common.date')}: {new Date(settings.exchangeRate.lastUpdated).toLocaleString()}
-                  </div>
-                )}
-                {fetchSuccess && <div className="text-xs text-theme-green">{fetchSuccess}</div>}
-                {(fetchError || settings.exchangeRate?.error) && (
-                  <InlineAlert variant="destructive" className="mt-2">
-                    {fetchError || settings.exchangeRate?.error}
-                  </InlineAlert>
-                )}
-              </div>
-            </div>
-
-            {/* Manual Override */}
-            <div className="space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('settings.manualRate')}
-              </div>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  step="0.0001"
-                  min="0.0001"
-                  value={manualRateInput}
-                  onChange={e => setManualRateInput(e.target.value)}
-                  placeholder="5.2500"
-                  className="h-10 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
-                />
-                <Button
-                  type="button"
-                  variant="cyan"
-                  onClick={handleSaveManualRate}
-                  disabled={!manualRateInput || Number(manualRateInput) <= 0}
-                  className="h-10 shrink-0"
-                >
-                  <Check className="w-4 h-4 mr-1.5" />
-                  {t('common.save')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Application Updates Card */}
-        <AppUpdatesCard />
       </div>
 
       {/* Live Preview Card */}
@@ -541,6 +423,124 @@ export function PreferencesPanel() {
           </div>
         </div>
       </Card>
+
+      {/* Exchange Rate Management Card */}
+      <Card className="@container min-w-0 p-4 sm:p-6 bg-foreground/5 backdrop-blur-xl border border-border @5xl/main:col-span-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-theme-blue/15 text-theme-blue">
+              <ArrowLeftRight className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-lg font-medium text-foreground">{t('settings.exchangeRateTitle')}</div>
+              <div className="text-xs text-muted-foreground">{t('settings.exchangeRateDesc')}</div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleFetchLiveRate}
+              disabled={isFetchingRate}
+              className="gap-2 border-border text-foreground hover:bg-foreground/5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRate ? 'animate-spin' : ''}`} />
+              {isFetchingRate ? t('settings.fetchingRate') : t('settings.fetchLiveRate')}
+            </Button>
+            {settings.exchangeRate?.rate !== null && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleClearRate}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                {t('settings.clearRate')}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 @md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-border/40">
+          {/* Current Status */}
+          <div className="space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('common.status')}
+            </div>
+            <div className="p-4 rounded-lg bg-foreground/5 border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">
+                  {settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
+                    ? `1 USD = R$ ${settings.exchangeRate.rate.toFixed(4)}`
+                    : t('settings.rateStatusNone')}
+                </span>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    settings.exchangeRate?.error
+                      ? 'bg-destructive/15 text-destructive border border-destructive/30'
+                      : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
+                        ? 'bg-theme-cyan/15 text-theme-cyan border border-theme-cyan/30'
+                        : 'bg-foreground/10 text-muted-foreground border border-border'
+                  }`}
+                >
+                  {settings.exchangeRate?.error
+                    ? t('settings.rateStatusError')
+                    : settings.exchangeRate?.rate !== null && settings.exchangeRate?.rate !== undefined
+                      ? settings.exchangeRate.source === 'api'
+                        ? t('settings.rateStatusLive')
+                        : t('settings.rateStatusManual')
+                      : t('settings.rateStatusNone')}
+                </span>
+              </div>
+              {settings.exchangeRate?.lastUpdated && (
+                <div className="text-xs text-muted-foreground">
+                  {t('common.date')}: {new Date(settings.exchangeRate.lastUpdated).toLocaleString()}
+                </div>
+              )}
+              {fetchSuccess && <div className="text-xs text-theme-green">{fetchSuccess}</div>}
+              {(fetchError || settings.exchangeRate?.error) && (
+                <InlineAlert variant="destructive" className="mt-2">
+                  {fetchError || settings.exchangeRate?.error}
+                </InlineAlert>
+              )}
+            </div>
+          </div>
+
+          {/* Manual Override */}
+          <div className="space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('settings.manualRate')}
+            </div>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                value={manualRateInput}
+                onChange={e => setManualRateInput(e.target.value)}
+                placeholder="5.2500"
+                className="h-10 border-border bg-foreground/5 text-foreground placeholder:text-muted-foreground"
+              />
+              <Button
+                type="button"
+                variant="cyan"
+                onClick={handleSaveManualRate}
+                disabled={!manualRateInput || Number(manualRateInput) <= 0}
+                className="h-10 shrink-0"
+              >
+                <Check className="w-4 h-4 mr-1.5" />
+                {t('common.save')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Application Updates Card */}
+      <AppUpdatesCard />
 
       {/* Danger Zone: Workspace Data Reset (Development & Test Environments Only) */}
       {import.meta.env.DEV && (
