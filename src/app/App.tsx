@@ -4,6 +4,7 @@ import { TopNavigation } from '@/layout/TopNavigation';
 import { Sidebar } from '@/layout/Sidebar';
 import { SidebarProvider, useSidebar } from '@/layout/SidebarContext';
 import { ElectronThemeSync } from '@/layout/ElectronThemeSync';
+import { QuitConfirmationDialog } from '@/layout/QuitConfirmationDialog';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { TransactionsPage } from '@/features/transactions/TransactionsPage';
 import { AccountsPage } from '@/features/accounts/AccountsPage';
@@ -43,6 +44,7 @@ function AppLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ElectronThemeSync />
+      <QuitConfirmationDialog />
       <TopNavigation />
       <Sidebar />
 

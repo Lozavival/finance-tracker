@@ -79,6 +79,9 @@ export const en = {
     maximizeWindow: 'Maximize window',
     restoreWindow: 'Restore window',
     closeWindow: 'Close window',
+    quitConfirmTitle: 'Quit Finance Tracker?',
+    quitConfirmDesc: 'Are you sure you want to close the application?',
+    quitConfirmAction: 'Quit',
   },
   search: {
     noOmniResults: 'No accounts or transactions match "{query}"',
@@ -111,7 +114,6 @@ export const en = {
     closeOverlay: 'Close dialog, menu, or search',
     navigateOptions: 'Navigate dropdown options',
     reloadWindow: 'Reload window',
-    closeWindow: 'Close window',
     quitApp: 'Quit application',
     toggleDevTools: 'Toggle developer tools',
   },

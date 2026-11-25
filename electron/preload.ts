@@ -12,6 +12,8 @@ export interface ElectronWindowAPI {
   minimize: () => Promise<void>;
   maximize: () => Promise<boolean>;
   close: () => Promise<void>;
+  quitApp: () => Promise<void>;
+  onConfirmQuitRequested: (callback: () => void) => () => void;
   isMaximized: () => Promise<boolean>;
   onMaximizedChange: (callback: (isMaximized: boolean) => void) => () => void;
   getSystemTheme: () => Promise<'dark' | 'light'>;
@@ -26,6 +28,16 @@ const electronAPI: ElectronWindowAPI = {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
+  quitApp: () => ipcRenderer.invoke('app-quit'),
+  onConfirmQuitRequested: (callback: () => void) => {
+    const listener = () => {
+      callback();
+    };
+    ipcRenderer.on('confirm-quit-requested', listener);
+    return () => {
+      ipcRenderer.removeListener('confirm-quit-requested', listener);
+    };
+  },
   isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   onMaximizedChange: (callback: (isMaximized: boolean) => void) => {
     const listener = (_event: unknown, isMax: boolean) => {

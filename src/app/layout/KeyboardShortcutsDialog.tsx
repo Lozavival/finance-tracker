@@ -79,7 +79,6 @@ export function KeyboardShortcutsDialog() {
       title: t('shortcuts.groupDesktop'),
       items: [
         { keys: [mod, 'R'], description: t('shortcuts.reloadWindow') },
-        { keys: [mod, 'W'], description: t('shortcuts.closeWindow') },
         { keys: [mod, 'Q'], description: t('shortcuts.quitApp') },
         { keys: ['F12'], description: t('shortcuts.toggleDevTools') },
       ],

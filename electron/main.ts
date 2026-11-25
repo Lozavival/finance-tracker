@@ -250,6 +250,20 @@ async function createWindow(port: number): Promise<void> {
     }
   });
 
+  // Intercept Ctrl+Q / Cmd+Q to prompt for quit confirmation in the UI,
+  // and disable Ctrl+W / Cmd+W since the app runs in a single window.
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && (input.control || input.meta) && !input.alt && !input.shift) {
+      const key = input.key.toLowerCase();
+      if (key === 'q') {
+        event.preventDefault();
+        mainWindow?.webContents.send('confirm-quit-requested');
+      } else if (key === 'w') {
+        event.preventDefault();
+      }
+    }
+  });
+
   // Open external links in user's default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:') || url.startsWith('http:')) {
@@ -282,6 +296,10 @@ ipcMain.handle('window-maximize', () => {
 
 ipcMain.handle('window-close', () => {
   mainWindow?.close();
+});
+
+ipcMain.handle('app-quit', () => {
+  app.quit();
 });
 
 ipcMain.handle('window-is-maximized', () => {

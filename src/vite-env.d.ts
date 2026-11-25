@@ -14,6 +14,8 @@ interface ElectronWindowAPI {
   minimize: () => Promise<void>;
   maximize: () => Promise<boolean>;
   close: () => Promise<void>;
+  quitApp?: () => Promise<void>;
+  onConfirmQuitRequested?: (callback: () => void) => () => void;
   isMaximized: () => Promise<boolean>;
   onMaximizedChange: (callback: (isMaximized: boolean) => void) => () => void;
   getSystemTheme: () => Promise<'dark' | 'light'>;

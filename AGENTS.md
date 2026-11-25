@@ -99,7 +99,7 @@ src/
 │   └── sqliteRepository.ts       # SQLite implementation of FinanceRepository
 └── app/
     ├── App.tsx                   # Main layout and top-level view routing
-    ├── layout/                   # App shell components (TopNavigation, GlobalSearch, Sidebar, SidebarContext, MobileNavDrawer, KeyboardShortcutsDialog)
+    ├── layout/                   # App shell components (TopNavigation, GlobalSearch, Sidebar, SidebarContext, MobileNavDrawer, KeyboardShortcutsDialog, QuitConfirmationDialog)
     ├── features/                 # Domain feature modules
     │   ├── dashboard/            # DashboardPage, KPIs, AnalyticsVisualizer, SpendingBreakdownCard, SmartInsightsContent
     │   ├── accounts/             # Account lists, balance projections & statement views

@@ -81,6 +81,9 @@ export const pt: Translations = {
     maximizeWindow: 'Maximizar janela',
     restoreWindow: 'Restaurar janela',
     closeWindow: 'Fechar janela',
+    quitConfirmTitle: 'Sair do Finance Tracker?',
+    quitConfirmDesc: 'Tem certeza de que deseja fechar o aplicativo?',
+    quitConfirmAction: 'Sair',
   },
   search: {
     noOmniResults: 'Nenhuma conta ou transação corresponde a "{query}"',
@@ -113,7 +116,6 @@ export const pt: Translations = {
     closeOverlay: 'Fechar diálogo, menu ou busca',
     navigateOptions: 'Navegar entre opções de lista',
     reloadWindow: 'Recarregar janela',
-    closeWindow: 'Fechar janela',
     quitApp: 'Sair do aplicativo',
     toggleDevTools: 'Alternar ferramentas de desenvolvedor',
   },
