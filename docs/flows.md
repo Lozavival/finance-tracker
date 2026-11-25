@@ -384,6 +384,18 @@ This document describes the operational user journeys of the Finance Tracker app
 3. User clicks the "Expand sidebar" button or presses `Ctrl+B` / `⌘B` again to restore the full sidebar with page labels.
 4. On smaller screens (tablet and mobile), navigation is accessed through the top-left menu button or by pressing `Ctrl+B` / `⌘B`, which opens and closes a slide-over navigation drawer; selecting a page automatically closes the drawer.
 
+## Flow X: Viewing Available Keyboard Shortcuts
+
+**When it happens:** User wants to discover or review the keyboard shortcuts supported by the application.
+
+**Goal:** Display a clear, organized reference of navigation, dialog, and desktop window shortcuts without leaving the current page.
+
+**Implementation:** `KeyboardShortcutsDialog.handleKeyDown` / `TopNavigation.render` → `KeyboardShortcutsDialog.render`
+
+1. User clicks the keyboard icon button in the top navigation bar or presses `?` while not typing in a text field.
+2. A modal dialog opens listing available shortcuts grouped by category ("Navigation & Search", "Dialogs & Controls", and, when running the desktop app, "Desktop Window").
+3. User presses `Escape` or clicks outside the dialog to close it and return to the current view.
+
 ## Exceptional & Edge Flows
 
 - **Reconnecting After Offline Disconnection & Sync Recovery**: When network connectivity drops or the server returns errors during mutations, the application catches the error, coalesces duplicate notifications to prevent spamming, and renders an offline banner. The app continues in cached mode until network restores, re-fetching a fresh 90-day workspace snapshot.

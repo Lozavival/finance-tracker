@@ -14,6 +14,7 @@ import { NotificationCenter } from './NotificationCenter';
 import { GlobalSearch } from './GlobalSearch';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { WindowControls } from './WindowControls';
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 
 export function TopNavigation() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -55,6 +56,9 @@ export function TopNavigation() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10 app-no-drag" style={noDragStyle}>
+          {/* Keyboard Shortcuts */}
+          <KeyboardShortcutsDialog />
+
           {/* Notification Bell */}
           <NotificationCenter />
 

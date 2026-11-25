@@ -80,6 +80,14 @@ test.describe('Flow 15: Responsive Layout & Multi-Viewport Verification', () => 
     await page.keyboard.press('Control+b');
     await expect(aside).toHaveAttribute('data-collapsed', 'false');
     await expect(aside).toHaveCSS('width', '256px');
+
+    // 4. Keyboard shortcuts dialog via '?' shortcut and Escape to close
+    await page.keyboard.press('?');
+    const shortcutsDialog = page.getByRole('dialog', { name: /keyboard shortcuts|atalhos de teclado/i });
+    await expect(shortcutsDialog).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.keyboard.press('Escape');
+    await expect(shortcutsDialog).toHaveCount(0);
   });
 
   test('dialogs and overlays stay within bounds on 360px mobile viewports', async ({ page }) => {
